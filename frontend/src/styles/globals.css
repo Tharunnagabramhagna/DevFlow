@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: #E2E8F0;
+    /* Prevent text from overflowing its container on mobile */
+    min-width: 0;
+  }
+
+  html {
+    /* Prevent horizontal scroll at root level */
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Prevent body horizontal scroll */
+    overflow-x: hidden;
+  }
+
+  /* Tabular numbers for financial balances and code stats */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Accessible, visible focus rings for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid #0070BA;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Minimum 44px touch targets for interactive elements on mobile */
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

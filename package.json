@@ -1,0 +1,9 @@
+{
+  "name": "devflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DevFlow — AI-powered milestone intelligence and payment orchestration",
+  "scripts": {
+    "dev:placeholder": "echo \"DevFlow workspace initialized; service development scripts will be added with their implementations.\""
+  }
+}

@@ -5,5 +5,11 @@
   "description": "DevFlow — AI-powered milestone intelligence and payment orchestration",
   "scripts": {
     "dev:placeholder": "echo \"DevFlow workspace initialized; service development scripts will be added with their implementations.\""
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
   }
 }

@@ -1,0 +1,651 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CLIENT
+  FREELANCER
+  ADMIN
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+  DISPUTED
+}
+
+enum ProjectMemberRole {
+  OWNER
+  CLIENT
+  LEAD_DEVELOPER
+  MEMBER
+  VIEWER
+}
+
+enum ProjectInvitationRole {
+  CLIENT
+  LEAD_DEVELOPER
+  MEMBER
+  VIEWER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  REVOKED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  EVIDENCE_SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PASSED
+  FAILED
+  MANUAL_REVIEW_REQUIRED
+  AI_UNAVAILABLE
+}
+
+enum EvidenceType {
+  FILE
+  GITHUB_COMMIT
+  GITHUB_PR
+  TEXT_NOTE
+  URL
+}
+
+enum PaymentStatus {
+  PENDING
+  CREATING
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAID
+  PAYMENT_PENDING
+  PARTIALLY_PAID
+  PARTIALLY_REFUNDED
+  CANCELLED
+  FAILED
+  REFUNDED
+  MARKED_AS_REFUNDED
+  MANUAL_RECONCILIATION_REQUIRED
+}
+
+enum PaymentPayoutStatus {
+  AWAITING_PAYMENT
+  PLATFORM_HELD
+  DISBURSEMENT_IN_PROGRESS
+  PARTIALLY_DISBURSED
+  DISBURSED
+  DISBURSEMENT_PAUSED
+  PAYOUT_FAILED
+}
+
+enum PayoutProvider {
+  PAYPAL_PAYOUTS
+  MANUAL_TRANSFER
+}
+
+enum PayoutRecordStatus {
+  INITIATED
+  PROCESSING
+  DISBURSED
+  FAILED
+  CANCELLED
+}
+
+enum CaptureStatus {
+  COMPLETED
+  PENDING
+  REFUNDED
+  PARTIALLY_REFUNDED
+  DENIED
+  FAILED
+  UNKNOWN
+}
+
+enum CaptureFeeStatus {
+  VERIFIED
+  PENDING_CONFIRMATION
+  MANUAL_REVIEW_REQUIRED
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum RefundFeeReversalStatus {
+  VERIFIED
+  PENDING_CONFIRMATION
+  NO_FEE_REVERSAL
+}
+
+enum ActivityAction {
+  USER_REGISTERED
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  INVITATION_SENT
+  INVITATION_ACCEPTED
+  MILESTONE_CREATED
+  MILESTONE_UPDATED
+  EVIDENCE_SUBMITTED
+  AI_VERIFICATION_COMPLETED
+  MILESTONE_APPROVED
+  MILESTONE_REJECTED
+  INVOICE_CREATED
+  INVOICE_SENT
+  PAYMENT_RECEIVED
+  PAYMENT_REFUNDED
+  PAYOUT_INITIATED
+  PAYOUT_CONFIRMED
+  PAYOUT_CANCELLED
+  PAYOUT_CANCELLED_BY_REFUND
+  PAYOUT_CLAIMED_FOR_DISPATCH
+  PAYOUT_DISBURSED
+  PAYOUT_FAILED
+  MANUAL_HOLD_APPLIED
+  MANUAL_HOLD_CLEARED
+  RECONCILIATION_RESOLVED
+}
+
+enum NotificationType {
+  INVITATION_RECEIVED
+  INVITATION_ACCEPTED
+  MILESTONE_SUBMITTED
+  VERIFICATION_READY
+  MILESTONE_APPROVED
+  MILESTONE_REJECTED
+  INVOICE_RECEIVED
+  PAYMENT_CONFIRMED
+  PAYMENT_REFUNDED
+  PAYOUT_DISBURSED
+  SYSTEM_ALERT
+}
+
+model User {
+  id                 String       @id @default(uuid())
+  email              String       @unique
+  passwordHash       String?
+  name               String
+  avatarUrl          String?
+  bio                String?
+  role               Role         @default(FREELANCER)
+  githubId           String?      @unique
+  githubAccessToken  String?      // AES-256-GCM encrypted
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  createdProjects    Project[]    @relation("ProjectCreator")
+  clientProjects     Project[]    @relation("ProjectClient")
+  developerProjects  Project[]    @relation("ProjectLeadDeveloper")
+  memberships        ProjectMember[]
+  assignedMilestones Milestone[]  @relation("AssignedDeveloper")
+  submittedMilestones Milestone[] @relation("SubmittedBy")
+  approvals          MilestoneApproval[]
+  evidences          Evidence[]
+  sentInvitations    ProjectInvitation[] @relation("InvitationSender")
+  createdPayments    Payment[]    @relation("PaymentCreator")
+  authorizedPayouts  PayoutRecord[] @relation("AdminAuthorizedPayouts")
+  refreshTokens      RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  oauthExchangeCodes OAuthExchangeCode[]
+  accountLinkingChallenges AccountLinkingChallenge[]
+  notifications      Notification[]
+  activityLogs       ActivityLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id                 String       @id @default(uuid())
+  familyId           String       @db.Uuid
+  tokenHash          String       @unique // SHA-256
+  userId             String
+  replacedByTokenId  String?      @unique
+  revokedAt          DateTime?
+  expiresAt          DateTime
+  createdAt          DateTime     @default(now())
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replacedBy         RefreshToken? @relation("TokenRotation", fields: [replacedByTokenId], references: [id])
+  replaces           RefreshToken? @relation("TokenRotation")
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id                 String       @id @default(uuid())
+  tokenHash          String       @unique // SHA-256
+  userId             String
+  expiresAt          DateTime
+  usedAt             DateTime?
+  createdAt          DateTime     @default(now())
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model OAuthState {
+  id                 String       @id @default(uuid())
+  stateHash          String       @unique // SHA-256
+  pkceVerifier       String?      // AES-256-GCM encrypted
+  expiresAt          DateTime
+  usedAt             DateTime?
+  createdAt          DateTime     @default(now())
+
+  @@index([stateHash])
+  @@map("oauth_states")
+}
+
+model OAuthExchangeCode {
+  id                 String       @id @default(uuid())
+  codeHash           String       @unique // SHA-256
+  userId             String
+  expiresAt          DateTime
+  usedAt             DateTime?
+  createdAt          DateTime     @default(now())
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([codeHash])
+  @@index([userId])
+  @@map("oauth_exchange_codes")
+}
+
+model AccountLinkingChallenge {
+  id                     String       @id @default(uuid())
+  challengeHash          String       @unique // SHA-256
+  userId                 String
+  githubId               String
+  encryptedGithubToken   String
+  otpHash                String?      // SHA-256 of 6-digit OTP for passwordless
+  otpAttempts            Int          @default(0)
+  maxOtpAttempts         Int          @default(5)
+  otpSentAt              DateTime?
+  resendCooldownSeconds  Int          @default(60)
+  expiresAt              DateTime
+  usedAt                 DateTime?
+  createdAt              DateTime     @default(now())
+
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([challengeHash])
+  @@index([userId])
+  @@map("account_linking_challenges")
+}
+
+model Project {
+  id                 String          @id @default(uuid())
+  title              String
+  description        String?
+  brief              String?
+  budget             Decimal?        @db.Decimal(12, 2)
+  currency           String          @default("USD") @db.VarChar(3)
+  status             ProjectStatus   @default(DRAFT)
+  createdById        String
+  clientId           String?
+  leadDeveloperId    String?
+  githubRepoOwner    String?
+  githubRepoName     String?
+  isArchived         Boolean         @default(false)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  createdBy          User            @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  client             User?           @relation("ProjectClient", fields: [clientId], references: [id], onDelete: Restrict)
+  leadDeveloper      User?           @relation("ProjectLeadDeveloper", fields: [leadDeveloperId], references: [id], onDelete: Restrict)
+  members            ProjectMember[]
+  invitations        ProjectInvitation[]
+  milestones         Milestone[]
+  activityLogs       ActivityLog[]
+
+  @@index([createdById])
+  @@index([clientId])
+  @@index([leadDeveloperId])
+  @@map("projects")
+}
+
+model ProjectInvitation {
+  id                 String                @id @default(uuid())
+  projectId          String
+  invitedById        String
+  email              String
+  role               ProjectInvitationRole
+  tokenHash          String                @unique // SHA-256
+  status             InvitationStatus      @default(PENDING)
+  expiresAt          DateTime
+  acceptedAt         DateTime?
+  createdAt          DateTime              @default(now())
+
+  project            Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedBy          User                  @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  @@index([email])
+  @@index([projectId, email, status])
+  @@map("project_invitations")
+}
+
+model ProjectMember {
+  id                 String            @id @default(uuid())
+  projectId          String
+  userId             String
+  role               ProjectMemberRole
+  joinedAt           DateTime          @default(now())
+
+  project            Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Milestone {
+  id                   String             @id @default(uuid())
+  projectId            String
+  assignedDeveloperId  String?
+  submittedById        String?
+  title                String
+  description          String?
+  requirements         String[]
+  paymentAmount        Decimal            @db.Decimal(12, 2)
+  currency             String             @default("USD") @db.VarChar(3)
+  status               MilestoneStatus    @default(PENDING)
+  verificationStatus   VerificationStatus @default(UNVERIFIED)
+  publicToken          String?            @unique
+  isPubliclyVisible    Boolean            @default(false)
+  orderIndex           Int                @default(0)
+  dueDate              DateTime?
+  submittedAt          DateTime?
+  approvedAt           DateTime?
+  paidAt               DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  project              Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  assignedDeveloper    User?              @relation("AssignedDeveloper", fields: [assignedDeveloperId], references: [id], onDelete: SetNull)
+  submittedBy          User?              @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  approvals            MilestoneApproval[]
+  evidence             Evidence[]
+  verificationResult   VerificationResult?
+  payments             Payment[]
+
+  @@index([projectId])
+  @@index([assignedDeveloperId])
+  @@index([publicToken])
+  @@map("milestones")
+}
+
+model MilestoneApproval {
+  id                   String        @id @default(uuid())
+  milestoneId          String
+  approvedById         String
+  decision             String        // "APPROVED" or "REJECTED"
+  feedback             String?
+  createdAt            DateTime      @default(now())
+
+  milestone            Milestone     @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  approvedBy           User          @relation(fields: [approvedById], references: [id], onDelete: Restrict)
+
+  @@index([milestoneId])
+  @@map("milestone_approvals")
+}
+
+model Evidence {
+  id                   String        @id @default(uuid())
+  milestoneId          String
+  uploadedById         String
+  type                 EvidenceType
+  title                String
+  description          String?
+  fileKey              String?       // Local disk path or object storage key
+  fileName             String?
+  fileSize             Int?
+  mimeType             String?
+  githubCommitSha      String?
+  githubPrNumber       Int?
+  githubRepoOwner      String?
+  githubRepoName       String?
+  externalUrl          String?
+  textNote             String?
+  isDeleted            Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+
+  milestone            Milestone     @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  uploadedBy           User          @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([milestoneId])
+  @@map("evidence")
+}
+
+model VerificationResult {
+  id                   String             @id @default(uuid())
+  milestoneId          String             @unique
+  status               VerificationStatus @default(UNVERIFIED)
+  overallScore         Int                @default(0) // 0-100
+  summary              String?
+  checklistResults     Json               @default("[]")
+  riskAssessment       Json?
+  recommendations      String[]
+  modelName            String             @default("gemini-2.0-flash")
+  analyzedAt           DateTime           @default(now())
+
+  milestone            Milestone          @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  analyses             AIAnalysis[]
+
+  @@index([milestoneId])
+  @@map("verification_results")
+}
+
+model AIAnalysis {
+  id                   String             @id @default(uuid())
+  verificationResultId String
+  agentType            String             // "EVIDENCE_VERIFIER", "CODE_AUDITOR", "RISK_ASSESSOR"
+  promptTokens         Int?
+  completionTokens     Int?
+  rawResponse          String?
+  createdAt            DateTime           @default(now())
+
+  verificationResult   VerificationResult @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
+
+  @@index([verificationResultId])
+  @@map("ai_analyses")
+}
+
+model Payment {
+  id                   String              @id @default(uuid())
+  milestoneId          String
+  createdById          String
+  invoiceVersion       Int                 @default(1)
+  paypalInvoiceId      String?             @unique
+  paypalInvoiceUrl     String?
+  status               PaymentStatus       @default(PENDING)
+  payoutStatus         PaymentPayoutStatus @default(AWAITING_PAYMENT)
+  snapshotAmount       Decimal             @db.Decimal(12, 2)
+  settledAmount        Decimal             @default(0) @db.Decimal(12, 2) // Gross fiat captured
+  netReceivedAmount    Decimal             @default(0) @db.Decimal(12, 2) // Gross - verified fees
+  feeAmount            Decimal             @default(0) @db.Decimal(12, 2) // Verified fees - verified reversals
+  refundedAmount       Decimal             @default(0) @db.Decimal(12, 2) // Confirmed gross refunds
+  netRefundDeducted    Decimal             @default(0) @db.Decimal(12, 2) // Gross - feeReversals
+  snapshotCurrency     String              @default("USD") @db.VarChar(3)
+  payerEmail           String
+  beneficiaryEmail     String
+  paidAt               DateTime?
+  errorMessage         String?
+  lastReconciledAt     DateTime?
+  reconciliationNotes  String?
+  idempotencyKey       String              @unique @db.VarChar(128)
+  referenceId          String              @unique @db.VarChar(128)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  milestone            Milestone           @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  createdBy            User                @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  captures             PaymentCapture[]
+  refunds              PaymentRefund[]
+  webhookEvents        WebhookEvent[]
+  payoutRecords        PayoutRecord[]
+
+  @@unique([milestoneId, invoiceVersion])
+  @@index([milestoneId])
+  @@index([referenceId])
+  @@map("payments")
+}
+
+model PaymentCapture {
+  id                 String           @id @default(uuid())
+  paymentId          String           @map("payment_id")
+  paypalCaptureId    String           @unique @db.VarChar(128) @map("paypal_capture_id")
+  status             CaptureStatus    @default(PENDING)
+  grossAmount        Decimal          @db.Decimal(12, 2) @map("gross_amount")
+  feeAmount          Decimal?         @db.Decimal(12, 2) @map("fee_amount")
+  netAmount          Decimal?         @db.Decimal(12, 2) @map("net_amount")
+  currency           String           @db.VarChar(3)
+  feeStatus          CaptureFeeStatus @default(PENDING_CONFIRMATION) @map("fee_status")
+  capturedAt         DateTime         @map("captured_at")
+  rawResponse        Json             @map("raw_response")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  payment            Payment          @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  refunds            PaymentRefund[]
+
+  @@unique([paymentId, id], name: "payment_capture_ownership_idx")
+  @@index([paymentId])
+  @@map("payment_captures")
+}
+
+model PaymentRefund {
+  id                 String                  @id @default(uuid())
+  paymentId          String                  @map("payment_id")
+  captureId          String                  @map("capture_id")
+  paypalRefundId     String?                 @unique @db.VarChar(128) @map("paypal_refund_id")
+  idempotencyKey     String                  @unique @db.VarChar(128) @map("idempotency_key")
+  status             RefundStatus            @default(PENDING)
+  grossAmount        Decimal                 @db.Decimal(12, 2) @map("gross_amount")
+  feeReversalStatus  RefundFeeReversalStatus @default(PENDING_CONFIRMATION) @map("fee_reversal_status")
+  feeReversalAmount  Decimal?                @db.Decimal(12, 2) @map("fee_reversal_amount")
+  netDeductedAmount  Decimal?                @db.Decimal(12, 2) @map("net_deducted_amount")
+  currency           String                  @db.VarChar(3)
+  reason             String?
+  rawResponse        Json?                   @map("raw_response")
+  requestedAt        DateTime                @default(now()) @map("requested_at")
+  refundedAt         DateTime?               @map("refunded_at")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+
+  payment            Payment                 @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  capture            PaymentCapture          @relation(fields: [captureId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId])
+  @@index([captureId])
+  @@map("payment_refunds")
+}
+
+model PayoutRecord {
+  id                     String             @id @default(uuid())
+  paymentId              String             @map("payment_id")
+  provider               PayoutProvider     @default(PAYPAL_PAYOUTS)
+  providerPayoutBatchId  String?            @db.VarChar(128) @map("provider_payout_batch_id")
+  providerItemId         String?            @unique @db.VarChar(128) @map("provider_item_id")
+  amount                 Decimal            @db.Decimal(12, 2)
+  currency               String             @default("USD") @db.VarChar(3)
+  beneficiaryEmail       String             @map("beneficiary_email")
+  status                 PayoutRecordStatus @default(INITIATED)
+  idempotencyKey         String             @unique @db.VarChar(128) @map("idempotency_key")
+  transferReference      String?            @db.VarChar(255) @map("transfer_reference")
+  adminUserId            String             @map("admin_user_id")
+  evidenceDocumentUrl    String?            @map("evidence_document_url")
+  failureReason          String?            @map("failure_reason")
+  reconciliationHistory  Json               @default("[]") @map("reconciliation_history")
+  rawResponse            Json?              @map("raw_response")
+  initiatedAt            DateTime           @default(now()) @map("initiated_at")
+  disbursedAt            DateTime?          @map("disbursed_at")
+  cancelledAt            DateTime?          @map("cancelled_at")
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+
+  payment                Payment            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  adminUser              User               @relation("AdminAuthorizedPayouts", fields: [adminUserId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId])
+  @@index([adminUserId])
+  @@map("payout_records")
+}
+
+model WebhookEvent {
+  id                   String        @id @default(uuid())
+  provider             String        @default("PAYPAL")
+  eventId              String
+  eventType            String
+  summary              String?
+  resourceId           String?
+  payload              Json
+  status               String        @default("RECEIVED")
+  processedAt          DateTime?
+  errorMessage         String?
+  createdAt            DateTime      @default(now())
+
+  paymentId            String?
+  payment              Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, eventId])
+  @@index([resourceId])
+  @@map("webhook_events")
+}
+
+model Notification {
+  id                   String           @id @default(uuid())
+  userId               String
+  type                 NotificationType
+  title                String
+  message              String
+  linkUrl              String?
+  isRead               Boolean          @default(false)
+  createdAt            DateTime         @default(now())
+
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id                   String         @id @default(uuid())
+  projectId            String
+  userId               String?
+  action               ActivityAction
+  entityType           String
+  entityId             String
+  details              Json           @default("{}")
+  createdAt            DateTime       @default(now())
+
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user                 User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt(sort: Desc)])
+  @@map("activity_logs")
+}

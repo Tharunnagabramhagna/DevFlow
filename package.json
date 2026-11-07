@@ -3,7 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "description": "DevFlow — AI-powered milestone intelligence and payment orchestration",
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
-    "dev:placeholder": "echo \"DevFlow workspace initialized; service development scripts will be added with their implementations.\""
+    "dev": "npm run dev --prefix frontend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "preview": "npm run preview --prefix frontend"
   }
 }

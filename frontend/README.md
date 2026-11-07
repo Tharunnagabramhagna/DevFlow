@@ -1,7 +1,32 @@
 # DevFlow Frontend
 
-The frontend will provide the DevFlow user interface for project progress, milestone review, and payment status.
+DevFlow user interface for milestone intelligence, project progress review, and payment orchestration.
 
-**Intended stack:** React, TypeScript, Vite, and Tailwind CSS.
+**Tech stack:** React 18, TypeScript, Vite, Tailwind CSS, Lucide React, React Router.
 
-Application code and dependencies have not been initialized yet.
+## Getting Started
+
+### Development
+From the project root:
+```bash
+npm run dev
+```
+
+Or from the `frontend/` directory:
+```bash
+npm run dev
+```
+
+The Vite development server runs at `http://localhost:3000`.
+
+### Production Build
+```bash
+npm run build
+```
+Type checks with `tsc` and compiles assets via Vite into `frontend/dist/`.
+
+### Preview Build
+```bash
+npm run preview
+```
+Previews the production build locally using Vite.

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { cn } from '@/utils/cn';
 import {
   Bell,
   HelpCircle,
@@ -12,22 +13,24 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  CreditCard,
+  Check,
 } from 'lucide-react';
-import { Badge, Input } from '@/components/common';
 import { MobileMenuTrigger } from './Sidebar';
 
 export interface HeaderProps {
   onOpenMobileMenu: () => void;
+  onOpenCommandPalette?: () => void;
 }
 
 const breadcrumbMap: Record<string, { title: string; subtitle: string; section: string }> = {
   '/dashboard': {
-    title: 'Developer Overview',
+    title: 'Developer Command Center',
     subtitle: 'Milestone telemetry, AI analysis confidence, and PayPal invoice tracking',
     section: 'Analytics',
   },
   '/projects': {
-    title: 'Active Projects',
+    title: 'Active Projects Directory',
     subtitle: 'Track repository branches, team allocations, and milestone scopes',
     section: 'Workspace',
   },
@@ -38,7 +41,7 @@ const breadcrumbMap: Record<string, { title: string; subtitle: string; section: 
   },
   '/evidence': {
     title: 'GitHub Evidence Audit',
-    subtitle: 'Inspect PR diffs, commit hashes, and author verifications',
+    subtitle: 'Inspect PR diffs, commit hashes, and author signoffs',
     section: 'Intelligence',
   },
   '/verification': {
@@ -58,44 +61,93 @@ const breadcrumbMap: Record<string, { title: string; subtitle: string; section: 
   },
 };
 
-export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
+interface NotificationItem {
+  id: string;
+  category: 'all' | 'milestones' | 'ai' | 'payments';
+  title: string;
+  desc: string;
+  time: string;
+  type: 'success' | 'ai' | 'warning' | 'info';
+  read: boolean;
+  actionUrl?: string;
+}
+
+export const Header: React.FC<HeaderProps> = ({
+  onOpenMobileMenu,
+  onOpenCommandPalette,
+}) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentMeta = breadcrumbMap[location.pathname] || {
-    title: 'DevFlow Dashboard',
+    title: 'DevFlow Workspace',
     subtitle: 'Milestone intelligence and payments',
     section: 'Platform',
   };
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [searchVal, setSearchVal] = useState('');
+  const [activeCategory, setActiveCategory] = useState<'all' | 'milestones' | 'ai' | 'payments'>('all');
 
-  const notifications = [
+  const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
       id: '1',
+      category: 'payments',
       title: 'Milestone 2 Verified & Paid',
       desc: 'PayPal webhook verified PAYMENT.INVOICING.INVOICE.PAID ($4,400.00)',
       time: '12m ago',
       type: 'success',
+      read: false,
+      actionUrl: '/payments',
     },
     {
       id: '2',
+      category: 'ai',
       title: 'AI Analysis Completed',
       desc: 'Milestone 3 scored 90% confidence across 5 commit hashes',
       time: '1h ago',
       type: 'ai',
+      read: false,
+      actionUrl: '/verification',
     },
     {
       id: '3',
+      category: 'milestones',
       title: 'Client Review Pending',
       desc: 'Alex Mercer opened Milestone 3 evidence submission',
       time: '2h ago',
       type: 'warning',
+      read: false,
+      actionUrl: '/milestones',
     },
-  ];
+    {
+      id: '4',
+      category: 'payments',
+      title: 'Sandbox Invoice Draft Ready',
+      desc: 'Invoice #INV-2026-004 created for Algorithmic Liquidity Router',
+      time: '5h ago',
+      type: 'info',
+      read: true,
+      actionUrl: '/payments',
+    },
+  ]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const markAsRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  };
+
+  const filteredNotifications = notifications.filter((n) => {
+    if (activeCategory === 'all') return true;
+    return n.category === activeCategory;
+  });
 
   return (
-    <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
+    <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E9EAF2] shadow-xs select-none">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
         {/* Left: Mobile Trigger + Breadcrumb */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -103,37 +155,39 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
 
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="hidden xs:inline text-[11px] font-medium text-slate-400 uppercase tracking-wider shrink-0">
+              <span className="hidden xs:inline text-[11px] font-semibold text-[#9D9EAF] uppercase tracking-wider shrink-0">
                 {currentMeta.section}
               </span>
-              <span className="hidden xs:inline text-slate-300">/</span>
-              <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">
+              <span className="hidden xs:inline text-[#E9EAF2]">/</span>
+              <h1 className="text-sm sm:text-base font-bold text-[#25263A] tracking-tight truncate">
                 {currentMeta.title}
               </h1>
             </div>
-            <p className="hidden md:block text-xs text-slate-500 truncate max-w-md">
+            <p className="hidden md:block text-xs text-[#777B91] truncate max-w-md">
               {currentMeta.subtitle}
             </p>
           </div>
         </div>
 
-        {/* Right: Search + Notifications + Help + Profile */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Quick Search Input */}
-          <div className="hidden md:block w-56 lg:w-64">
-            <Input
-              placeholder="Search milestones, commits..."
-              value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-              leftIcon={<Search className="w-3.5 h-3.5" />}
-              className="py-1.5 text-xs bg-slate-50 border-slate-200 focus:bg-white"
-            />
-          </div>
+        {/* Right: Quick Command Search + Notifications + Help + Profile */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Quick Search / Command Palette Trigger */}
+          <button
+            onClick={onOpenCommandPalette}
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#F1F3FA] border border-[#E9EAF2] text-[#777B91] hover:text-[#25263A] hover:border-[#93C5FD] transition-all duration-150 text-xs w-48 sm:w-60 lg:w-72"
+            title="Open Command Palette (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate flex-1 text-left">Search projects, invoices...</span>
+            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-white border border-[#E9EAF2] text-[10px] font-mono shadow-xs text-[#777B91]">
+              ⌘K
+            </kbd>
+          </button>
 
           {/* Sandbox Status Badge */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-50 border border-sky-200/80 text-[11px] font-semibold text-[#004B87]">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] font-semibold text-[#1D4ED8]">
             <span className="w-2 h-2 rounded-full bg-[#0070BA] animate-pulse" />
-            <span>PayPal Sandbox Active</span>
+            <span>PayPal Sandbox</span>
           </div>
 
           {/* Notifications Button & Dropdown */}
@@ -143,39 +197,128 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                 setIsNotificationsOpen(!isNotificationsOpen);
                 setIsProfileOpen(false);
               }}
-              className="relative p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              className="relative p-2 rounded-xl text-[#777B91] hover:text-[#25263A] hover:bg-[#F1F3FA] transition-colors"
               aria-label="View notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-fintech-paypal-blue ring-2 ring-white" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#0070BA] ring-2 ring-white" />
+              )}
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-900">Activity & Webhook Events</span>
-                  <Badge variant="neutral" size="sm">3 New</Badge>
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-88 max-w-sm bg-white rounded-2xl shadow-modal-elevated border border-[#E9EAF2] py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-4 py-2.5 border-b border-[#E9EAF2] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#25263A]">Activity & Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.2 rounded-full bg-[#EFF6FF] text-[#1D4ED8] text-[10px] font-semibold">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-[11px] text-[#0070BA] hover:underline font-medium flex items-center gap-1"
+                    >
+                      <Check className="w-3 h-3" />
+                      Mark all read
+                    </button>
+                  )}
                 </div>
-                <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                  {notifications.map((n) => (
-                    <div key={n.id} className="p-3 hover:bg-slate-50 transition-colors flex items-start gap-3">
-                      <div className="mt-0.5 shrink-0">
-                        {n.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                        {n.type === 'ai' && <Sparkles className="w-4 h-4 text-violet-600" />}
-                        {n.type === 'warning' && <AlertCircle className="w-4 h-4 text-amber-600" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-900 truncate">{n.title}</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{n.desc}</p>
-                        <span className="text-[10px] text-slate-400 mt-1 block">{n.time}</span>
-                      </div>
-                    </div>
+
+                {/* Filter category pills */}
+                <div className="px-3 py-1.5 flex items-center gap-1 border-b border-[#E9EAF2] bg-[#F8F9FC]">
+                  {(['all', 'milestones', 'ai', 'payments'] as const).map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={cn(
+                        'text-[10px] font-semibold px-2 py-0.5 rounded-lg capitalize transition-colors',
+                        activeCategory === cat
+                          ? 'bg-white text-[#25263A] shadow-xs border border-[#E9EAF2]'
+                          : 'text-[#777B91] hover:text-[#25263A]'
+                      )}
+                    >
+                      {cat}
+                    </button>
                   ))}
                 </div>
-                <div className="px-4 py-2 border-t border-slate-100 text-center">
-                  <span className="text-xs text-fintech-paypal-blue font-semibold hover:underline cursor-pointer">
-                    View all webhook logs
-                  </span>
+
+                {/* Notification Items */}
+                <div className="divide-y divide-[#E9EAF2] max-h-72 overflow-y-auto">
+                  {filteredNotifications.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-[#777B91]">
+                      No notifications in this category.
+                    </div>
+                  ) : (
+                    filteredNotifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          markAsRead(n.id);
+                          if (n.actionUrl) {
+                            navigate(n.actionUrl);
+                            setIsNotificationsOpen(false);
+                          }
+                        }}
+                        className={cn(
+                          'p-3 hover:bg-[#F7F8FC] transition-colors flex items-start gap-3 cursor-pointer',
+                          !n.read && 'bg-[#EFF6FF]/30'
+                        )}
+                      >
+                        <div className="mt-0.5 shrink-0">
+                          {n.type === 'success' && (
+                            <div className="w-6 h-6 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] flex items-center justify-center text-[#15803D]">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                          {n.type === 'ai' && (
+                            <div className="w-6 h-6 rounded-lg bg-[#F5F3FF] border border-[#DDD6FE] flex items-center justify-center text-[#6D28D9]">
+                              <Sparkles className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                          {n.type === 'warning' && (
+                            <div className="w-6 h-6 rounded-lg bg-[#FEFCE8] border border-[#FEF08A] flex items-center justify-center text-[#A16207]">
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                          {n.type === 'info' && (
+                            <div className="w-6 h-6 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1D4ED8]">
+                              <CreditCard className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p
+                              className={cn(
+                                'text-xs truncate',
+                                !n.read ? 'font-bold text-[#25263A]' : 'font-medium text-[#777B91]'
+                              )}
+                            >
+                              {n.title}
+                            </p>
+                            <span className="text-[10px] text-[#9D9EAF] shrink-0 ml-2">{n.time}</span>
+                          </div>
+                          <p className="text-[11px] text-[#777B91] mt-0.5 leading-snug">{n.desc}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="px-4 py-2 border-t border-[#E9EAF2] text-center bg-[#F8F9FC]">
+                  <button
+                    onClick={() => {
+                      navigate('/payments');
+                      setIsNotificationsOpen(false);
+                    }}
+                    className="text-xs text-[#0070BA] font-semibold hover:underline"
+                  >
+                    View all invoice & webhook audit logs →
+                  </button>
                 </div>
               </div>
             )}
@@ -184,7 +327,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
           {/* Help Button */}
           <button
             onClick={() => window.open('https://github.com/Tharunnagabramhagna/DevFlow#readme', '_blank')}
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-xl text-[#777B91] hover:text-[#25263A] hover:bg-[#F1F3FA] transition-colors"
             title="DevFlow Architecture Docs"
             aria-label="DevFlow Docs"
           >
@@ -198,57 +341,57 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                 setIsProfileOpen(!isProfileOpen);
                 setIsNotificationsOpen(false);
               }}
-              className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl hover:bg-[#F1F3FA] transition-colors"
               aria-label="User profile menu"
             >
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 text-white flex items-center justify-center font-semibold text-xs shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#A78BFA] to-[#818CF8] text-white flex items-center justify-center font-bold text-xs shadow-card-subtle">
                 S
               </div>
               <div className="hidden lg:flex flex-col text-left">
-                <span className="text-xs font-semibold text-slate-900 leading-tight">Sowjanya S.</span>
-                <span className="text-[10px] text-slate-500">Frontend Lead</span>
+                <span className="text-xs font-semibold text-[#25263A] leading-tight">Sowjanya S.</span>
+                <span className="text-[10px] text-[#777B91]">Frontend Lead</span>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#9D9EAF]" />
             </button>
 
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-3.5 py-2 border-b border-slate-100">
-                  <p className="text-xs font-semibold text-slate-900">Sowjanya Sappala</p>
-                  <p className="text-[11px] text-slate-500 truncate">sowjanya@devflow.team</p>
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-modal-elevated border border-[#E9EAF2] py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3.5 py-2 border-b border-[#E9EAF2]">
+                  <p className="text-xs font-bold text-[#25263A]">Sowjanya Sappala</p>
+                  <p className="text-[11px] text-[#777B91] truncate">sowjanya@devflow.team</p>
                   <div className="mt-1.5 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] text-emerald-700 font-medium">Team Member #2 (Frontend)</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#86DDBB]" />
+                    <span className="text-[10px] text-[#15803D] font-medium">Team Member #2 (Frontend)</span>
                   </div>
                 </div>
 
                 <div className="py-1">
                   <a
                     href="#/settings"
-                    className="flex items-center gap-2 px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    className="flex items-center gap-2 px-3.5 py-2 text-xs text-[#25263A] hover:bg-[#F1F3FA]"
                     onClick={() => setIsProfileOpen(false)}
                   >
-                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <User className="w-3.5 h-3.5 text-[#777B91]" />
                     <span>Profile & API Keys</span>
                   </a>
                   <a
                     href="https://developer.paypal.com/dashboard/"
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    className="flex items-center justify-between px-3.5 py-2 text-xs text-[#25263A] hover:bg-[#F1F3FA]"
                   >
                     <div className="flex items-center gap-2">
-                      <Shield className="w-3.5 h-3.5 text-slate-400" />
-                      <span>PayPal Sandbox Dashboard</span>
+                      <Shield className="w-3.5 h-3.5 text-[#777B91]" />
+                      <span>PayPal Sandbox Portal</span>
                     </div>
-                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                    <ExternalLink className="w-3 h-3 text-[#9D9EAF]" />
                   </a>
                 </div>
 
-                <div className="border-t border-slate-100 pt-1">
+                <div className="border-t border-[#E9EAF2] pt-1">
                   <button
                     onClick={() => setIsProfileOpen(false)}
-                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
+                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-[#C2410C] hover:bg-[#FFF7ED] text-left"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Disconnect Session</span>

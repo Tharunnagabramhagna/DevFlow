@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DevFlowLogo } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -7,15 +8,44 @@ import {
   CreditCard,
   ArrowRight,
   CheckCircle2,
-  ExternalLink,
-  FolderGit2,
   Menu,
   X,
+  Check,
+  Lock,
   Layers,
-  Zap,
-  AlertCircle,
+  Wand2,
+  FolderGit2,
+  Users,
+  AlertTriangle,
+  Clock,
+  LayoutDashboard,
+  CheckCheck,
 } from 'lucide-react';
-import { Badge, Button } from '@/components/common';
+
+// Custom PayPal Logo Mark
+const PayPalIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path
+      d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.789.789 0 0 1 .777-.66h7.026c2.81 0 4.887.675 5.86 1.905.922 1.168.995 2.802.215 4.86-.022.057-.046.113-.07.168-.783 2.113-2.22 3.613-4.27 4.457-.866.357-1.892.538-3.05.538H9.362a.788.788 0 0 0-.777.66l-.992 5.093a.64.64 0 0 1-.517.596z"
+      fill="#0079C1"
+    />
+    <path
+      d="M8.585 14.989l1.107-7.009a.788.788 0 0 1 .778-.66h5.36c2.518 0 4.385.64 5.258 1.808.825 1.106.89 2.656.192 4.607-.749 2.022-2.124 3.456-4.086 4.263-.83.342-1.81.515-2.918.515h-1.92a.788.788 0 0 0-.777.66l-.758 4.793a.64.64 0 0 1-.633.541H6.71a.641.641 0 0 1-.633-.74l2.508-8.778z"
+      fill="#00457C"
+    />
+  </svg>
+);
+
+// Custom GitHub Octocat Logo Mark
+const GitHubIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+    />
+  </svg>
+);
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,53 +60,25 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#0070BA] selection:text-white overflow-x-hidden">
-      {/* ──────────────────────────────────────────────────────────────────────────
-          1. NAVIGATION
-      ────────────────────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-slate-950/85 backdrop-blur-md border-b border-slate-800/80">
+    <div className="min-h-screen bg-[#080D1B] text-[#F1F5F9] font-sans selection:bg-[#0070BA] selection:text-white overflow-x-hidden antialiased">
+      {/* 1. Header Navigation */}
+      <header className="sticky top-0 z-50 bg-[#080D1B]/85 backdrop-blur-md border-b border-[#1E293B]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#003087] via-[#004B87] to-[#0070BA] flex items-center justify-center text-white font-bold text-base shadow-sm">
-              DF
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-lg tracking-tight">DevFlow</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider bg-[#0070BA]/20 text-sky-400 border border-sky-400/30 px-1.5 py-0.2 rounded">
-                  PayPal
-                </span>
-              </div>
-              <span className="text-[10px] text-slate-400 hidden xs:inline">Milestone Intelligence</span>
-            </div>
+          <div
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-3 cursor-pointer group select-none"
+          >
+            <DevFlowLogo variant="horizontal" theme="light" size="md" />
           </div>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-7 text-xs font-semibold text-slate-300">
+          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-slate-400">
             <button
-              onClick={() => scrollToSection('how-it-works')}
+              onClick={() => scrollToSection('preview')}
               className="hover:text-white transition-colors cursor-pointer"
             >
-              How It Works
-            </button>
-            <button
-              onClick={() => scrollToSection('ai-verification')}
-              className="hover:text-white transition-colors cursor-pointer"
-            >
-              AI Verification
-            </button>
-            <button
-              onClick={() => scrollToSection('github-evidence')}
-              className="hover:text-white transition-colors cursor-pointer"
-            >
-              GitHub Evidence
-            </button>
-            <button
-              onClick={() => scrollToSection('paypal-workflow')}
-              className="hover:text-white transition-colors cursor-pointer"
-            >
-              PayPal Payments
+              Product
             </button>
             <button
               onClick={() => scrollToSection('features')}
@@ -84,422 +86,409 @@ export const LandingPage: React.FC = () => {
             >
               Features
             </button>
+            <button
+              onClick={() => scrollToSection('how-it-works')}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              How It Works
+            </button>
+            <button
+              onClick={() => scrollToSection('trust')}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              About
+            </button>
           </nav>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <a
-              href="https://github.com/Tharunnagabramhagna/DevFlow"
-              target="_blank"
-              rel="noreferrer"
-              className="p-2 text-slate-400 hover:text-white transition-colors"
-              title="View Repository on GitHub"
-            >
-              <GitBranch className="w-4 h-4" />
-            </a>
-            <Button
-              variant="paypal"
-              size="sm"
+          {/* Desktop Right CTA */}
+          <div className="hidden md:flex items-center gap-4">
+            <button
               onClick={() => navigate('/dashboard')}
-              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-              data-testid="landing-open-dashboard"
+              className="text-xs font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5"
             >
-              Open Dashboard
-            </Button>
+              Login
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="text-xs font-semibold bg-[#0070BA] hover:bg-[#005ea6] text-white px-4 py-2 rounded-full transition-all shadow-md shadow-[#0070BA]/25 hover:shadow-[#0070BA]/40"
+            >
+              Get Started
+            </button>
           </div>
 
-          {/* Mobile Menu Trigger */}
+          {/* Mobile Menu Hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 transition-colors"
-            aria-label="Toggle Navigation"
+            className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E293B] transition-colors"
+            aria-label="Toggle navigation"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-b border-slate-800 px-4 py-4 space-y-3 animate-in slide-in-from-top-2 duration-150">
+          <div className="md:hidden border-b border-[#1E293B] bg-[#0A0F1D] px-5 py-4 space-y-3">
+            <button
+              onClick={() => scrollToSection('preview')}
+              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
+            >
+              Product
+            </button>
+            <button
+              onClick={() => scrollToSection('features')}
+              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
+            >
+              Features
+            </button>
             <button
               onClick={() => scrollToSection('how-it-works')}
-              className="block w-full text-left py-2 text-sm font-semibold text-slate-300 hover:text-white"
+              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
             >
               How It Works
             </button>
             <button
-              onClick={() => scrollToSection('ai-verification')}
-              className="block w-full text-left py-2 text-sm font-semibold text-slate-300 hover:text-white"
+              onClick={() => scrollToSection('trust')}
+              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
             >
-              AI Verification
+              About
             </button>
-            <button
-              onClick={() => scrollToSection('github-evidence')}
-              className="block w-full text-left py-2 text-sm font-semibold text-slate-300 hover:text-white"
-            >
-              GitHub Evidence
-            </button>
-            <button
-              onClick={() => scrollToSection('paypal-workflow')}
-              className="block w-full text-left py-2 text-sm font-semibold text-slate-300 hover:text-white"
-            >
-              PayPal Payments
-            </button>
-            <button
-              onClick={() => scrollToSection('features')}
-              className="block w-full text-left py-2 text-sm font-semibold text-slate-300 hover:text-white"
-            >
-              Features
-            </button>
-            <div className="pt-2 border-t border-slate-800">
-              <Button
-                variant="paypal"
-                size="sm"
-                className="w-full"
+            <div className="pt-2 flex flex-col gap-2 border-t border-[#1E293B]">
+              <button
                 onClick={() => navigate('/dashboard')}
-                rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                className="w-full text-center py-2 text-xs font-semibold text-slate-300 bg-[#1E293B] rounded-lg"
               >
-                Open Dashboard
-              </Button>
+                Login
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full text-center py-2 text-xs font-semibold text-white bg-[#0070BA] rounded-lg"
+              >
+                Get Started
+              </button>
             </div>
           </div>
         )}
       </header>
 
-      {/* ──────────────────────────────────────────────────────────────────────────
-          2. HERO SECTION
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section className="relative pt-16 sm:pt-24 pb-16 sm:pb-24 overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-tr from-[#003087]/30 to-[#0070BA]/20 blur-[120px] rounded-full pointer-events-none" />
+      {/* 2. HERO SECTION */}
+      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden">
+        {/* Subtle background ambient glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-blue-600/10 via-cyan-500/5 to-purple-600/10 blur-3xl pointer-events-none rounded-full" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center space-y-6 sm:space-y-8">
-          {/* Eyebrow Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-sky-300 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-[#0070BA] animate-pulse" />
-            <span className="font-semibold">PayPal Hackathon Project</span>
-            <span className="text-slate-600">&bull;</span>
-            <span className="text-slate-400">Milestone Verification &amp; Settlement</span>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            {/* Left Column: Headline & CTA */}
+            <div className="lg:col-span-5 space-y-6 text-left">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
+                From Code <br />
+                to Cash.
+              </h1>
 
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.1]">
-            Turn Verified Work Into{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-[#0070BA] to-emerald-400">
-              Trusted Payments.
-            </span>
-          </h1>
-
-          {/* Supporting Text */}
-          <p className="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            DevFlow connects GitHub evidence, AI-powered milestone verification and PayPal payment workflows in one
-            transparent platform.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Button
-              variant="paypal"
-              size="lg"
-              onClick={() => navigate('/dashboard')}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-              className="w-full sm:w-auto text-sm px-6 py-3"
-              data-testid="hero-explore-dashboard-btn"
-            >
-              Explore Dashboard
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => scrollToSection('how-it-works')}
-              className="w-full sm:w-auto text-sm px-6 py-3 bg-slate-900/60 border-slate-700 text-slate-200 hover:bg-slate-800"
-            >
-              See How It Works
-            </Button>
-          </div>
-
-          {/* Trust Highlights */}
-          <div className="pt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 font-medium">
-            <span className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Cryptographic Webhook Validation
-            </span>
-            <span className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              AST Semantic Code Verification
-            </span>
-            <span className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-[#0070BA]" />
-              Official PayPal REST Invoicing v2
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────────────────────────
-          3. PRODUCT PREVIEW (Interactive Dashboard Mockup)
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl overflow-hidden backdrop-blur-md">
-          {/* Mock Browser Title Bar */}
-          <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-              <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-              <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-              <span className="ml-2 text-xs font-mono text-slate-400">devflow.team/#/dashboard</span>
-            </div>
-            <div className="flex items-center gap-2 text-[11px] font-mono text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Live Monitored Repo: Tharunnagabramhagna/DevFlow
-            </div>
-          </div>
-
-          {/* Mock Dashboard Body */}
-          <div className="p-6 sm:p-8 space-y-6">
-            {/* Mock Top Metrics Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase">Active Projects</span>
-                <div className="text-2xl font-bold font-mono text-white">2</div>
-                <span className="text-[10px] text-emerald-400">100% webhooks active</span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase">Fulfilled Milestones</span>
-                <div className="text-2xl font-bold font-mono text-white">2 / 4</div>
-                <span className="text-[10px] text-emerald-400">50% completed</span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase">AI Verification</span>
-                <div className="text-2xl font-bold font-mono text-violet-400">90%</div>
-                <span className="text-[10px] text-amber-400">Milestone 3 Awaiting Client</span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase">PayPal Settled</span>
-                <div className="text-2xl font-bold font-mono text-emerald-400">$7,600.00</div>
-                <span className="text-[10px] text-slate-400">Verified via webhook signatures</span>
-              </div>
-            </div>
-
-            {/* Mock Milestones Table Strip */}
-            <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-                <span>Active Deliverables Pipeline</span>
-                <span className="font-mono text-[11px] text-slate-500">Representative Demonstration Data</span>
-              </div>
-              <div className="space-y-2 text-xs font-mono">
-                <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="font-semibold text-white">Milestone 1: Backend Architecture &amp; Database</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-emerald-400 font-bold">$3,200.00 USD</span>
-                    <Badge variant="success" size="sm">
-                      PAID &bull; Settled
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="font-semibold text-white">Milestone 2: PayPal Invoicing API &amp; Webhook Verifier</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-emerald-400 font-bold">$4,400.00 USD</span>
-                    <Badge variant="success" size="sm">
-                      PAID &bull; Settled
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-                    <span className="font-semibold text-white">Milestone 3: AI Verification &amp; Evidence Analysis</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sky-300 font-bold">$3,200.00 USD</span>
-                    <Badge variant="ai" size="sm">
-                      AI Verified (90%)
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Preview Banner */}
-            <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
-              <span>All 7 workspace views are fully interactive in the dashboard.</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-                className="bg-slate-950 border-slate-700 text-sky-400 hover:bg-slate-800 text-xs"
-              >
-                Launch Live App &rarr;
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────────────────────────
-          4. HOW IT WORKS
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section id="how-it-works" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <Badge variant="paypal" size="sm">
-            Transparent Workflow
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">How DevFlow Works</h2>
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-            From Git commit to PayPal settlement &mdash; zero ambiguity, objective verification, and client trust.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* Step 1 */}
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-slate-800 text-sky-400 flex items-center justify-center font-bold text-sm font-mono">
-              01
-            </div>
-            <h3 className="font-bold text-sm text-white">Connect GitHub</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Link the repository branch. DevFlow indexes commits, pull requests, and file diffs in real time.
-            </p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-slate-800 text-sky-400 flex items-center justify-center font-bold text-sm font-mono">
-              02
-            </div>
-            <h3 className="font-bold text-sm text-white">Track Milestones</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Define measurable acceptance criteria, deliverable scopes, and agreed milestone payout values.
-            </p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3 hover:border-violet-500/50 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-violet-950 text-violet-300 flex items-center justify-center font-bold text-sm font-mono">
-              03
-            </div>
-            <h3 className="font-bold text-sm text-white">Review AI Scoring</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              DevFlow analyzes code diffs against requirements, producing citations, test suite stats, and confidence scores.
-            </p>
-          </div>
-
-          {/* Step 4 */}
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-slate-800 text-amber-400 flex items-center justify-center font-bold text-sm font-mono">
-              04
-            </div>
-            <h3 className="font-bold text-sm text-white">Client Sign-Off</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Human-in-the-loop approval. Clients inspect evidence and approve deliverables before any invoice is actioned.
-            </p>
-          </div>
-
-          {/* Step 5 */}
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3 hover:border-emerald-500/50 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-emerald-950 text-emerald-300 flex items-center justify-center font-bold text-sm font-mono">
-              05
-            </div>
-            <h3 className="font-bold text-sm text-white">PayPal Settlement</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Invoices are issued via PayPal REST API v2; cryptographically verified webhook events mark invoices paid.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────────────────────────
-          5. AI VERIFICATION SECTION
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section id="ai-verification" className="py-16 sm:py-24 bg-slate-900/50 border-y border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div className="space-y-3 max-w-2xl">
-              <Badge variant="ai" size="sm">
-                Objective Code Intelligence
-              </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-                Explainable AI Verification Without Hallucinations
-              </h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                DevFlow matches technical acceptance criteria with exact syntactic code evidence from repository pull requests.
+              <p className="text-sm sm:text-base text-slate-400 max-w-md leading-relaxed font-normal">
+                Turn development progress into verified milestones and seamless payments with
+                AI-powered project intelligence.
               </p>
-            </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/verification')}
-              className="self-start lg:self-auto bg-slate-950 border-slate-700 text-slate-200"
-            >
-              Inspect Live Reports &rarr;
-            </Button>
-          </div>
-
-          {/* Sample AI Report Card */}
-          <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-slate-400">REPORT #ai_rep_03</span>
-                  <Badge variant="success" size="sm">
-                    Passed (90%)
-                  </Badge>
-                  <span className="text-[10px] text-violet-400 font-mono bg-violet-950/60 px-2 py-0.5 rounded border border-violet-800/50">
-                    DevFlow-AI v0.1.0
-                  </span>
-                </div>
-                <h4 className="text-base font-bold text-white mt-1">
-                  Milestone 3: AI Milestone Verification &amp; Evidence Analysis
-                </h4>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="text-3xl font-black font-mono text-emerald-400">90%</div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold">Confidence</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-lg shadow-[#0070BA]/30 hover:shadow-[#0070BA]/50 flex items-center gap-2"
+                >
+                  Get Started
+                </button>
+                <button
+                  onClick={() => scrollToSection('how-it-works')}
+                  className="bg-[#0F172A] hover:bg-[#1E293B] border border-[#1E293B] hover:border-slate-600 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all"
+                >
+                  Explore How It Works
+                </button>
               </div>
             </div>
 
-            {/* Requirement Breakdown Sample */}
-            <div className="space-y-3">
-              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2 text-xs">
+            {/* Right Column: Hero Dashboard Mockup + Overlapping Payment Status */}
+            <div className="lg:col-span-7 relative">
+              {/* Outer Dashboard Mockup Shell */}
+              <div className="bg-[#0B1222] border border-[#1E293B] rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+                {/* Window Chrome Header */}
+                <div className="flex items-center justify-between pb-3.5 border-b border-[#1E293B] text-[11px] text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                    <span className="font-mono text-slate-500 ml-2">DevFlow Intelligence Command</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    LIVE TELEMETRY
+                  </div>
+                </div>
+
+                {/* Inner Mockup Layout: Mini Sidebar + Main Viewport */}
+                <div className="grid grid-cols-12 gap-3 pt-3.5">
+                  {/* Mini Sidebar */}
+                  <div className="col-span-3 border-r border-[#1E293B] pr-3 space-y-1 text-[11px]">
+                    <div className="flex items-center gap-1.5 font-bold text-white mb-3">
+                      <DevFlowLogo variant="icon" size="xs" />
+                      <span>DevFlow</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="p-1.5 rounded bg-blue-950/60 text-blue-400 font-semibold flex items-center gap-1.5">
+                        <LayoutDashboard className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Dashboard</span>
+                      </div>
+                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                        <FolderGit2 className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Projects</span>
+                      </div>
+                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Milestones</span>
+                      </div>
+                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                        <GitBranch className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Evidence</span>
+                      </div>
+                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">AI Verify</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mini Dashboard Workspace */}
+                  <div className="col-span-9 space-y-3 pl-1">
+                    {/* Top Row: Milestone Tracking + Mini Stat */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="sm:col-span-2 p-2.5 rounded-xl bg-[#0F172A] border border-[#1E293B] space-y-2">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-semibold text-white">Milestone Tracking</span>
+                          <span className="text-emerald-400 font-mono text-[10px] bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-800/40">
+                            94.2% AI Pass
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span>Order Routing & Webhooks</span>
+                            <span>100%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-[#1E293B] overflow-hidden">
+                            <div className="h-full bg-emerald-400 w-full rounded-full" />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span>AST Syntax Verification</span>
+                            <span>75%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-[#1E293B] overflow-hidden">
+                            <div className="h-full bg-blue-500 w-3/4 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-[#0F172A] border border-[#1E293B] flex flex-col justify-between">
+                        <span className="text-[10px] text-slate-400 font-medium">Expected Volume</span>
+                        <div>
+                          <div className="text-lg font-bold font-mono text-white">$10,000.00</div>
+                          <span className="text-[10px] text-emerald-400 font-mono">4 Milestones</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Commit Stream Snippet */}
+                    <div className="p-2.5 rounded-xl bg-[#0F172A] border border-[#1E293B] text-[11px] space-y-1.5 font-mono">
+                      <div className="flex items-center justify-between text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                          <GitHubIcon className="w-3.5 h-3.5 text-slate-300" />
+                          <span>Tharunnagabramhagna/DevFlow</span>
+                        </span>
+                        <span className="text-blue-400">main</span>
+                      </div>
+                      <div className="text-[10px] text-slate-300 truncate bg-[#080D1B] p-1.5 rounded border border-[#1E293B]">
+                        commit <span className="text-amber-400">54813f0</span> &bull; chore: initialize DevFlow monorepo structure
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Overlapping Floating "Payment Status" Panel (Matches Reference) */}
+              <div className="sm:absolute sm:-bottom-6 sm:-right-4 mt-4 sm:mt-0 bg-[#0F172A] border border-[#1E293B] rounded-2xl p-4 shadow-2xl space-y-3 w-full sm:w-64 backdrop-blur-md">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-[#1E293B] pb-2">
+                  <span>Payment Status</span>
+                  <div className="flex items-center gap-1 text-[11px] text-emerald-400">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Settled</span>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span className="font-semibold text-white">
-                      Requirement Acceptance Criteria Evaluation Engine
-                    </span>
+                    <div className="w-7 h-7 rounded-lg bg-blue-950/70 border border-blue-800/50 flex items-center justify-center">
+                      <PayPalIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white">PayPal Invoicing</div>
+                      <div className="text-[10px] text-slate-400 font-mono">Instant Payout</div>
+                    </div>
                   </div>
-                  <span className="font-mono text-emerald-400 font-bold">91% Match</span>
+                  <div className="text-right">
+                    <div className="text-xs font-bold font-mono text-emerald-400">$3,200.00</div>
+                    <div className="text-[9px] text-slate-500">USD Net</div>
+                  </div>
                 </div>
-                <p className="text-slate-400 pl-6 leading-relaxed">
-                  AST analyzer identifies code syntax matching schema validation requirements. Confirmed against TypeScript types.
+
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-[#1E293B]/70 font-mono">
+                  <span className="flex items-center gap-1">
+                    <GitHubIcon className="w-3 h-3 text-slate-400" />
+                    <span>SHA 54813f0</span>
+                  </span>
+                  <span className="text-blue-400 font-sans">Verified</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. PROBLEM AND SOLUTION SECTION */}
+      <section className="py-20 bg-[#060A15] border-t border-b border-[#1E293B]/60">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Section Heading */}
+          <div className="text-center space-y-3">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+              PROBLEM &amp; SOLUTION
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              The manual process is broken.
+            </h2>
+            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+              Traditional milestone verification wastes developer hours and delays payments.
+              DevFlow turns evidence into instant settlement.
+            </p>
+          </div>
+
+          {/* Two-Column Comparison */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {/* Left: The Manual Process (Red Accents) */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1">
+                <div className="w-2 h-2 rounded-full bg-rose-500" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                  The Manual Process
+                </h3>
+              </div>
+
+              {/* Card 1: Manual Milestone Tracking */}
+              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-rose-900/50 transition-colors space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                    <span>Manual Milestone Tracking</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-950/50 text-rose-400 border border-rose-800/40 px-2 py-0.5 rounded-full">
+                    Broken
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Milestones, metrics and progress left unverified in scattered emails, spreadsheets,
+                  and unverified chat messages.
                 </p>
-                <div className="pl-6 flex items-center gap-2 font-mono text-[11px] text-slate-400">
-                  <span>Matched commit evidence:</span>
-                  <span className="bg-slate-800 px-2 py-0.5 rounded text-sky-400">3e41b99</span>
+              </div>
+
+              {/* Card 2: Client Approval Delays */}
+              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-rose-900/50 transition-colors space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <Clock className="w-4 h-4 text-rose-400" />
+                    <span>Client Approvals</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-950/50 text-rose-400 border border-rose-800/40 px-2 py-0.5 rounded-full">
+                    Delayed
+                  </span>
                 </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Payment delayed for weeks while waiting for manual review cycles, disputed
+                  criteria, and unclear commit verification.
+                </p>
+              </div>
+
+              {/* Card 3: Payment Administration */}
+              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-rose-900/50 transition-colors space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <CreditCard className="w-4 h-4 text-rose-400" />
+                    <span>Payment Administration</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-950/50 text-rose-400 border border-rose-800/40 px-2 py-0.5 rounded-full">
+                    Friction
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Manual invoice drafting, bank wire delays, and zero visibility into webhook
+                  cryptographic confirmation.
+                </p>
               </div>
             </div>
 
-            {/* Mandatory Human-in-the-Loop Callout */}
-            <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-start gap-3 text-xs text-amber-200">
-              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-bold text-amber-100">Human-in-the-Loop Architecture</p>
-                <p className="text-amber-300/90 leading-relaxed">
-                  AI verification produces automated pattern matching only. AI confidence is NOT proof of correctness.
-                  AI verification is NOT client approval. Human review by the client is required before any invoice is issued or paid.
+            {/* Right: The DevFlow Way (Green Accents) */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                  The DevFlow Way
+                </h3>
+              </div>
+
+              {/* Card 1: Evidence Collection */}
+              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-800/50 transition-colors space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <GitBranch className="w-4 h-4 text-emerald-400" />
+                    <span>Evidence Collection</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                    Smart
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Cryptographic git commits, PR diffs, and test suites tied directly to requirement
+                  acceptance criteria automatically.
+                </p>
+              </div>
+
+              {/* Card 2: Transparent Approvals */}
+              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-800/50 transition-colors space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <span>Transparent Approvals</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                    Verified
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Explainable AI AST scoring provides clients with indisputable proof-of-work
+                  citations for rapid, confident sign-off.
+                </p>
+              </div>
+
+              {/* Card 3: Automated Payment Workflows */}
+              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-800/50 transition-colors space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <PayPalIcon className="w-4 h-4" />
+                    <span>Automated Workflows</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                    Instant
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Automated PayPal sandbox invoice generation upon approved milestone delivery with
+                  cryptographic webhook receipts.
                 </p>
               </div>
             </div>
@@ -507,259 +496,632 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ──────────────────────────────────────────────────────────────────────────
-          6. GITHUB EVIDENCE SECTION
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section id="github-evidence" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <Badge variant="neutral" size="sm">
-              Source of Truth
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-              Immutable GitHub Evidence Trail
+      {/* 4. HOW IT WORKS SECTION */}
+      <section id="how-it-works" className="py-20 relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Section Heading */}
+          <div className="text-center space-y-3">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+              HOW IT WORKS
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              From commit to payment in four connected steps.
             </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Every deliverable links directly to audited git commits, pull request discussions, and structured file diffs.
+            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+              DevFlow bridges developer workflow directly into client milestone sign-off and PayPal settlement.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/evidence')}
-            className="self-start lg:self-auto bg-slate-900 border-slate-700 text-slate-200"
-          >
-            Open Evidence Audit &rarr;
-          </Button>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Monitored Commits</div>
-            <div className="text-2xl font-bold font-mono text-white">4 Verified</div>
-            <p className="text-xs text-slate-400">Indexed commit hashes on monitored main branch</p>
-          </div>
+          {/* 4 Connected Step Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative">
+            {/* Step 1: Connect GitHub */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 relative group">
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-blue-400 transition-colors">
+                  01
+                </span>
+                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-[#1E293B] flex items-center justify-center text-white">
+                  <GitHubIcon className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white">Connect GitHub</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  DevFlow listens to monitored repository branches, cryptographic commit SHAs, and pull requests.
+                </p>
+              </div>
+            </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cumulative Line Diff</div>
-            <div className="text-2xl font-bold font-mono text-emerald-400">+1,807 / -67</div>
-            <p className="text-xs text-slate-400">Calculated across repository source files</p>
-          </div>
+            {/* Step 2: Analyze with AI */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-purple-500/50 transition-all space-y-4 relative group">
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-purple-400 transition-colors">
+                  02
+                </span>
+                <div className="w-10 h-10 rounded-xl bg-purple-950/50 border border-purple-800/50 flex items-center justify-center text-purple-400">
+                  <Wand2 className="w-5 h-5" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white">Analyse with AI</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  AST syntax analysis scores code diffs deterministically against milestone acceptance criteria.
+                </p>
+              </div>
+            </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Milestone Mapping</div>
-            <div className="text-2xl font-bold font-mono text-sky-400">100% Associated</div>
-            <p className="text-xs text-slate-400">Every acceptance criterion cites specific commit SHAs</p>
+            {/* Step 3: Approve Milestones */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-500/50 transition-all space-y-4 relative group">
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-emerald-400 transition-colors">
+                  03
+                </span>
+                <div className="w-10 h-10 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+                  <CheckCheck className="w-5 h-5" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white">Approve Milestones</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Clients inspect clear evidence citations with human-in-the-loop review authority.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 4: Get Paid */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-[#0070BA]/50 transition-all space-y-4 relative group">
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-[#0070BA] transition-colors">
+                  04
+                </span>
+                <div className="w-10 h-10 rounded-xl bg-blue-950/50 border border-blue-800/50 flex items-center justify-center">
+                  <PayPalIcon className="w-5 h-5" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white">Get Paid</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Instant invoice dispatch via PayPal Invoicing REST API v2 with verified webhook receipt.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ──────────────────────────────────────────────────────────────────────────
-          7. PAYPAL PAYMENT WORKFLOW SECTION
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section id="paypal-workflow" className="py-16 sm:py-24 bg-slate-900/40 border-y border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center space-y-3 max-w-2xl mx-auto">
-            <Badge variant="paypal" size="sm">
-              Financial Integration
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-              Official PayPal REST Invoicing &amp; Webhooks
+      {/* 5. CORE FEATURES SECTION */}
+      <section id="features" className="py-20 bg-[#060A15] border-t border-b border-[#1E293B]/60">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Section Heading */}
+          <div className="text-center space-y-3">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+              CORE FEATURES
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Engineered for autonomous engineering delivery.
             </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              No manual bank wires or disputed hours. Invoices are issued via PayPal REST API v2 and automatically reconciled
-              upon cryptographic webhook verification.
+            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+              Purpose-built tools for freelancers, dev teams, and enterprises seeking transparent proof-of-work.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Flow Card 1: Invoicing */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#0070BA]/20 text-sky-400">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-white">Automated Invoicing API</h4>
-                  <p className="text-xs text-slate-400">POST /v2/invoicing/invoices</p>
-                </div>
+          {/* 6 Feature Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Feature 1: AI Agent Intelligence */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center text-blue-400">
+                <Sparkles className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                When a client signs off on verified milestone deliverables, DevFlow creates and dispatches an official PayPal
-                invoice directly to the client's email with net terms and itemized deliverable lines.
-              </p>
-              <div className="p-3 rounded-lg bg-slate-900 font-mono text-[11px] text-slate-400 space-y-1">
-                <div>&bull; Sandbox Client: AUJ892X-SANDBOX-PAYPAL-CLIENT-ID</div>
-                <div>&bull; Supported Currencies: USD, EUR, GBP, CAD, AUD</div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                  AI Agent Intelligence
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  AST syntax analysis and pattern matching evaluate code directly against milestone criteria with 0-100% confidence scores.
+                </p>
+              </div>
+              {/* Mini UI Preview */}
+              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono text-slate-400 space-y-1">
+                <div className="flex justify-between text-blue-400">
+                  <span>Confidence Gauge</span>
+                  <span className="text-emerald-400 font-bold">94.2%</span>
+                </div>
+                <div className="w-full h-1 bg-[#1E293B] rounded-full overflow-hidden">
+                  <div className="w-[94%] h-full bg-blue-500 rounded-full" />
+                </div>
               </div>
             </div>
 
-            {/* Flow Card 2: Cryptographic Webhook */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-white">Cryptographic Webhook Reconciliation</h4>
-                  <p className="text-xs text-slate-400">PAYMENT.INVOICING.INVOICE.PAID</p>
-                </div>
+            {/* Feature 2: GitHub Evidence Integration */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 border border-[#1E293B] flex items-center justify-center text-white">
+                <GitBranch className="w-5 h-5 text-purple-400" />
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Settlement is only recorded when PayPal emits a signed webhook event. DevFlow verifies transmission ID,
-                timestamp CRC32 body hash, and cert URL against PayPal's official PKI certificate.
-              </p>
-              <div className="p-3 rounded-lg bg-slate-900 font-mono text-[11px] text-emerald-400">
-                &check; Zero unauthorized status alterations permitted
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">
+                  GitHub Evidence Integration
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Inspect diffs, line additions/deletions, and PR approvals linked directly to requirement IDs.
+                </p>
+              </div>
+              {/* Mini UI Preview */}
+              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono space-y-1">
+                <div className="text-emerald-400 truncate">+1,240 lines added (docker-compose.yml)</div>
+                <div className="text-slate-500">SHA 54813f0 verified via webhook</div>
+              </div>
+            </div>
+
+            {/* Feature 3: Smart Milestone Tracking */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center text-blue-400">
+                <Layers className="w-5 h-5" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                  Smart Milestone Tracking
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Interactive deliverable states from draft, to evidence submission, to verified client payout.
+                </p>
+              </div>
+              {/* Mini UI Preview */}
+              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] flex items-center justify-between text-slate-300">
+                <span>Phase 1 Architecture</span>
+                <span className="text-emerald-400 font-mono font-bold">COMPLETED</span>
+              </div>
+            </div>
+
+            {/* Feature 4: Human Approval */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  Human Approval
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  AI acts as an objective validator, but clients always retain the final sign-off authority before any payment is dispatched.
+                </p>
+              </div>
+              {/* Mini UI Preview */}
+              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] flex items-center justify-between text-slate-300">
+                <span>Client Gatekeeper</span>
+                <span className="text-blue-400 font-semibold">Alex Mercer &bull; Approved</span>
+              </div>
+            </div>
+
+            {/* Feature 5: PayPal Invoicing */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center">
+                <PayPalIcon className="w-5 h-5" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                  PayPal Invoicing
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Auto-generates itemized invoices via PayPal Invoicing REST API v2 with line items, tax routing, and due dates.
+                </p>
+              </div>
+              {/* Mini UI Preview */}
+              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono flex items-center justify-between">
+                <span className="text-slate-400">INV-DEVFLOW-003</span>
+                <span className="text-emerald-400 font-bold">$3,200.00 USD</span>
+              </div>
+            </div>
+
+            {/* Feature 6: Payment Verification */}
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  Payment Verification
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Cryptographically verified webhook listeners capture PAYMENT.INVOICING.INVOICE.PAID events in real time.
+                </p>
+              </div>
+              {/* Mini UI Preview */}
+              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono flex items-center justify-between">
+                <span className="text-slate-400">WH-78M9-VERIFIED</span>
+                <span className="text-emerald-400 font-bold">100% Settled</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ──────────────────────────────────────────────────────────────────────────
-          8. CORE FEATURES GRID
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section id="features" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <Badge variant="neutral" size="sm">
-            Platform Capabilities
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">Built for High-Trust Engineering</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            Everything software agencies and freelance developers need to establish unshakeable client confidence.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
-            <div className="p-2 rounded-xl bg-sky-950 text-sky-400 w-fit">
-              <FolderGit2 className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-white">Evidence Transparency</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Every single line of code altered is tracked and linked to a specific contract milestone requirement.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
-            <div className="p-2 rounded-xl bg-violet-950 text-violet-400 w-fit">
-              <Zap className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-white">Automated AST Evaluation</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Objective Abstract Syntax Tree pattern evaluation matches code architecture without hallucinations.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
-            <div className="p-2 rounded-xl bg-emerald-950 text-emerald-400 w-fit">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-white">Instant PayPal Reconciliation</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Automatic PayPal invoice generation and real-time webhook settlement updates.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
-            <div className="p-2 rounded-xl bg-slate-800 text-slate-300 w-fit">
-              <Layers className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-white">Shared Team Workspace</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Synchronized tracking for engineering teams working on shared repository branches and multi-milestone budgets.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────────────────────────
-          9. FINAL CTA
-      ────────────────────────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-8 sm:p-14 rounded-3xl bg-gradient-to-r from-slate-900 via-[#003087]/50 to-slate-900 border border-slate-800 text-center space-y-6 relative overflow-hidden">
-          <div className="max-w-2xl mx-auto space-y-3">
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-              Make every milestone measurable. Make every payment transparent.
+      {/* 6. PRODUCT PREVIEW SECTION */}
+      <section id="preview" className="py-20 relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          {/* Section Heading */}
+          <div className="text-center space-y-3">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+              PRODUCT PREVIEW
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Turn development progress into verified milestones and seamless payments.
             </h2>
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Experience the future of freelance and agency milestone billing built on PayPal.
+            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+              Real-time developer telemetry, explainable code diff audits, and automated PayPal invoicing unified.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Button
-              variant="paypal"
-              size="lg"
-              onClick={() => navigate('/dashboard')}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-              className="w-full sm:w-auto px-7 py-3 text-sm"
-              data-testid="final-cta-open-dashboard"
-            >
-              Launch Developer Dashboard
-            </Button>
-            <a
-              href="https://github.com/Tharunnagabramhagna/DevFlow"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-200 hover:bg-slate-800 text-sm font-semibold w-full sm:w-auto transition-colors"
-            >
-              <GitBranch className="w-4 h-4" />
-              <span>View on GitHub</span>
-              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────────────────────────
-          10. FOOTER
-      ────────────────────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-800 bg-slate-950 py-12 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-1">
+          {/* Large Realistic Enterprise Dark Dashboard Composition */}
+          <div className="bg-[#0B1222] border border-[#1E293B] rounded-2xl p-4 sm:p-6 shadow-2xl relative space-y-5">
+            {/* Window Bar */}
+            <div className="flex items-center justify-between pb-4 border-b border-[#1E293B]">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-[#0070BA] text-white flex items-center justify-center font-bold text-xs">
-                  DF
-                </div>
-                <span className="font-bold text-white text-base">DevFlow</span>
+                <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                <span className="font-mono text-xs text-slate-400 ml-3">devflow.team/workspace/overview</span>
               </div>
-              <p className="text-slate-400">AI-Powered Milestone Verification &amp; PayPal Settlement Platform</p>
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>Connected &bull; GitHub Webhook Active</span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6 text-slate-400">
-              <button onClick={() => scrollToSection('how-it-works')} className="hover:text-white cursor-pointer">
-                How It Works
-              </button>
-              <button onClick={() => scrollToSection('ai-verification')} className="hover:text-white cursor-pointer">
-                AI Verification
-              </button>
-              <button onClick={() => scrollToSection('paypal-workflow')} className="hover:text-white cursor-pointer">
-                PayPal Integration
-              </button>
-              <button onClick={() => navigate('/dashboard')} className="hover:text-white cursor-pointer">
-                Dashboard
-              </button>
-              <a
-                href="https://github.com/Tharunnagabramhagna/DevFlow"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-white inline-flex items-center gap-1"
+            {/* Dashboard Inner Screen */}
+            <div className="grid grid-cols-12 gap-5">
+              {/* Left Mini Nav */}
+              <div className="col-span-12 lg:col-span-3 border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-4 lg:pb-0 lg:pr-5 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <DevFlowLogo variant="icon" size="sm" />
+                  <div>
+                    <h4 className="text-xs font-bold text-white">DevFlow Platform</h4>
+                    <p className="text-[10px] text-slate-400">Milestone Intelligence</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-xs font-medium">
+                  <div className="p-2 rounded-xl bg-blue-950/70 border border-blue-800/40 text-blue-400 flex items-center gap-2">
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span>Command Center</span>
+                  </div>
+                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                    <FolderGit2 className="w-4 h-4" />
+                    <span>Projects (2)</span>
+                  </div>
+                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Milestones (4)</span>
+                  </div>
+                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                    <GitBranch className="w-4 h-4" />
+                    <span>GitHub Evidence</span>
+                  </div>
+                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    <span>PayPal Invoices</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="col-span-12 lg:col-span-9 space-y-4">
+                {/* Metric Cards Banner */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Settled Paid</div>
+                    <div className="text-lg font-bold font-mono text-emerald-400 mt-1">$7,600.00</div>
+                    <div className="text-[10px] text-slate-500">2 settled invoices</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Pending Review</div>
+                    <div className="text-lg font-bold font-mono text-amber-400 mt-1">$3,200.00</div>
+                    <div className="text-[10px] text-slate-500">Awaiting client sign-off</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">AI Pass Rate</div>
+                    <div className="text-lg font-bold font-mono text-blue-400 mt-1">94.2%</div>
+                    <div className="text-[10px] text-slate-500">AST syntax evaluation</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Scope</div>
+                    <div className="text-lg font-bold font-mono text-white mt-1">4 Deliverables</div>
+                    <div className="text-[10px] text-slate-500">Tharunnagabramhagna/DevFlow</div>
+                  </div>
+                </div>
+
+                {/* Split Evidence + Invoice Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {/* GitHub Evidence Analysis Box */}
+                  <div className="p-4 rounded-xl bg-[#0F172A] border border-[#1E293B] space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 font-bold text-white">
+                        <GitBranch className="w-4 h-4 text-purple-400" />
+                        <span>Git Proof-of-Work</span>
+                      </div>
+                      <span className="font-mono text-[10px] bg-purple-950/60 text-purple-400 border border-purple-800/50 px-2 py-0.5 rounded">
+                        SHA 54813f0
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 font-mono">
+                      chore: initialize DevFlow monorepo project structure
+                    </p>
+                    <div className="p-2.5 rounded-lg bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono space-y-1">
+                      <div className="text-emerald-400">+1240 lines &bull; docker-compose.yml</div>
+                      <div className="text-blue-400">+ AST validation satisfied req_01_arch</div>
+                    </div>
+                  </div>
+
+                  {/* PayPal Webhook Invoice Settlement Box */}
+                  <div className="p-4 rounded-xl bg-[#0F172A] border border-[#1E293B] space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 font-bold text-white">
+                        <PayPalIcon className="w-4 h-4" />
+                        <span>PayPal Settlement</span>
+                      </div>
+                      <span className="font-mono text-[10px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded">
+                        PAID &bull; Settled
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-xs text-slate-400 font-mono">INV-DEVFLOW-003</span>
+                      <span className="text-base font-bold font-mono text-emerald-400">$3,200.00 USD</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                      <span>Webhook WH-78M9 verified</span>
+                      <span className="text-slate-300">Instant Settlement</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. TRUST AND SECURITY SECTION */}
+      <section id="trust" className="py-20 bg-[#060A15] border-t border-b border-[#1E293B]/60">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Section Heading */}
+          <div className="text-center space-y-3">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+              TRUST AND SECURITY
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Enterprise guarantees for developers and clients.
+            </h2>
+            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+              DevFlow combines deterministic code proofs with PayPal financial safeguards.
+            </p>
+          </div>
+
+          {/* 3 Trust Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center text-blue-400">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-base font-bold text-white">Evidence-Based AI</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Deterministic AST pattern matching and explainable citations link every evaluation to verifiable git commit SHAs. No black-box claims.
+                </p>
+              </div>
+              <div className="pt-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 bg-blue-950/50 border border-blue-800/40 px-2.5 py-1 rounded-full">
+                  <Check className="w-3 h-3" />
+                  <span>Explainable Citations</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-base font-bold text-white">Human-in-the-Loop Approval</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  AI functions strictly as an objective intelligence copilot. Clients retain complete authority and final sign-off before invoice disbursement.
+                </p>
+              </div>
+              <div className="pt-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 px-2.5 py-1 rounded-full">
+                  <Lock className="w-3 h-3" />
+                  <span>Client Gatekeeper</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center">
+                <PayPalIcon className="w-5 h-5" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-base font-bold text-white">Verified PayPal Integration</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Built on PayPal Invoicing REST API v2 with cryptographic webhook signatures to confirm transparent, dispute-free settlements.
+                </p>
+              </div>
+              <div className="pt-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 bg-blue-950/50 border border-blue-800/40 px-2.5 py-1 rounded-full">
+                  <Check className="w-3 h-3" />
+                  <span>Cryptographic Webhooks</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. FINAL CTA */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative p-10 sm:p-16 rounded-3xl bg-gradient-to-b from-[#0F172A] to-[#0A0F1D] border border-[#1E293B] text-center space-y-6 overflow-hidden shadow-2xl">
+            {/* Ambient Cyan/Blue Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-blue-600/15 blur-3xl rounded-full pointer-events-none" />
+
+            {/* Decorative Sparkle Accent (Bottom Right) */}
+            <div className="absolute -bottom-6 -right-6 w-28 h-28 opacity-20 pointer-events-none text-blue-400">
+              <svg viewBox="0 0 100 100" fill="currentColor">
+                <path d="M50 0 L55 35 L90 40 L60 60 L70 95 L50 70 L30 95 L40 60 L10 40 L45 35 Z" />
+              </svg>
+            </div>
+
+            <div className="relative z-10 space-y-3">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+                Your work deserves a <br className="hidden sm:inline" />
+                smarter way to get paid.
+              </h2>
+              <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto">
+                Start automating your milestones and invoicing today.
+              </p>
+            </div>
+
+            <div className="relative z-10 pt-2">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-sm sm:text-base font-semibold px-8 py-3.5 rounded-full transition-all shadow-xl shadow-[#0070BA]/35 hover:shadow-[#0070BA]/55 inline-flex items-center gap-2"
               >
-                <span>GitHub Repo</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+                <span>Start with DevFlow</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. FOOTER */}
+      <footer className="border-t border-[#1E293B] bg-[#050811] text-slate-400 text-xs py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+            {/* Brand Column */}
+            <div className="col-span-2 space-y-3">
+              <div className="flex items-center gap-2">
+                <DevFlowLogo variant="horizontal" theme="light" size="sm" />
+              </div>
+              <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+                From Code to Cash. Autonomous milestone intelligence and PayPal payment platform for modern engineering teams.
+              </p>
+              <div className="flex items-center gap-3 pt-1">
+                <a
+                  href="https://github.com/Tharunnagabramhagna/DevFlow"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#0F172A] border border-[#1E293B] flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
+                  title="GitHub Repository"
+                >
+                  <GitHubIcon className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://developer.paypal.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#0F172A] border border-[#1E293B] flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
+                  title="PayPal Developer"
+                >
+                  <PayPalIcon className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Column: Product */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Product</h4>
+              <ul className="space-y-1.5">
+                <li>
+                  <button onClick={() => navigate('/dashboard')} className="hover:text-white transition-colors">
+                    Command Center
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/projects')} className="hover:text-white transition-colors">
+                    Projects Directory
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/milestones')} className="hover:text-white transition-colors">
+                    Milestones
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/payments')} className="hover:text-white transition-colors">
+                    PayPal Invoices
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column: Features */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Features</h4>
+              <ul className="space-y-1.5">
+                <li>
+                  <button onClick={() => navigate('/verification')} className="hover:text-white transition-colors">
+                    AI Verification
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/evidence')} className="hover:text-white transition-colors">
+                    GitHub Evidence
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition-colors">
+                    How It Works
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/settings')} className="hover:text-white transition-colors">
+                    Settings &amp; Webhooks
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column: Resources & Legal */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Resources</h4>
+              <ul className="space-y-1.5">
+                <li>
+                  <a
+                    href="https://github.com/Tharunnagabramhagna/DevFlow"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-white transition-colors"
+                  >
+                    GitHub Monorepo
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://developer.paypal.com/docs/api/invoicing/v2/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-white transition-colors"
+                  >
+                    PayPal Invoicing API
+                  </a>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/settings')} className="hover:text-white transition-colors">
+                    Security Policy
+                  </button>
+                </li>
+                <li>
+                  <span className="text-slate-600">Privacy &amp; Terms</span>
+                </li>
+              </ul>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-600">
+          <div className="pt-8 border-t border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
             <div>
-              &copy; {new Date().getFullYear()} DevFlow Team &bull; Developed for the PayPal Global Hackathon.
+              &copy; {new Date().getFullYear()} DevFlow. All rights reserved. Built for PayPal Hackathon.
             </div>
-            <div>
-              Team: Sowjanya Sappala (Frontend), Tharun Nagabramhagna (Core), Ganesh (Client Portal &amp; Testing) &amp; Teammates.
+            <div className="flex items-center gap-4">
+              <span>PayPal Invoicing REST API v2 Sandbox</span>
+              <span>&bull;</span>
+              <span>GitHub Webhooks Verified</span>
             </div>
           </div>
         </div>

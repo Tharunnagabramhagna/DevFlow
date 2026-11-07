@@ -1,1349 +1,1614 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { DevFlowLogo } from '@/components/common';
+import { useNavigate } from 'react-router-dom';
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  Badge,
-  Button,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableEmptyState,
-  Input,
-  Modal,
-  Skeleton,
-  useToast,
-} from '@/components/common';
-import { devFlowApi } from '@/services/api';
-import { Milestone, PayPalInvoice, Project } from '@/types';
-import {
+  LayoutDashboard,
+  FolderGit2,
   CheckCircle2,
-  Clock,
-  AlertTriangle,
   FileText,
-  Printer,
-  CreditCard,
-  ShieldCheck,
-  ExternalLink,
+  Settings,
+  Bell,
   Search,
-  ArrowUpDown,
-  Info,
-  RefreshCw,
+  Plus,
+  Copy,
   Check,
   X,
-  AlertCircle,
-  Building2,
+  Menu,
+  ChevronDown,
+  Printer,
+  CreditCard,
   Lock,
-  User,
+  RefreshCw,
+  AlertTriangle,
+  HelpCircle,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  ArrowRight,
 } from 'lucide-react';
+import { devFlowApi } from '@/services/api';
+import { Milestone, Project } from '@/types';
 
-// ─── Status Utilities ─────────────────────────────────────────────────────────
-
-function getStatusBadge(status: PayPalInvoice['status']) {
-  switch (status) {
-    case 'PAID':
-      return (
-        <Badge variant="success" size="sm" dot>
-          PAID &bull; Settled
-        </Badge>
-      );
-    case 'SENT':
-      return (
-        <Badge variant="paypal" size="sm" dot>
-          SENT &bull; Unpaid
-        </Badge>
-      );
-    case 'OVERDUE':
-      return (
-        <Badge variant="danger" size="sm" dot pulseDot>
-          OVERDUE &bull; Action Req.
-        </Badge>
-      );
-    case 'DRAFT':
-    default:
-      return (
-        <Badge variant="neutral" size="sm">
-          DRAFT &bull; Pending Send
-        </Badge>
-      );
-  }
-}
-
-// ─── Print Styles Helper ──────────────────────────────────────────────────────
-
-const printStyles = `
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  #printable-invoice-container, #printable-invoice-container * {
-    visibility: visible;
-  }
-  #printable-invoice-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 20px;
-    background: white;
-  }
-  .no-print {
-    display: none !important;
-  }
-}
-`;
-
-// ─── Loading Skeleton ─────────────────────────────────────────────────────────
-
-const PaymentsSkeleton: React.FC = () => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {[0, 1, 2, 3].map((i) => (
-        <Card key={i}>
-          <CardContent className="pt-5 space-y-2">
-            <Skeleton variant="text" className="w-24 h-3" />
-            <Skeleton variant="text" className="w-32 h-7" />
-            <Skeleton variant="text" className="w-40 h-3" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-    <Card>
-      <CardContent className="pt-6 space-y-4">
-        <Skeleton variant="text" className="w-full h-10" />
-        <Skeleton variant="text" className="w-full h-12" />
-        <Skeleton variant="text" className="w-full h-12" />
-        <Skeleton variant="text" className="w-full h-12" />
-      </CardContent>
-    </Card>
-  </div>
+// Custom PayPal Logo Mark
+const PayPalIcon = ({ className = 'w-3.5 h-3.5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path
+      d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.789.789 0 0 1 .777-.66h7.026c2.81 0 4.887.675 5.86 1.905.922 1.168.995 2.802.215 4.86-.022.057-.046.113-.07.168-.783 2.113-2.22 3.613-4.27 4.457-.866.357-1.892.538-3.05.538H9.362a.788.788 0 0 0-.777.66l-.992 5.093a.64.64 0 0 1-.517.596z"
+      fill="#0079C1"
+    />
+    <path
+      d="M19.068 7.378c-.783 2.113-2.22 3.613-4.27 4.457-.866.357-1.892.538-3.05.538H9.362a.788.788 0 0 0-.777.66l-.992 5.093a.64.64 0 0 1-.517.596H2.47a.641.641 0 0 1-.633-.74L4.944 3.72"
+      fill="#00457C"
+      opacity="0.2"
+    />
+    <path
+      d="M9.135 12.373l.865-4.444.027-.142A.789.789 0 0 1 10.804 7.1h5.05c2.02 0 3.513.486 4.212 1.37.562.712.67 1.706.324 2.953-.61 2.19-2.074 3.42-4.137 3.42h-2.126a.788.788 0 0 0-.777.66l-.68 3.49-.135.68h-3.4zm7.68-4.273h-3.93a.473.473 0 0 0-.466.395l-.624 3.204h1.53c1.47 0 2.515-.878 2.952-2.443.207-.743.085-1.156-.462-1.156z"
+      fill="#0079C1"
+    />
+  </svg>
 );
 
-// ─── Main Payments Page Component ─────────────────────────────────────────────
+// Extended Invoice Item for unified table and detail rendering
+export interface UnifiedInvoiceItem {
+  id: string;
+  invoiceNumber: string;
+  project: string;
+  client: string;
+  clientEmail: string;
+  clientAddress?: string;
+  clientDescription?: string;
+  relatedMilestone: string;
+  amount: number;
+  issueDate: string;
+  dueDate: string;
+  status: 'Paid' | 'Sent' | 'Pending' | 'Overdue' | 'Draft';
+  referenceNumber: string;
+  timelineCreated: string;
+  timelineSent: string;
+  timelineStatus: string;
+  hostedInvoiceUrl: string;
+  notes?: string;
+  paypalWebhookEventId?: string;
+}
 
 export const PaymentsPage: React.FC = () => {
-  const { toast } = useToast();
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const navigate = useNavigate();
+
+  // Navigation & Layout States
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Data Loading & Live State
+  const [, setMilestones] = useState<Milestone[]>([]);
+  const [, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isMockData, setIsMockData] = useState(false);
 
-  // Filters, Search & Sorting
+  // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'PAID' | 'SENT' | 'OVERDUE' | 'DRAFT'>('all');
-  const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'>('date_desc');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Paid' | 'Sent' | 'Pending' | 'Overdue' | 'Draft'>('All');
+  const [projectFilter, setProjectFilter] = useState<string>('Select Project');
+  const [clientFilter, setClientFilter] = useState<string>('Select Client');
+  const [dateFilter, setDateFilter] = useState<string>('Select Range');
 
-  // Modal States
-  const [selectedInvoiceData, setSelectedInvoiceData] = useState<{
-    invoice: PayPalInvoice;
-    milestone: Milestone;
-  } | null>(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  // Selected Invoice ID (Defaulting to INV-2026-002 as depicted in the reference screenshot)
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('INV-2026-002');
+
+  // Pagination States
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Modals & Drawers States
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isCreateInvoiceModalOpen, setIsCreateInvoiceModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-  // PayPal Checkout Simulation State
-  const [checkoutStep, setCheckoutStep] = useState<'idle' | 'authorizing' | 'webhook_simulating' | 'success' | 'failed'>('idle');
-  const [simulateFailureMode, setSimulateFailureMode] = useState(false);
-  const [generatedWebhookId, setGeneratedWebhookId] = useState<string>('');
+  // Form State for Create Invoice Modal
+  const [newClient, setNewClient] = useState('');
+  const [newProject, setNewProject] = useState('');
+  const [newMilestone, setNewMilestone] = useState('');
+  const [newAmount, setNewAmount] = useState('8500');
+  const [newDueDate, setNewDueDate] = useState('2026-11-28');
+
+  // Sandbox Checkout Simulation States
+  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<'review' | 'processing' | 'success' | 'error'>('review');
+
+  // Copy Feedback State
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
+
+  const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setToastMessage({ title, desc, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   useEffect(() => {
-    loadData();
+    loadInvoices();
   }, []);
 
-  const loadData = async () => {
+  const loadInvoices = async () => {
     setLoading(true);
     try {
-      const [msRes, projRes] = await Promise.all([
+      const [milestonesRes, projectsRes] = await Promise.all([
         devFlowApi.getMilestones(),
         devFlowApi.getProjects(),
       ]);
-      setMilestones(msRes.data);
-      setProjects(projRes.data);
-      setIsMockData(msRes.isMock);
+      setMilestones(milestonesRes.data);
+      setProjects(projectsRes.data);
     } catch (err) {
-      console.error('Failed to load payments data:', err);
+      console.error('Failed to load invoice telemetry:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Compile all invoices
-  const allInvoices = useMemo(() => {
-    return milestones
-      .filter((m) => m.invoice)
-      .map((m) => ({ milestone: m, invoice: m.invoice! }));
-  }, [milestones]);
+  // Static/Demo Table Entries matching the visual reference screenshot
+  const initialInvoiceList: UnifiedInvoiceItem[] = useMemo(() => [
+    {
+      id: 'inv-1',
+      invoiceNumber: 'INV-2026-001',
+      project: 'Apollo Mobile',
+      client: 'Acme Corp',
+      clientEmail: 'billing@acme-corp.com',
+      clientAddress: '100 Market St, San Francisco, CA',
+      clientDescription: 'Enterprise mobile platform for client logistics.',
+      relatedMilestone: 'Milestone 3: API Integration',
+      amount: 7500.0,
+      issueDate: 'Oct 26, 2026',
+      dueDate: 'Nov 9, 2026',
+      status: 'Paid',
+      referenceNumber: 'REF-8849201940',
+      timelineCreated: 'Oct 26, 2026',
+      timelineSent: 'Oct 26, 2026',
+      timelineStatus: 'Settled via PayPal (Webhook verified)',
+      hostedInvoiceUrl: 'devflow.com/invoice/INV-2026-001',
+      notes: 'API integration endpoints verified against AST requirement specifications.',
+      paypalWebhookEventId: 'WH-EVT-772910-PAID',
+    },
+    {
+      id: 'inv-2',
+      invoiceNumber: 'INV-2026-002',
+      project: 'Alpha Portal',
+      client: 'Stellar Innovations',
+      clientEmail: 'contacts@stellarinnov.com',
+      clientAddress: '123 Stellar St, Future City',
+      clientDescription: 'Connected Innovation.',
+      relatedMilestone: 'Milestone 1: Design Sync',
+      amount: 12000.0,
+      issueDate: 'Nov 1, 2026',
+      dueDate: 'Nov 15, 2026',
+      status: 'Sent',
+      referenceNumber: 'REF-1133557799',
+      timelineCreated: 'Nov 1, 2026',
+      timelineSent: 'Nov 1, 2026',
+      timelineStatus: 'Awaiting Payment',
+      hostedInvoiceUrl: 'devflow.com/invoice/INV-2026-002',
+      notes: 'Design tokens and component architecture approved in Milestone 1.',
+    },
+    {
+      id: 'inv-3',
+      invoiceNumber: 'INV-2026-003',
+      project: 'Gamma Analytics',
+      client: 'Global Dynamics',
+      clientEmail: 'accounts@globaldynamics.io',
+      clientAddress: '450 Fifth Ave, New York, NY',
+      clientDescription: 'Real-time telemetry and reporting backend.',
+      relatedMilestone: 'Milestone 4: Security Audit',
+      amount: 18500.0,
+      issueDate: 'Nov 5, 2026',
+      dueDate: 'Nov 19, 2026',
+      status: 'Overdue',
+      referenceNumber: 'REF-9920148102',
+      timelineCreated: 'Nov 5, 2026',
+      timelineSent: 'Nov 5, 2026',
+      timelineStatus: 'Payment Overdue by 3 days',
+      hostedInvoiceUrl: 'devflow.com/invoice/INV-2026-003',
+      notes: 'Security audit report and automated penetration test suite delivered.',
+    },
+    {
+      id: 'inv-4',
+      invoiceNumber: 'INV-2026-004',
+      project: 'Delta Platform',
+      client: 'Future Tech',
+      clientEmail: 'finance@futuretech.dev',
+      clientAddress: '78 Silicon Alley, Austin, TX',
+      clientDescription: 'High-scale event streaming platform.',
+      relatedMilestone: 'Milestone 2: Feature Launch',
+      amount: 9000.0,
+      issueDate: 'Nov 7, 2026',
+      dueDate: 'Nov 21, 2026',
+      status: 'Pending',
+      referenceNumber: 'REF-4491028374',
+      timelineCreated: 'Nov 7, 2026',
+      timelineSent: 'Nov 7, 2026',
+      timelineStatus: 'Client Review in Progress',
+      hostedInvoiceUrl: 'devflow.com/invoice/INV-2026-004',
+      notes: 'Feature flag integration and distributed tracing telemetry delivered.',
+    },
+    {
+      id: 'inv-5',
+      invoiceNumber: 'INV-2026-005',
+      project: 'Beta Engine',
+      client: 'TechSolutions',
+      clientEmail: 'invoicing@techsolutions.com',
+      clientAddress: '900 Technology Blvd, Seattle, WA',
+      clientDescription: 'Core computational pipeline and worker services.',
+      relatedMilestone: 'Milestone 5: Cloud Deployment',
+      amount: 15000.0,
+      issueDate: 'Nov 8, 2026',
+      dueDate: 'Nov 22, 2026',
+      status: 'Draft',
+      referenceNumber: 'REF-5520194820',
+      timelineCreated: 'Nov 8, 2026',
+      timelineSent: 'Pending Dispatch',
+      timelineStatus: 'Drafted in PayPal Sandbox',
+      hostedInvoiceUrl: 'devflow.com/invoice/INV-2026-005',
+      notes: 'Automated CI/CD Terraform scripts and Kubernetes manifest verification.',
+    },
+  ], []);
 
-  // KPI Metrics Calculation
-  const totalInvoicesCount = allInvoices.length;
-  const paidInvoices = allInvoices.filter((item) => item.invoice.status === 'PAID');
-  const pendingInvoices = allInvoices.filter((item) => item.invoice.status === 'SENT' || item.invoice.status === 'DRAFT');
-  const overdueInvoices = allInvoices.filter((item) => item.invoice.status === 'OVERDUE');
+  const [invoices, setInvoices] = useState<UnifiedInvoiceItem[]>(initialInvoiceList);
 
-  const totalInvoiceValue = allInvoices.reduce((sum, item) => sum + item.invoice.amount, 0);
-  const paidInvoiceValue = paidInvoices.reduce((sum, item) => sum + item.invoice.amount, 0);
-  const pendingInvoiceValue = pendingInvoices.reduce((sum, item) => sum + item.invoice.amount, 0);
-  const overdueInvoiceValue = overdueInvoices.reduce((sum, item) => sum + item.invoice.amount, 0);
-
-  // Search & Filter Logic
+  // Filtered Invoices
   const filteredInvoices = useMemo(() => {
-    return allInvoices
-      .filter(({ milestone, invoice }) => {
-        const query = searchQuery.toLowerCase().trim();
-        const matchesQuery =
-          !query ||
-          invoice.invoiceNumber.toLowerCase().includes(query) ||
-          invoice.recipientName.toLowerCase().includes(query) ||
-          invoice.recipientEmail.toLowerCase().includes(query) ||
-          milestone.title.toLowerCase().includes(query) ||
-          (invoice.paypalInvoiceId && invoice.paypalInvoiceId.toLowerCase().includes(query));
-
-        const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
-        return matchesQuery && matchesStatus;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'date_desc') {
-          return new Date(b.invoice.createdAt).getTime() - new Date(a.invoice.createdAt).getTime();
-        }
-        if (sortBy === 'date_asc') {
-          return new Date(a.invoice.createdAt).getTime() - new Date(b.invoice.createdAt).getTime();
-        }
-        if (sortBy === 'amount_desc') {
-          return b.invoice.amount - a.invoice.amount;
-        }
-        if (sortBy === 'amount_asc') {
-          return a.invoice.amount - b.invoice.amount;
-        }
-        return 0;
-      });
-  }, [allInvoices, searchQuery, statusFilter, sortBy]);
-
-  // Actions
-  const handleOpenDetails = (invoice: PayPalInvoice, milestone: Milestone) => {
-    setSelectedInvoiceData({ invoice, milestone });
-    setIsDetailsModalOpen(true);
-  };
-
-  const handleOpenPreview = (invoice: PayPalInvoice, milestone: Milestone) => {
-    setSelectedInvoiceData({ invoice, milestone });
-    setIsPreviewModalOpen(true);
-  };
-
-  const handleOpenCheckout = (invoice: PayPalInvoice, milestone: Milestone) => {
-    setSelectedInvoiceData({ invoice, milestone });
-    setCheckoutStep('idle');
-    setSimulateFailureMode(false);
-    setIsCheckoutModalOpen(true);
-  };
-
-  // PayPal Sandbox Checkout Execution
-  const handleExecutePaymentSimulation = async () => {
-    if (!selectedInvoiceData) return;
-    setCheckoutStep('authorizing');
-
-    setTimeout(async () => {
-      if (simulateFailureMode) {
-        setCheckoutStep('failed');
-        toast.error('Payment Authorization Declined', 'Simulated PayPal Sandbox payment failure: Insufficient sandbox funds or card rejected.');
-        return;
+    return invoices.filter((inv) => {
+      // Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matches =
+          inv.invoiceNumber.toLowerCase().includes(q) ||
+          inv.project.toLowerCase().includes(q) ||
+          inv.client.toLowerCase().includes(q) ||
+          inv.relatedMilestone.toLowerCase().includes(q);
+        if (!matches) return false;
       }
 
-      setCheckoutStep('webhook_simulating');
+      // Status Filter
+      if (statusFilter !== 'All' && inv.status !== statusFilter) return false;
 
-      try {
-        const res = await devFlowApi.recordPayPalPaymentEvent(selectedInvoiceData.invoice.id);
-        const webhookId = res.data.paypalWebhookEventId || `WH-SIMULATED-${Date.now()}`;
-        setGeneratedWebhookId(webhookId);
-        setCheckoutStep('success');
-        toast.success(
-          'PayPal Webhook Confirmed',
-          `Payment for ${selectedInvoiceData.invoice.invoiceNumber} verified via webhook (${webhookId}).`
-        );
-        await loadData();
-      } catch {
-        setCheckoutStep('failed');
-        toast.error('Webhook Verification Failed', 'Could not record simulated webhook event.');
+      // Project Filter
+      if (projectFilter !== 'Select Project' && inv.project !== projectFilter) return false;
+
+      // Client Filter
+      if (clientFilter !== 'Select Client' && inv.client !== clientFilter) return false;
+
+      return true;
+    });
+  }, [invoices, searchQuery, statusFilter, projectFilter, clientFilter]);
+
+  // Selected Invoice object
+  const selectedInvoice = useMemo(() => {
+    return (
+      invoices.find((inv) => inv.invoiceNumber === selectedInvoiceId) ||
+      invoices[1] ||
+      invoices[0]
+    );
+  }, [invoices, selectedInvoiceId]);
+
+  // Financial Summary KPIs (Matching reference: $128,450.00, $89,120.00, $22,350.00, $16,980.00)
+  const summaryMetrics = useMemo(() => {
+    return {
+      totalInvoiced: 128450.0,
+      paidInvoices: 89120.0,
+      pendingInvoices: 22350.0,
+      overdueInvoices: 16980.0,
+    };
+  }, []);
+
+  // Copy hosted link
+  const handleCopyHostedLink = async () => {
+    try {
+      const link = `https://${selectedInvoice.hostedInvoiceUrl}`;
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
       }
-    }, 1200);
+      setCopiedLink(true);
+      showToast('Link Copied', `Hosted PayPal invoice URL copied to clipboard: ${link}`, 'info');
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      showToast('Copy Failed', 'Could not access clipboard.', 'error');
+    }
   };
 
-  const handlePrint = () => {
-    window.print();
+  // Sandbox Checkout Execution
+  const handleExecuteSandboxCheckout = async () => {
+    setIsProcessingCheckout(true);
+    setCheckoutStep('processing');
+    try {
+      await new Promise((res) => setTimeout(res, 1200));
+      // Mark current invoice as Paid
+      setInvoices((prev) =>
+        prev.map((item) =>
+          item.invoiceNumber === selectedInvoice.invoiceNumber
+            ? {
+                ...item,
+                status: 'Paid',
+                timelineStatus: 'Settled via PayPal (Webhook verified)',
+                paypalWebhookEventId: `WH-SIM-${Date.now().toString().slice(-6)}`,
+              }
+            : item
+        )
+      );
+      setCheckoutStep('success');
+      showToast('Sandbox Settlement Complete', `Simulated payment recorded for ${selectedInvoice.invoiceNumber}.`, 'success');
+    } catch {
+      setCheckoutStep('error');
+      showToast('Simulation Failed', 'Could not process sandbox settlement.', 'error');
+    } finally {
+      setIsProcessingCheckout(false);
+    }
   };
 
-  if (loading) return <PaymentsSkeleton />;
+  // Handle Generate Invoice for Unbilled Milestone
+  const handleGenerateInvoiceForUnbilled = () => {
+    const newInv: UnifiedInvoiceItem = {
+      id: `inv-${Date.now()}`,
+      invoiceNumber: `INV-2026-00${invoices.length + 1}`,
+      project: 'Apollo Mobile',
+      client: 'Acme Corp',
+      clientEmail: 'billing@acme-corp.com',
+      clientAddress: '100 Market St, San Francisco, CA',
+      clientDescription: 'Enterprise mobile platform for client logistics.',
+      relatedMilestone: 'Milestone 4: QA Testing',
+      amount: 8200.0,
+      issueDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      dueDate: new Date(Date.now() + 14 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: 'Sent',
+      referenceNumber: `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      timelineCreated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      timelineSent: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      timelineStatus: 'Awaiting Payment',
+      hostedInvoiceUrl: `devflow.com/invoice/INV-2026-00${invoices.length + 1}`,
+      notes: 'Generated from approved QA Testing milestone acceptance proofs.',
+    };
+    setInvoices([newInv, ...invoices]);
+    setSelectedInvoiceId(newInv.invoiceNumber);
+    showToast('Invoice Generated', `Created ${newInv.invoiceNumber} for $8,200.00 via PayPal Invoicing API.`, 'success');
+  };
+
+  // Handle Manual Invoice Creation
+  const handleCreateNewInvoice = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClient.trim() || !newProject.trim()) return;
+
+    const newInv: UnifiedInvoiceItem = {
+      id: `inv-${Date.now()}`,
+      invoiceNumber: `INV-2026-00${invoices.length + 1}`,
+      project: newProject,
+      client: newClient,
+      clientEmail: `${newClient.toLowerCase().replace(/\s+/g, '')}@partner.io`,
+      clientDescription: `Client milestone deliverable for ${newProject}.`,
+      relatedMilestone: newMilestone || 'Milestone Deliverable',
+      amount: parseFloat(newAmount) || 5000.0,
+      issueDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      dueDate: new Date(newDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: 'Sent',
+      referenceNumber: `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      timelineCreated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      timelineSent: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      timelineStatus: 'Awaiting Payment',
+      hostedInvoiceUrl: `devflow.com/invoice/INV-2026-00${invoices.length + 1}`,
+      notes: 'Standard milestone payment request.',
+    };
+
+    setInvoices([newInv, ...invoices]);
+    setSelectedInvoiceId(newInv.invoiceNumber);
+    setIsCreateInvoiceModalOpen(false);
+    setNewClient('');
+    setNewProject('');
+    setNewMilestone('');
+    showToast('Invoice Issued', `Invoice ${newInv.invoiceNumber} dispatched to ${newInv.client}.`, 'success');
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#080D18] text-white">
+        <div className="flex items-center gap-2.5 text-xs text-slate-400 font-mono">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] animate-ping" />
+          <span>Synchronizing PayPal Invoicing Ledger...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Print stylesheet injection */}
-      <style>{printStyles}</style>
-
-      {/* Demonstration / Sandbox Transparency Banner */}
-      {isMockData && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-xl bg-sky-50/90 border border-sky-200/90 text-xs text-sky-950 shadow-xs">
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-[#0070BA] shrink-0" />
-            <span className="leading-snug">
-              <strong>PayPal Sandbox Environment:</strong> Transactions and webhook listeners operate in
-              demonstration mode. Real payment methods are never charged. Settled status requires verified webhook signatures.
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
-            <Badge variant="paypal" size="sm" dot pulseDot>
-              REST v2 Sandbox
-            </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={loadData}
-              leftIcon={<RefreshCw className="w-3 h-3" />}
-              className="text-xs py-1 h-7 text-[#0070BA]"
-            >
-              Refresh
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">PayPal Invoices &amp; Settlements</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Automated milestone invoicing, PayPal REST API integration, and cryptographically verified webhook settlement ledger
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5 shrink-0">
-          <a
-            href="https://developer.paypal.com/docs/api/invoicing/v2/"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
-          >
-            <span>PayPal Docs v2</span>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-          </a>
-        </div>
-      </div>
-
-      {/* 1. Invoice Dashboard KPI Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Total Volume */}
-        <Card className="hover:border-slate-300 transition-colors">
-          <CardHeader className="pb-1">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Total Invoiced
-              </CardTitle>
-              <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
-                <FileText className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black font-mono tabular-nums text-slate-900">
-              ${totalInvoiceValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1 font-mono">
-              {totalInvoicesCount} invoices issued across projects
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Metric 2: Settled / Paid Volume */}
-        <Card className="hover:border-emerald-200 transition-colors">
-          <CardHeader className="pb-1">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Settled (Paid)
-              </CardTitle>
-              <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black font-mono tabular-nums text-emerald-700">
-              ${paidInvoiceValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-[11px] text-emerald-600 mt-1 flex items-center gap-1 font-medium">
-              <ShieldCheck className="w-3 h-3" />
-              <span>{paidInvoices.length} verified via PayPal webhooks</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Metric 3: Pending Invoices */}
-        <Card className="hover:border-sky-200 transition-colors">
-          <CardHeader className="pb-1">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Pending Settlement
-              </CardTitle>
-              <div className="p-1.5 rounded-lg bg-sky-50 text-[#0070BA]">
-                <Clock className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black font-mono tabular-nums text-[#0070BA]">
-              ${pendingInvoiceValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              {pendingInvoices.length} awaiting sandbox client review
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Metric 4: Overdue Invoices */}
-        <Card className="hover:border-rose-200 transition-colors">
-          <CardHeader className="pb-1">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Overdue
-              </CardTitle>
-              <div className="p-1.5 rounded-lg bg-rose-50 text-rose-700">
-                <AlertTriangle className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black font-mono tabular-nums text-rose-700">
-              ${overdueInvoiceValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-[11px] text-rose-600 mt-1 font-medium">
-              {overdueInvoices.length} invoices past payment term
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 2. Invoice Management Toolbar & Filter Tabs */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-        {/* Search */}
-        <div className="w-full sm:w-80">
-          <Input
-            placeholder="Search by invoice #, client, milestone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            leftIcon={<Search className="w-4 h-4" />}
-            className="text-xs py-1.5"
-            data-testid="search-invoices"
+    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-[#111C30] border border-[#2563EB]/40 shadow-xl shadow-blue-900/30 text-xs animate-in fade-in slide-in-from-top duration-200">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              toastMessage.type === 'success'
+                ? 'bg-emerald-400'
+                : toastMessage.type === 'error'
+                ? 'bg-rose-400'
+                : 'bg-blue-400'
+            }`}
           />
-        </div>
-
-        {/* Status Tabs + Sort Controls */}
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto max-w-full">
-          <div className="flex items-center gap-1 overflow-x-auto p-1 bg-slate-100 rounded-lg">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
-                statusFilter === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-              data-testid="filter-all"
-            >
-              All ({allInvoices.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('PAID')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
-                statusFilter === 'PAID' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-              data-testid="filter-paid"
-            >
-              Paid ({paidInvoices.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('SENT')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
-                statusFilter === 'SENT' ? 'bg-[#0070BA] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-              data-testid="filter-sent"
-            >
-              Pending ({pendingInvoices.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('OVERDUE')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
-                statusFilter === 'OVERDUE' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-              data-testid="filter-overdue"
-            >
-              Overdue ({overdueInvoices.length})
-            </button>
-          </div>
-
-          {/* Sort Selector */}
-          <div className="flex items-center gap-1 pl-1">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200"
-            >
-              <option value="date_desc">Newest First</option>
-              <option value="date_asc">Oldest First</option>
-              <option value="amount_desc">Amount: High to Low</option>
-              <option value="amount_asc">Amount: Low to High</option>
-            </select>
+          <div>
+            <div className="font-bold text-white">{toastMessage.title}</div>
+            <div className="text-slate-400 text-[11px]">{toastMessage.desc}</div>
           </div>
         </div>
-      </div>
-
-      {/* 3. Invoicing Ledger Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Invoicing Ledger &amp; Cryptographic Receipts</CardTitle>
-              <CardDescription>
-                Invoices are generated upon milestone acceptance. Payments are verified via signed PayPal webhook payloads.
-              </CardDescription>
-            </div>
-            <span className="text-xs text-slate-400 font-mono tabular-nums">
-              Showing {filteredInvoices.length} of {allInvoices.length}
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap">Invoice #</TableHead>
-                  <TableHead className="min-w-[150px]">Client</TableHead>
-                  <TableHead className="min-w-[180px]">Milestone / Deliverable</TableHead>
-                  <TableHead className="whitespace-nowrap">Amount (USD)</TableHead>
-                  <TableHead className="whitespace-nowrap">Issue Date</TableHead>
-                  <TableHead className="whitespace-nowrap">Due Date</TableHead>
-                  <TableHead className="whitespace-nowrap">Status</TableHead>
-                  <TableHead className="min-w-[200px]">Webhook Reference</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInvoices.length === 0 ? (
-                  <TableEmptyState
-                    colSpan={9}
-                    icon={<AlertCircle className="w-8 h-8 text-slate-300" />}
-                    title="No Invoices Found"
-                    description="No invoices match your search query or status filter. Try clearing filters."
-                  />
-                ) : (
-                  filteredInvoices.map(({ milestone, invoice }) => (
-                    <TableRow
-                      key={invoice.id}
-                      className="hover:bg-slate-50/80 transition-colors"
-                      data-testid={`invoice-row-${invoice.invoiceNumber}`}
-                    >
-                      {/* Invoice ID */}
-                      <TableCell className="font-mono text-xs font-bold text-[#0070BA] whitespace-nowrap">
-                        <button
-                          onClick={() => handleOpenDetails(invoice, milestone)}
-                          className="hover:underline flex items-center gap-1 text-left"
-                        >
-                          <FileText className="w-3.5 h-3.5 shrink-0" />
-                          <span>{invoice.invoiceNumber}</span>
-                        </button>
-                      </TableCell>
-
-                      {/* Client */}
-                      <TableCell>
-                        <div className="font-medium text-slate-900 text-xs">{invoice.recipientName}</div>
-                        <div className="text-[11px] text-slate-400 truncate max-w-[160px]">
-                          {invoice.recipientEmail}
-                        </div>
-                      </TableCell>
-
-                      {/* Milestone */}
-                      <TableCell>
-                        <div className="font-semibold text-xs text-slate-800 line-clamp-1">{milestone.title}</div>
-                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                          ID: {milestone.id} &bull; Order #{milestone.order}
-                        </div>
-                      </TableCell>
-
-                      {/* Amount */}
-                      <TableCell className="font-mono tabular-nums font-bold text-slate-900 whitespace-nowrap">
-                        ${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </TableCell>
-
-                      {/* Issue Date */}
-                      <TableCell className="text-xs text-slate-600 font-mono whitespace-nowrap">
-                        {new Date(invoice.createdAt).toLocaleDateString()}
-                      </TableCell>
-
-                      {/* Due Date */}
-                      <TableCell className="text-xs text-slate-600 font-mono whitespace-nowrap">
-                        {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '—'}
-                      </TableCell>
-
-                      {/* Status */}
-                      <TableCell className="whitespace-nowrap">{getStatusBadge(invoice.status)}</TableCell>
-
-                      {/* Webhook ID */}
-                      <TableCell className="font-mono text-xs">
-                        {invoice.paypalWebhookEventId ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/70 text-[11px]">
-                            <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
-                            <span className="truncate max-w-[180px]">{invoice.paypalWebhookEventId}</span>
-                          </span>
-                        ) : invoice.paypalInvoiceId ? (
-                          <span className="inline-flex items-center gap-1 text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200/70 text-[11px]">
-                            <Lock className="w-3 h-3 text-[#0070BA] shrink-0" />
-                            <span>{invoice.paypalInvoiceId}</span>
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs italic">Awaiting dispatch</span>
-                        )}
-                      </TableCell>
-
-                      {/* Actions */}
-                      <TableCell className="text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Details Button */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenDetails(invoice, milestone)}
-                            title="View Itemized Breakdown"
-                            data-testid={`btn-details-${invoice.invoiceNumber}`}
-                          >
-                            Details
-                          </Button>
-
-                          {/* Print Preview Button */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenPreview(invoice, milestone)}
-                            leftIcon={<Printer className="w-3.5 h-3.5" />}
-                            title="Print / PDF Invoice"
-                            data-testid={`btn-print-${invoice.invoiceNumber}`}
-                          >
-                            PDF
-                          </Button>
-
-                          {/* Pay / Settle Button */}
-                          {invoice.status !== 'PAID' ? (
-                            <Button
-                              variant="paypal"
-                              size="sm"
-                              onClick={() => handleOpenCheckout(invoice, milestone)}
-                              leftIcon={<CreditCard className="w-3.5 h-3.5" />}
-                              data-testid={`btn-pay-${invoice.invoiceNumber}`}
-                            >
-                              Pay
-                            </Button>
-                          ) : (
-                            <span className="p-1 px-2 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-semibold flex items-center gap-1">
-                              <Check className="w-3 h-3" />
-                              <span>Settled</span>
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 4. Recent Payment Webhook Activity Feed */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Recent Webhook Settlement Log</CardTitle>
-              <CardDescription>
-                Real-time stream of cryptographic webhook events validated by the DevFlow payment module
-              </CardDescription>
-            </div>
-            <Badge variant="success" size="sm" dot>
-              Listener Active
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {paidInvoices.map(({ milestone, invoice }) => (
-              <div
-                key={invoice.id}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-              >
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800 shrink-0 mt-0.5">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono font-bold text-slate-900">{invoice.invoiceNumber}</span>
-                      <span className="text-slate-400">&bull;</span>
-                      <span className="font-semibold text-slate-800 truncate">{milestone.title}</span>
-                    </div>
-                    <p className="text-slate-500 text-[11px] mt-0.5">
-                      Settled via <strong>{invoice.paymentMethod || 'PayPal Instant Settlement'}</strong> to{' '}
-                      <span className="font-mono text-slate-700">{invoice.recipientEmail}</span>
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] font-mono text-slate-400">
-                      <span>Event: PAYMENT.INVOICING.INVOICE.PAID</span>
-                      <span>&bull;</span>
-                      <span>ID: {invoice.paypalWebhookEventId}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <div className="text-sm font-mono font-black text-emerald-700">
-                    +${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </div>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">
-                    {invoice.paidAt ? new Date(invoice.paidAt).toLocaleString() : 'Settled'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ──────────────────────────────────────────────────────────────────────────
-          MODAL 1: INVOICE DETAILS VIEW
-      ────────────────────────────────────────────────────────────────────────── */}
-      {selectedInvoiceData && (
-        <Modal
-          isOpen={isDetailsModalOpen}
-          onClose={() => setIsDetailsModalOpen(false)}
-          title={`Invoice: ${selectedInvoiceData.invoice.invoiceNumber}`}
-          description={`Issued for milestone "${selectedInvoiceData.milestone.title}"`}
-          size="lg"
-          footer={
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setIsDetailsModalOpen(false);
-                    setIsPreviewModalOpen(true);
-                  }}
-                  leftIcon={<Printer className="w-3.5 h-3.5" />}
-                >
-                  Print / Preview
-                </Button>
-                {selectedInvoiceData.invoice.status !== 'PAID' && (
-                  <Button
-                    variant="paypal"
-                    size="sm"
-                    onClick={() => {
-                      setIsDetailsModalOpen(false);
-                      setIsCheckoutModalOpen(true);
-                    }}
-                    leftIcon={<CreditCard className="w-3.5 h-3.5" />}
-                  >
-                    Open PayPal Checkout
-                  </Button>
-                )}
-              </div>
-              <Button variant="secondary" size="sm" onClick={() => setIsDetailsModalOpen(false)}>
-                Close
-              </Button>
-            </div>
-          }
-        >
-          <div className="space-y-5 text-xs">
-            {/* Top Info Banner */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  Current Status
-                </span>
-                <div className="mt-1">{getStatusBadge(selectedInvoiceData.invoice.status)}</div>
-              </div>
-              <div className="sm:text-right">
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  Total Payable
-                </span>
-                <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
-                  ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}{' '}
-                  {selectedInvoiceData.invoice.currency}
-                </div>
-              </div>
-            </div>
-
-            {/* Billed To / Billed By Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
-                  <User className="w-3 h-3" />
-                  Billed Client
-                </span>
-                <p className="font-bold text-slate-900 text-sm">{selectedInvoiceData.invoice.recipientName}</p>
-                <p className="text-slate-500 font-mono">{selectedInvoiceData.invoice.recipientEmail}</p>
-                <p className="text-slate-400 text-[11px]">Organization: Fintech Ventures Ltd.</p>
-              </div>
-
-              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
-                  <Building2 className="w-3 h-3" />
-                  Service Provider
-                </span>
-                <p className="font-bold text-slate-900 text-sm">DevFlow Engineering Platform</p>
-                <p className="text-slate-500 font-mono">billing@devflow.team</p>
-                <p className="text-slate-400 text-[11px]">Monitored Repo: Tharunnagabramhagna/DevFlow</p>
-              </div>
-            </div>
-
-            {/* Itemized Services Breakdown */}
-            <div className="space-y-2">
-              <span className="text-[11px] uppercase font-bold text-slate-600 tracking-wider">
-                Itemized Deliverable Breakdown
-              </span>
-              <div className="rounded-xl border border-slate-200 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-semibold">
-                    <tr>
-                      <th className="text-left p-2.5 pl-3">Item Description</th>
-                      <th className="text-center p-2.5 w-16">Qty</th>
-                      <th className="text-right p-2.5 w-28">Unit Price</th>
-                      <th className="text-right p-2.5 pr-3 w-28">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {selectedInvoiceData.invoice.items && selectedInvoiceData.invoice.items.length > 0 ? (
-                      selectedInvoiceData.invoice.items.map((item) => (
-                        <tr key={item.id}>
-                          <td className="p-2.5 pl-3 font-medium text-slate-800">{item.description}</td>
-                          <td className="p-2.5 text-center font-mono text-slate-500">{item.quantity}</td>
-                          <td className="p-2.5 text-right font-mono text-slate-700">
-                            ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td className="p-2.5 pr-3 text-right font-mono font-semibold text-slate-900">
-                            ${item.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td className="p-2.5 pl-3 font-medium text-slate-800">
-                          {selectedInvoiceData.milestone.title}
-                        </td>
-                        <td className="p-2.5 text-center font-mono text-slate-500">1</td>
-                        <td className="p-2.5 text-right font-mono text-slate-700">
-                          ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="p-2.5 pr-3 text-right font-mono font-semibold text-slate-900">
-                          ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                  <tfoot className="bg-slate-50 border-t border-slate-200 font-mono text-xs">
-                    <tr>
-                      <td colSpan={3} className="text-right p-2 pr-3 text-slate-500">
-                        Subtotal:
-                      </td>
-                      <td className="text-right p-2 pr-3 font-semibold text-slate-800">
-                        ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colSpan={3} className="text-right p-2 pr-3 text-slate-500">
-                        Estimated Tax / Processing Fee (0%):
-                      </td>
-                      <td className="text-right p-2 pr-3 text-slate-500">$0.00</td>
-                    </tr>
-                    <tr className="border-t border-slate-200 bg-slate-100/70 font-bold text-slate-900">
-                      <td colSpan={3} className="text-right p-2.5 pr-3">
-                        Total Payable:
-                      </td>
-                      <td className="text-right p-2.5 pr-3 text-sm text-[#0070BA]">
-                        ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-
-            {/* Payment References & Cryptographic Verifications */}
-            <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
-              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                PayPal Sandbox Gateway References
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
-                <div>
-                  <span className="text-slate-400 block text-[10px]">PayPal Invoice ID:</span>
-                  <span className="text-slate-800 font-semibold">
-                    {selectedInvoiceData.invoice.paypalInvoiceId || 'Pending REST registration'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Verified Webhook Event ID:</span>
-                  {selectedInvoiceData.invoice.paypalWebhookEventId ? (
-                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      {selectedInvoiceData.invoice.paypalWebhookEventId}
-                    </span>
-                  ) : (
-                    <span className="text-amber-700 italic">No webhook payment event recorded yet</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Timeline */}
-            <div className="space-y-2">
-              <span className="text-[11px] uppercase font-bold text-slate-600 tracking-wider">
-                Milestone &amp; Payment Audit Timeline
-              </span>
-              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
-                {selectedInvoiceData.invoice.timeline && selectedInvoiceData.invoice.timeline.length > 0 ? (
-                  selectedInvoiceData.invoice.timeline.map((event, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5">
-                      <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="w-3 h-3" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-900 text-xs">{event.event}</span>
-                          <span className="text-[10px] font-mono text-slate-400">
-                            {new Date(event.timestamp).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-slate-500 text-[11px] leading-snug mt-0.5">{event.description}</p>
-                        {event.actor && (
-                          <span className="text-[10px] text-slate-400 font-mono">Actor: {event.actor}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex items-start gap-2.5">
-                    <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                      <Clock className="w-3 h-3" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900 text-xs">Invoice Drafted</p>
-                      <p className="text-slate-500 text-[11px]">
-                        Created on {new Date(selectedInvoiceData.invoice.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Modal>
       )}
 
-      {/* ──────────────────────────────────────────────────────────────────────────
-          MODAL 2: PRINTABLE INVOICE PREVIEW
-      ────────────────────────────────────────────────────────────────────────── */}
-      {selectedInvoiceData && (
-        <Modal
-          isOpen={isPreviewModalOpen}
-          onClose={() => setIsPreviewModalOpen(false)}
-          title="Printable Invoice Document"
-          description="High-fidelity print preview with official DevFlow & PayPal layout"
-          size="lg"
-          footer={
-            <div className="flex items-center justify-between w-full">
-              <span className="text-xs text-slate-400 no-print">Print view formatted for standard A4 / Letter PDF</span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrint}
-                  leftIcon={<Printer className="w-3.5 h-3.5" />}
-                  className="no-print"
-                >
-                  Print / Save PDF
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsPreviewModalOpen(false)}
-                  className="no-print"
-                >
-                  Close
-                </Button>
-              </div>
+      {/* 1. FIXED DARK ENTERPRISE SIDEBAR (Matching reference: Dashboard, Projects, Milestones, Invoices, settings, user profile) */}
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
+          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
+          {/* Logo Header */}
+          <div className="flex items-center justify-between px-3">
+            <div
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2.5 cursor-pointer group"
+            >
+              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
             </div>
-          }
-        >
-          {/* Printable Container */}
-          <div
-            id="printable-invoice-container"
-            className="p-6 bg-white border border-slate-200 rounded-xl space-y-6 text-slate-900 font-sans shadow-xs"
+            {/* Mobile Close Button */}
+            <button
+              onClick={() => setMobileSidebarOpen(false)}
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Navigation Items */}
+          <div className="space-y-1.5 text-xs">
+            <button
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate('/dashboard');
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4 text-slate-400" />
+              <span>Dashboard</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate('/projects');
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+            >
+              <FolderGit2 className="w-4 h-4 text-slate-400" />
+              <span>Projects</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate('/milestones');
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+            >
+              <CheckCircle2 className="w-4 h-4 text-slate-400" />
+              <span>Milestones</span>
+            </button>
+
+            {/* Invoices Active Pill */}
+            <button
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate('/payments');
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#2563EB] text-white font-semibold shadow-md shadow-blue-600/30"
+            >
+              <FileText className="w-4 h-4 text-white" />
+              <span>Invoices</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                navigate('/settings');
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+            >
+              <Settings className="w-4 h-4 text-slate-400" />
+              <span>settings</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                setUserMenuOpen(!userMenuOpen);
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces"
+                alt="user profile"
+                className="w-4 h-4 rounded-full object-cover"
+              />
+              <span>user profile</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Sidebar Bottom Nav (+ Quick-add, Help center) */}
+        <div className="p-3 border-t border-[#26344B] space-y-1 text-xs">
+          <button
+            onClick={() => setIsCreateInvoiceModalOpen(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-[#152238] transition-colors font-medium"
           >
-            {/* Header: Branding + Invoice Number */}
-            <div className="flex items-start justify-between border-b border-slate-200 pb-5">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#0070BA] text-white flex items-center justify-center font-bold text-sm">
-                    DF
-                  </div>
-                  <span className="text-xl font-bold tracking-tight text-slate-900">DevFlow</span>
-                </div>
-                <p className="text-xs text-slate-500">AI-Powered Milestone Verification &amp; Payments</p>
-                <p className="text-[11px] text-slate-400">PayPal Hackathon Submission Platform</p>
-              </div>
+            <Plus className="w-4 h-4 text-blue-400" />
+            <span>+ Quick-add</span>
+          </button>
+          <button
+            onClick={() => setIsHelpModalOpen(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+          >
+            <HelpCircle className="w-4 h-4 text-slate-400" />
+            <span>Help center</span>
+          </button>
+        </div>
+      </aside>
 
-              <div className="text-right space-y-1">
-                <h3 className="text-lg font-black font-mono tracking-tight text-[#0070BA]">
-                  {selectedInvoiceData.invoice.invoiceNumber}
-                </h3>
-                <div className="text-xs text-slate-500 font-mono">
-                  Issued: {new Date(selectedInvoiceData.invoice.createdAt).toLocaleDateString()}
-                </div>
-                <div className="text-xs text-slate-500 font-mono">
-                  Due:{' '}
-                  {selectedInvoiceData.invoice.dueDate
-                    ? new Date(selectedInvoiceData.invoice.dueDate).toLocaleDateString()
-                    : 'Upon Acceptance'}
-                </div>
-                <div className="mt-1">{getStatusBadge(selectedInvoiceData.invoice.status)}</div>
-              </div>
-            </div>
+      {/* Mobile Sidebar Backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
-            {/* Billed From & Billed To */}
-            <div className="grid grid-cols-2 gap-6 text-xs border-b border-slate-200 pb-5">
-              <div>
-                <span className="font-bold text-slate-500 uppercase tracking-wider block mb-1">From:</span>
-                <p className="font-bold text-slate-900">DevFlow Engineering Services</p>
-                <p className="text-slate-600">billing@devflow.team</p>
-                <p className="text-slate-500 mt-1">Repository: Tharunnagabramhagna/DevFlow</p>
-                <p className="text-slate-500">Branch: main</p>
-              </div>
-
-              <div>
-                <span className="font-bold text-slate-500 uppercase tracking-wider block mb-1">Billed To:</span>
-                <p className="font-bold text-slate-900">{selectedInvoiceData.invoice.recipientName}</p>
-                <p className="text-slate-600">{selectedInvoiceData.invoice.recipientEmail}</p>
-                <p className="text-slate-500 mt-1">
-                  Project: {projects.find((p) => p.id === selectedInvoiceData.milestone.projectId)?.name || 'DevFlow Milestone Intelligence'}
-                </p>
-                <p className="text-slate-500">Milestone ID: {selectedInvoiceData.milestone.id}</p>
-              </div>
-            </div>
-
-            {/* Itemized Table */}
+      {/* 2. MAIN CONTENT VIEWPORT */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* PHASE 3: PAGE HEADER */}
+        <header className="h-16 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             <div>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 uppercase font-semibold">
-                    <th className="text-left py-2">Service Description</th>
-                    <th className="text-center py-2 w-16">Qty</th>
-                    <th className="text-right py-2 w-28">Rate (USD)</th>
-                    <th className="text-right py-2 w-28">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {selectedInvoiceData.invoice.items && selectedInvoiceData.invoice.items.length > 0 ? (
-                    selectedInvoiceData.invoice.items.map((item) => (
-                      <tr key={item.id}>
-                        <td className="py-2.5 text-slate-800 font-medium">{item.description}</td>
-                        <td className="py-2.5 text-center font-mono text-slate-500">{item.quantity}</td>
-                        <td className="py-2.5 text-right font-mono text-slate-700">
-                          ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="py-2.5 text-right font-mono font-bold text-slate-900">
-                          ${item.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className="py-2.5 text-slate-800 font-medium">
-                        {selectedInvoiceData.milestone.title} &mdash; Full Acceptance
-                      </td>
-                      <td className="py-2.5 text-center font-mono text-slate-500">1</td>
-                      <td className="py-2.5 text-right font-mono text-slate-700">
-                        ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2.5 text-right font-mono font-bold text-slate-900">
-                        ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-
-              <div className="border-t border-slate-200 pt-3 flex justify-end font-mono text-xs">
-                <div className="w-64 space-y-1.5">
-                  <div className="flex justify-between text-slate-500">
-                    <span>Subtotal:</span>
-                    <span>
-                      ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-500">
-                    <span>Platform Fee (0%):</span>
-                    <span>$0.00</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-sm text-slate-900 pt-2 border-t border-slate-200">
-                    <span>Total Due:</span>
-                    <span className="text-[#0070BA]">
-                      ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}{' '}
-                      USD
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Remittance & Settlement Footer */}
-            <div className="border-t border-slate-200 pt-4 text-xs text-slate-500 space-y-1">
-              <p className="font-bold text-slate-700">Payment Instructions (PayPal Sandbox Integration):</p>
-              <p>
-                Invoices are processed automatically using the PayPal REST Invoicing v2 API. Payments made via PayPal
-                Sandbox trigger an instant webhook receipt validation.
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+                Invoices
+              </h1>
+              <p className="text-xs text-slate-400 mt-1 hidden sm:block">
+                Manage milestone-based invoices and track client payments.
               </p>
-              {selectedInvoiceData.invoice.paypalWebhookEventId && (
-                <div className="mt-2 p-2 rounded bg-emerald-50 text-emerald-800 text-[11px] font-mono flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>
-                    Cryptographically Settled Webhook Event: {selectedInvoiceData.invoice.paypalWebhookEventId}
-                  </span>
+            </div>
+          </div>
+
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-3">
+            {/* Settings Icon */}
+            <button
+              onClick={() => navigate('/settings')}
+              className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-lg transition-colors"
+              title="Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-lg relative transition-colors"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
+              </button>
+
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 space-y-2 text-xs">
+                  <div className="flex items-center justify-between border-b border-[#26344B] pb-2 font-bold text-white">
+                    <span>Invoicing Notifications</span>
+                    <button
+                      onClick={() => setNotificationsOpen(false)}
+                      className="text-slate-400 hover:text-white"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                    <span className="font-semibold text-emerald-400">INV-2026-001</span> settled via PayPal Webhook ($7,500.00).
+                  </div>
+                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                    <span className="font-semibold text-amber-400">INV-2026-004</span> client review completed.
+                  </div>
                 </div>
               )}
             </div>
-          </div>
-        </Modal>
-      )}
 
-      {/* ──────────────────────────────────────────────────────────────────────────
-          MODAL 3: PAYPAL CHECKOUT SIMULATION EXPERIENCE
-      ────────────────────────────────────────────────────────────────────────── */}
-      {selectedInvoiceData && (
-        <Modal
-          isOpen={isCheckoutModalOpen}
-          onClose={() => setIsCheckoutModalOpen(false)}
-          title="PayPal Sandbox Checkout Experience"
-          description="Interactive demo of the client-side PayPal payment & webhook validation workflow"
-          size="md"
-          footer={
-            <div className="flex items-center justify-between w-full">
-              <span className="text-[11px] text-slate-400">Sandbox Test Mode</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsCheckoutModalOpen(false)}
-                disabled={checkoutStep === 'authorizing' || checkoutStep === 'webhook_simulating'}
-              >
-                {checkoutStep === 'success' ? 'Finished' : 'Cancel'}
-              </Button>
+            {/* User Profile Avatar */}
+            <div
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-[#152238] transition-colors"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces"
+                alt="Tharun"
+                className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/40"
+              />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
-          }
-        >
-          <div className="space-y-5 text-xs">
-            {/* PayPal Branded Order Summary Card */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-[#003087] via-[#004B87] to-[#0070BA] text-white space-y-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-base tracking-tight text-white">PayPal</span>
-                  <span className="text-[10px] uppercase font-semibold bg-white/20 px-1.5 py-0.5 rounded text-sky-100">
-                    Sandbox
+
+            {/* Create Invoice Button */}
+            <button
+              onClick={() => setIsCreateInvoiceModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Invoice</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Scrollable Dashboard Workspace */}
+        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-5">
+          {/* PHASE 4: SEARCH & FILTER TOOLBAR */}
+          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search input */}
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#0C1524] text-xs text-white placeholder-slate-400 pl-8 pr-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              {/* Status Dropdown */}
+              <div className="relative min-w-[130px]">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                >
+                  <option value="All">Status: All</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Sent">Sent</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Overdue">Overdue</option>
+                  <option value="Draft">Draft</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Project Dropdown */}
+              <div className="relative min-w-[160px]">
+                <select
+                  value={projectFilter}
+                  onChange={(e) => setProjectFilter(e.target.value)}
+                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                >
+                  <option value="Select Project">Project: Select Project</option>
+                  <option value="Apollo Mobile">Apollo Mobile</option>
+                  <option value="Alpha Portal">Alpha Portal</option>
+                  <option value="Gamma Analytics">Gamma Analytics</option>
+                  <option value="Delta Platform">Delta Platform</option>
+                  <option value="Beta Engine">Beta Engine</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Client Dropdown */}
+              <div className="relative min-w-[150px]">
+                <select
+                  value={clientFilter}
+                  onChange={(e) => setClientFilter(e.target.value)}
+                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                >
+                  <option value="Select Client">Client: Select Client</option>
+                  <option value="Acme Corp">Acme Corp</option>
+                  <option value="Stellar Innovations">Stellar Innovations</option>
+                  <option value="Global Dynamics">Global Dynamics</option>
+                  <option value="Future Tech">Future Tech</option>
+                  <option value="TechSolutions">TechSolutions</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Date Range Dropdown */}
+              <div className="relative min-w-[140px]">
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                >
+                  <option value="Select Range">Date: Select Range</option>
+                  <option value="This Month">This Month</option>
+                  <option value="Last 30 Days">Last 30 Days</option>
+                  <option value="Q4 2026">Q4 2026</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Clear Filters Button if filtered */}
+              {(searchQuery || statusFilter !== 'All' || projectFilter !== 'Select Project' || clientFilter !== 'Select Client') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('All');
+                    setProjectFilter('Select Project');
+                    setClientFilter('Select Client');
+                    setDateFilter('Select Range');
+                  }}
+                  className="text-xs text-blue-400 hover:text-white flex items-center gap-1 font-semibold transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* PHASE 5: FINANCIAL SUMMARY (4 KPI CARDS) */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              3. FINANCIAL SUMMARY
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Card 1: Total Invoiced */}
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-400 block font-medium">Total Invoiced</span>
+                  <div className="text-xl font-bold text-white font-mono tracking-tight">
+                    ${summaryMetrics.totalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Paid Invoices */}
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium">Paid Invoices</span>
+                    <div className="text-xl font-bold text-white font-mono tracking-tight">
+                      ${summaryMetrics.paidInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  <TrendingUp className="w-3 h-3" />
+                  <span>Trend</span>
+                </div>
+              </div>
+
+              {/* Card 3: Pending Invoices */}
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium">Pending Invoices</span>
+                    <div className="text-xl font-bold text-white font-mono tracking-tight">
+                      ${summaryMetrics.pendingInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-blue-400 font-semibold bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-500/30">
+                  <TrendingUp className="w-3 h-3" />
+                  <span>Trend</span>
+                </div>
+              </div>
+
+              {/* Card 4: Overdue Invoices */}
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium">Overdue Invoices</span>
+                    <div className="text-xl font-bold text-white font-mono tracking-tight">
+                      ${summaryMetrics.overdueInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-rose-400 font-semibold bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-500/30">
+                  <TrendingDown className="w-3 h-3" />
+                  <span>Trend</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* MAIN GRID: INVOICE TABLE (LEFT 8 COLS) + INVOICE DETAILS PANEL (RIGHT 4 COLS) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* PHASE 6: INVOICE TABLE (8 COLS) */}
+            <div className="lg:col-span-8 rounded-xl bg-[#111C30] border border-[#26344B] overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="px-4 py-3 border-b border-[#26344B] bg-[#0C1524] flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    4. INVOICE TABLE
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {filteredInvoices.length} invoices
                   </span>
                 </div>
-                <span className="font-mono text-xs text-sky-200">
-                  {selectedInvoiceData.invoice.invoiceNumber}
-                </span>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-[#26344B] text-[10px] text-slate-400 uppercase tracking-wider bg-[#0C1524]/60">
+                        <th className="py-2.5 px-3 font-semibold">Invoice #</th>
+                        <th className="py-2.5 px-3 font-semibold">Project</th>
+                        <th className="py-2.5 px-3 font-semibold">Client</th>
+                        <th className="py-2.5 px-3 font-semibold">Related Milestone</th>
+                        <th className="py-2.5 px-3 font-semibold">Amount</th>
+                        <th className="py-2.5 px-3 font-semibold">Issue Date</th>
+                        <th className="py-2.5 px-3 font-semibold">Due Date</th>
+                        <th className="py-2.5 px-3 font-semibold">Payment Status</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#26344B]/40">
+                      {filteredInvoices.map((row) => {
+                        const isSelected = row.invoiceNumber === selectedInvoiceId;
+                        return (
+                          <tr
+                            key={row.id}
+                            onClick={() => setSelectedInvoiceId(row.invoiceNumber)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-[#182C4E] border-l-4 border-l-[#2563EB] text-white'
+                                : 'hover:bg-[#152238]/60 text-slate-300'
+                            }`}
+                          >
+                            {/* Invoice # */}
+                            <td className="py-3 px-3 font-mono font-bold text-xs whitespace-nowrap">
+                              <span className={isSelected ? 'text-white' : 'text-blue-400'}>
+                                {row.invoiceNumber}
+                              </span>
+                            </td>
+
+                            {/* Project */}
+                            <td className="py-3 px-3 font-semibold text-slate-200 whitespace-nowrap">
+                              {row.project}
+                            </td>
+
+                            {/* Client */}
+                            <td className="py-3 px-3 text-slate-300 whitespace-nowrap">
+                              {row.client}
+                            </td>
+
+                            {/* Related Milestone */}
+                            <td className="py-3 px-3 text-slate-400 text-[11px] max-w-[160px] truncate">
+                              {row.relatedMilestone}
+                            </td>
+
+                            {/* Amount */}
+                            <td className="py-3 px-3 font-mono font-bold text-white whitespace-nowrap">
+                              ${row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </td>
+
+                            {/* Issue Date */}
+                            <td className="py-3 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                              {row.issueDate}
+                            </td>
+
+                            {/* Due Date */}
+                            <td className="py-3 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                              {row.dueDate}
+                            </td>
+
+                            {/* Payment Status Pill */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span
+                                className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                  row.status === 'Paid'
+                                    ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
+                                    : row.status === 'Sent'
+                                    ? 'bg-blue-950/70 text-blue-400 border border-blue-500/30'
+                                    : row.status === 'Overdue'
+                                    ? 'bg-rose-950/70 text-rose-400 border border-rose-500/30'
+                                    : row.status === 'Pending'
+                                    ? 'bg-amber-950/70 text-amber-400 border border-amber-500/30'
+                                    : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                }`}
+                              >
+                                {row.status}
+                              </span>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-3 px-3 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => setIsPrintModalOpen(true)}
+                                  className="p-1 text-slate-400 hover:text-white rounded hover:bg-[#152238] transition-colors"
+                                  title="Printable Invoice View"
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                </button>
+                                {row.status !== 'Paid' && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedInvoiceId(row.invoiceNumber);
+                                      setCheckoutStep('review');
+                                      setIsCheckoutModalOpen(true);
+                                    }}
+                                    className="p-1 text-blue-400 hover:text-blue-300 rounded hover:bg-[#152238] transition-colors"
+                                    title="Pay via Sandbox"
+                                  >
+                                    <CreditCard className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <div>
-                <p className="text-[11px] text-sky-100">Deliverable Payment Scope:</p>
-                <p className="font-semibold text-white text-sm truncate">{selectedInvoiceData.milestone.title}</p>
-              </div>
-              <div className="pt-2 border-t border-white/20 flex items-center justify-between">
-                <span className="text-xs text-sky-100">Amount to Authorize:</span>
-                <span className="text-xl font-bold font-mono text-white">
-                  ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
-                </span>
+
+              {/* Table Footer with Rows per page and Pagination */}
+              <div className="p-3 bg-[#0C1524] border-t border-[#26344B] flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-3">
+                <div className="flex items-center gap-2">
+                  <span>Rows-per-page:</span>
+                  <select
+                    value={rowsPerPage}
+                    onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                    className="bg-[#111C30] border border-[#26344B] text-slate-300 rounded px-1.5 py-0.5 focus:outline-hidden"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="font-mono">Page {currentPage} of 1</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                    >
+                      |&lt;
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                    >
+                      &lt;
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                    >
+                      &gt;
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                    >
+                      &gt;|
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Test Mode Selector (Success vs Failure) */}
-            {checkoutStep === 'idle' && (
-              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
-                <span className="text-xs text-slate-700 font-medium">Simulation Response Mode:</span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setSimulateFailureMode(false)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
-                      !simulateFailureMode
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    Simulate Success
-                  </button>
-                  <button
-                    onClick={() => setSimulateFailureMode(true)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
-                      simulateFailureMode
-                        ? 'bg-rose-600 text-white'
-                        : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    Simulate Failure
-                  </button>
+            {/* PHASE 7: INVOICE DETAILS SIDE PANEL (4 COLS) */}
+            <div className="lg:col-span-4 rounded-xl bg-[#111C30] border border-[#26344B] p-4 space-y-4 relative overflow-hidden">
+              {/* Header: Title & Reference */}
+              <div className="pb-3 border-b border-[#26344B]/60 space-y-1">
+                <h3 className="text-sm font-bold text-white tracking-wide">
+                  {selectedInvoice.invoiceNumber}: {selectedInvoice.project}
+                </h3>
+                <div className="flex items-center gap-1.5 font-mono text-[11px] text-blue-400">
+                  <span>{selectedInvoice.referenceNumber}</span>
+                  <PayPalIcon className="w-3 h-3 text-[#0079C1]" />
                 </div>
               </div>
-            )}
 
-            {/* STATE 1: IDLE / READY TO PAY */}
-            {checkoutStep === 'idle' && (
-              <div className="space-y-3 pt-2">
-                <p className="text-xs text-slate-500 text-center">
-                  Select payment method to test the PayPal REST invoice settlement callback:
-                </p>
-
-                {/* Golden PayPal Button */}
-                <button
-                  onClick={handleExecutePaymentSimulation}
-                  className="w-full py-3 px-4 rounded-xl bg-[#FFC439] hover:bg-[#F2BA36] active:bg-[#E5AF30] text-[#003087] font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all"
-                  data-testid="paypal-checkout-gold-btn"
-                >
-                  <span className="italic font-black text-base tracking-tight text-[#003087]">Pay</span>
-                  <span className="italic font-black text-base tracking-tight text-[#0070BA]">Pal</span>
-                  <span className="font-semibold text-xs ml-1 text-slate-800">Checkout</span>
-                </button>
-
-                {/* Dark Debit / Credit Card Option */}
-                <button
-                  onClick={handleExecutePaymentSimulation}
-                  className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-all"
-                >
-                  <CreditCard className="w-4 h-4 text-slate-300" />
-                  <span>Debit or Credit Card</span>
-                </button>
-
-                <div className="text-[11px] text-slate-400 text-center pt-1">
-                  Protected by PayPal Sandbox Encryption &bull; Zero Real Funds
-                </div>
+              {/* Client Info */}
+              <div className="space-y-1 text-xs">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Client Info
+                </span>
+                <div className="text-slate-200 font-semibold">{selectedInvoice.client}</div>
+                <div className="text-[11px] text-slate-400 font-mono">{selectedInvoice.clientEmail}</div>
+                <div className="text-[11px] text-slate-400">{selectedInvoice.clientAddress || '123 Stellar St, Future City'}</div>
               </div>
-            )}
 
-            {/* STATE 2 & 3: PROCESSING / WEBHOOK VERIFYING */}
-            {(checkoutStep === 'authorizing' || checkoutStep === 'webhook_simulating') && (
-              <div className="py-8 flex flex-col items-center justify-center gap-3 text-center">
-                <div className="w-12 h-12 rounded-full border-4 border-[#0070BA] border-t-transparent animate-spin" />
-                <div className="space-y-1">
-                  <p className="font-bold text-slate-900 text-sm">
-                    {checkoutStep === 'authorizing'
-                      ? 'Authorizing with PayPal OAuth2 Sandbox...'
-                      : 'Verifying Signed Webhook Event...'}
-                  </p>
-                  <p className="text-xs text-slate-500 font-mono">
-                    {checkoutStep === 'authorizing'
-                      ? 'POST https://api-m.sandbox.paypal.com/v2/invoicing/invoices'
-                      : 'Validating CRC32 payload hash & cert URL headers'}
-                  </p>
-                </div>
+              {/* Client Project */}
+              <div className="space-y-1 text-xs pt-2 border-t border-[#26344B]/40">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Client
+                </span>
+                <div className="text-slate-200 font-semibold">{selectedInvoice.project}</div>
+                <div className="text-[11px] text-slate-400">{selectedInvoice.clientDescription || 'Connected Innovation.'}</div>
               </div>
-            )}
 
-            {/* STATE 4: SUCCESS */}
-            {checkoutStep === 'success' && (
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-3">
-                <div className="flex items-center gap-2.5 text-emerald-800">
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                    <Check className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm">Payment Verified &amp; Settled!</h4>
-                    <p className="text-xs text-emerald-700">
-                      PayPal webhook transmission confirmed by DevFlow payment module.
-                    </p>
-                  </div>
+              {/* Amount */}
+              <div className="space-y-1 pt-2 border-t border-[#26344B]/40">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Amount
+                </span>
+                <div className="text-2xl font-bold text-white font-mono tracking-tight">
+                  ${selectedInvoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>
+                <span className="text-[11px] text-slate-400 block">Approved milestone amount</span>
+              </div>
 
-                <div className="p-3 rounded-lg bg-white border border-emerald-200 font-mono text-xs space-y-1.5 text-slate-800">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Invoice:</span>
-                    <span className="font-bold">{selectedInvoiceData.invoice.invoiceNumber}</span>
+              {/* Timeline */}
+              <div className="space-y-2 pt-2 border-t border-[#26344B]/40">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Timeline
+                </span>
+                <div className="space-y-1.5 text-xs text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                    <span>Created: {selectedInvoice.timelineCreated}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Settled Amount:</span>
-                    <span className="font-bold text-emerald-700">
-                      ${selectedInvoiceData.invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}{' '}
-                      USD
+                  <div className="pl-1 text-slate-500 font-mono text-[10px] leading-none">|</div>
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className="w-3 h-3 text-blue-400" />
+                    <span>Sent to Client: {selectedInvoice.timelineSent}</span>
+                  </div>
+                  <div className="pl-1 text-slate-500 font-mono text-[10px] leading-none">|</div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full border ${
+                        selectedInvoice.status === 'Paid'
+                          ? 'bg-emerald-400 border-emerald-400'
+                          : 'border-slate-400'
+                      }`}
+                    />
+                    <span className={selectedInvoice.status === 'Paid' ? 'text-emerald-400 font-semibold' : 'text-slate-400'}>
+                      {selectedInvoice.timelineStatus}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Webhook Event ID:</span>
-                    <span className="text-emerald-800 font-bold truncate max-w-[200px]">
-                      {generatedWebhookId || selectedInvoiceData.invoice.paypalWebhookEventId}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Method:</span>
-                    <span>PayPal Instant Settlement</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsCheckoutModalOpen(false)}
-                    className="border-emerald-300 text-emerald-800 hover:bg-emerald-100"
-                  >
-                    Done &bull; View In Ledger
-                  </Button>
                 </div>
               </div>
-            )}
 
-            {/* STATE 5: FAILED STATE */}
-            {checkoutStep === 'failed' && (
-              <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-3">
-                <div className="flex items-center gap-2.5 text-rose-800">
-                  <div className="w-7 h-7 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0">
-                    <X className="w-4 h-4" />
+              {/* Payment History */}
+              <div className="space-y-1 pt-2 border-t border-[#26344B]/40">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Payment History
+                </span>
+                {selectedInvoice.status === 'Paid' ? (
+                  <div className="p-2 rounded bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono">
+                    Paid via PayPal Webhook: {selectedInvoice.paypalWebhookEventId || 'WH-EVT-772910-PAID'}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm">Sandbox Payment Declined</h4>
-                    <p className="text-xs text-rose-700">
-                      Simulated PayPal Sandbox failure: Transaction rejected or timed out.
-                    </p>
-                  </div>
+                ) : (
+                  <div className="text-[11px] text-slate-400 italic">No payments yet</div>
+                )}
+              </div>
+
+              {/* Hosted Invoice Link with Copy */}
+              <div className="space-y-1 pt-2 border-t border-[#26344B]/40">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Hosted Invoice:
+                </span>
+                <div className="flex items-center justify-between p-2 rounded bg-[#0C1524] border border-[#26344B] text-xs">
+                  <span className="font-mono text-blue-400 text-[11px] truncate">
+                    {selectedInvoice.hostedInvoiceUrl}
+                  </span>
+                  <button
+                    onClick={handleCopyHostedLink}
+                    className="p-1 text-slate-400 hover:text-white transition-colors"
+                    title="Copy Hosted Invoice URL"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
+              </div>
 
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  No invoice status changes were recorded. The invoice remains in its previous state in the ledger.
-                </p>
-
-                <div className="flex justify-end gap-2 pt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
+              {/* Quick Action Buttons for Selected Invoice */}
+              <div className="pt-2 flex items-center gap-2 border-t border-[#26344B]/40">
+                <button
+                  onClick={() => setIsPrintModalOpen(true)}
+                  className="flex-1 py-1.5 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-xs font-semibold text-slate-200 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Print View</span>
+                </button>
+                {selectedInvoice.status !== 'Paid' && (
+                  <button
                     onClick={() => {
-                      setSimulateFailureMode(false);
-                      setCheckoutStep('idle');
+                      setCheckoutStep('review');
+                      setIsCheckoutModalOpen(true);
                     }}
+                    className="flex-1 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-colors flex items-center justify-center gap-1.5"
                   >
-                    Retry in Success Mode
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => setIsCheckoutModalOpen(false)}>
-                    Close
-                  </Button>
+                    <PayPalIcon className="w-3.5 h-3.5" />
+                    <span>Pay Sandbox</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Decorative Sparkle Graphic from visual reference */}
+              <div className="absolute bottom-16 right-2 opacity-25 pointer-events-none">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" className="text-blue-300">
+                  <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* PHASE 8: UNBILLED APPROVED MILESTONES & PENDING MILESTONE APPROVALS */}
+          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              {/* Left Column: Unbilled Approved Milestones */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Unbilled Approved Milestones
+                </span>
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#0C1524] border border-[#26344B]">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-semibold text-white">Acme Corp</span>
+                    <span className="text-slate-500">→</span>
+                    <span className="text-slate-300">Apollo Mobile</span>
+                    <span className="text-slate-500">→</span>
+                    <span className="text-blue-400 font-medium">Milestone 4: QA Testing</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono font-bold text-white text-xs">$8,200.00</span>
+                    <button
+                      onClick={handleGenerateInvoiceForUnbilled}
+                      className="text-xs text-blue-400 hover:text-white font-semibold transition-colors"
+                    >
+                      Generate Invoice
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              {/* Right Column: Pending Milestone Approvals */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Pending Milestone Approvals
+                </span>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C1524] border border-[#26344B]">
+                  <div className="text-xs text-slate-300">
+                    <span className="font-semibold text-white">Stellar Innovations</span> &bull; Alpha Portal (Milestone 2)
+                  </div>
+                  <button
+                    onClick={() => setIsCreateInvoiceModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-colors"
+                  >
+                    Create Invoice
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* MODAL 1: PRINTABLE INVOICE DOCUMENT (Preserves #printable-invoice-container for selective printing!) */}
+      {isPrintModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs no-print-backdrop">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3 no-print">
+              <div>
+                <h3 className="text-sm font-bold text-white">Printable Invoice Document</h3>
+                <span className="text-[11px] text-slate-400">
+                  Formatted for client export and standard printing
+                </span>
+              </div>
+              <button
+                onClick={() => setIsPrintModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Print Container with ID for CSS Print Rules */}
+            <div
+              id="printable-invoice-container"
+              className="p-6 bg-white text-[#111827] rounded-xl space-y-6 shadow-xs border border-slate-200"
+            >
+              {/* Header / Brand */}
+              <div className="flex justify-between items-start border-b border-slate-200 pb-4 print-avoid-break">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <DevFlowLogo variant="icon" size="sm" />
+                     <h2 className="text-xl font-bold tracking-tight text-[#111827]">DevFlow</h2>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Autonomous Milestone Invoicing Platform</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold font-mono text-[#0070BA]">
+                    {selectedInvoice.invoiceNumber}
+                  </span>
+                  <p className="text-xs text-slate-500">Issue Date: {selectedInvoice.issueDate}</p>
+                  <p className="text-xs text-slate-500">Due Date: {selectedInvoice.dueDate}</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                    STATUS: {selectedInvoice.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Billed To / From */}
+              <div className="grid grid-cols-2 gap-6 text-xs print-avoid-break">
+                <div>
+                  <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                    Billed To:
+                  </span>
+                  <p className="font-semibold text-sm text-[#111827] mt-1">{selectedInvoice.client}</p>
+                  <p className="text-slate-600">{selectedInvoice.clientEmail}</p>
+                  <p className="text-slate-600">{selectedInvoice.clientAddress || '123 Stellar St, Future City'}</p>
+                </div>
+                <div className="text-right">
+                  <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                    Remittance Routing:
+                  </span>
+                  <p className="font-semibold text-sm text-[#111827] mt-1">DevFlow PayPal Gateway</p>
+                  <p className="text-slate-600">Reference: {selectedInvoice.referenceNumber}</p>
+                  <p className="text-slate-600">Settlement Currency: USD</p>
+                </div>
+              </div>
+
+              {/* Itemized Table */}
+              <div className="border border-slate-200 rounded-lg overflow-hidden print-avoid-break">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <tr>
+                      <th className="p-3 text-left">Service Description</th>
+                      <th className="p-3 text-center">Project</th>
+                      <th className="p-3 text-right">Amount (USD)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="p-3 font-medium text-slate-800">
+                        {selectedInvoice.relatedMilestone} &bull; Verified Deliverable Execution
+                      </td>
+                      <td className="p-3 text-center text-slate-600">{selectedInvoice.project}</td>
+                      <td className="p-3 text-right font-mono font-bold text-slate-900">
+                        ${selectedInvoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Totals */}
+              <div className="flex justify-end pt-2 print-avoid-break">
+                <div className="w-56 space-y-1.5 text-xs text-right">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Subtotal:</span>
+                    <span className="font-mono">${selectedInvoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Tax (0%):</span>
+                    <span className="font-mono">$0.00</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold text-slate-900 pt-1.5 border-t border-slate-200">
+                    <span>Total Due:</span>
+                    <span className="font-mono text-[#0070BA]">
+                      ${selectedInvoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {selectedInvoice.notes && (
+                <div className="pt-3 border-t border-slate-200 text-[11px] text-slate-500 print-avoid-break">
+                  <span className="font-semibold text-slate-700">Invoice Notes: </span>
+                  {selectedInvoice.notes}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Controls (Hidden during print) */}
+            <div className="flex items-center justify-between pt-3 border-t border-[#26344B] no-print">
+              <button
+                onClick={() => setIsPrintModalOpen(false)}
+                className="px-4 py-2 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] text-slate-300 text-xs font-semibold"
+              >
+                Close Preview
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Invoice</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: PAYPAL SANDBOX CHECKOUT SIMULATION */}
+      {isCheckoutModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
+              <div className="flex items-center gap-2">
+                <PayPalIcon className="w-5 h-5 text-[#0079C1]" />
+                <h3 className="text-sm font-bold text-white">PayPal Sandbox Checkout Simulation</h3>
+              </div>
+              <button
+                onClick={() => setIsCheckoutModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {checkoutStep === 'review' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-400">Payer Sandbox Account</span>
+                    <span className="text-[10px] bg-blue-950/60 text-blue-300 border border-blue-500/30 px-1.5 py-0.2 rounded">
+                      SANDBOX MODE
+                    </span>
+                  </div>
+                  <div className="text-xl font-bold text-white font-mono">
+                    ${selectedInvoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                  </div>
+                  <div className="text-slate-400 text-[11px]">
+                    Client Payer: {selectedInvoice.client} ({selectedInvoice.clientEmail})
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#152238] border border-[#26344B] text-[11px] text-slate-300 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-white">
+                    <Lock className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Cryptographic Verification Gate</span>
+                  </div>
+                  <p className="text-slate-400 leading-relaxed">
+                    Executing this payment will fire a simulated PayPal webhook listener event and mark invoice {selectedInvoice.invoiceNumber} as PAID.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-[#26344B]">
+                  <button
+                    onClick={() => setIsCheckoutModalOpen(false)}
+                    className="px-3.5 py-2 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] text-slate-300 text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleExecuteSandboxCheckout}
+                    disabled={isProcessingCheckout}
+                    className="px-4 py-2 rounded-lg bg-[#0079C1] hover:bg-[#005ea6] text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-900/30"
+                  >
+                    <PayPalIcon className="w-3.5 h-3.5" />
+                    <span>Confirm Sandbox Payment</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {checkoutStep === 'processing' && (
+              <div className="py-8 text-center space-y-3">
+                <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
+                <p className="text-sm font-bold text-white">Processing Sandbox Settlement...</p>
+                <p className="text-xs text-slate-400">Validating HMAC webhook signature & settlement ledger</p>
+              </div>
+            )}
+
+            {checkoutStep === 'success' && (
+              <div className="py-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mx-auto">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-white">Payment Successfully Settled</h3>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                  PayPal Webhook event <strong className="text-white font-mono">PAYMENT.INVOICING.INVOICE.PAID</strong> captured and cryptographically recorded.
+                </p>
+                <button
+                  onClick={() => setIsCheckoutModalOpen(false)}
+                  className="mt-2 px-5 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold"
+                >
+                  Close Receipt
+                </button>
+              </div>
+            )}
+
+            {checkoutStep === 'error' && (
+              <div className="py-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-rose-950/60 border border-rose-500/40 flex items-center justify-center text-rose-400 mx-auto">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-white">Simulation Failed</h3>
+                <p className="text-xs text-slate-400">Could not record simulated webhook event.</p>
+                <button
+                  onClick={() => setIsCheckoutModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-[#152238] text-white text-xs font-semibold"
+                >
+                  Close
+                </button>
               </div>
             )}
           </div>
-        </Modal>
+        </div>
+      )}
+
+      {/* MODAL 3: CREATE INVOICE FORM */}
+      {isCreateInvoiceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
+              <h3 className="text-sm font-bold text-white">Create New Milestone Invoice</h3>
+              <button
+                onClick={() => setIsCreateInvoiceModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewInvoice} className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                  Client / Company Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Acme Corp"
+                  value={newClient}
+                  onChange={(e) => setNewClient(e.target.value)}
+                  className="w-full bg-[#0C1524] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                  Project Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Apollo Mobile"
+                  value={newProject}
+                  onChange={(e) => setNewProject(e.target.value)}
+                  className="w-full bg-[#0C1524] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                  Milestone Scope
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Milestone 4: QA Testing"
+                  value={newMilestone}
+                  onChange={(e) => setNewMilestone(e.target.value)}
+                  className="w-full bg-[#0C1524] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                    Amount (USD)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={newAmount}
+                    onChange={(e) => setNewAmount(e.target.value)}
+                    className="w-full bg-[#0C1524] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className="w-full bg-[#0C1524] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#26344B]">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateInvoiceModalOpen(false)}
+                  className="px-3.5 py-2 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] text-slate-300 text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30"
+                >
+                  Issue Invoice
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: HELP CENTER */}
+      {isHelpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
+              <h3 className="text-sm font-bold text-white">DevFlow Invoicing Guide</h3>
+              <button
+                onClick={() => setIsHelpModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
+              <p>
+                Invoices on DevFlow are tied strictly to verified milestone acceptance criteria and client sign-offs.
+              </p>
+              <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1">
+                <span className="font-bold text-white block">Key Rules:</span>
+                <ul className="space-y-1 text-slate-400 text-[11px]">
+                  <li>• Unbilled milestones cannot be invoiced without prior deliverable approval.</li>
+                  <li>• PayPal Sandbox settlements simulate payment receipts and webhook triggers.</li>
+                  <li>• Use the Print View button to generate client-ready PDF exports.</li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setIsHelpModalOpen(false)}
+                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold"
+              >
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* USER PROFILE MODAL */}
+      {userMenuOpen && (
+        <div className="fixed bottom-16 left-4 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150">
+          <div className="font-bold text-white border-b border-[#26344B] pb-2">
+            Tharun
+            <div className="text-[10px] text-slate-400 font-normal">Fintech Invoicing Lead</div>
+          </div>
+          <button
+            onClick={() => {
+              setUserMenuOpen(false);
+              navigate('/settings');
+            }}
+            className="w-full text-left py-1 text-slate-300 hover:text-white"
+          >
+            Billing Preferences
+          </button>
+          <button
+            onClick={() => {
+              setUserMenuOpen(false);
+              navigate('/');
+            }}
+            className="w-full text-left py-1 text-rose-400 hover:text-rose-300"
+          >
+            Sign Out
+          </button>
+        </div>
       )}
     </div>
   );

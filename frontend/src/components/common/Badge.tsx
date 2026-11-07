@@ -2,7 +2,18 @@ import React from 'react';
 import { cn } from '@/utils/cn';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'neutral' | 'success' | 'ai' | 'paypal' | 'warning' | 'danger';
+  variant?:
+    | 'neutral'
+    | 'success'
+    | 'ai'
+    | 'paypal'
+    | 'warning'
+    | 'danger'
+    | 'lavender'
+    | 'mint'
+    | 'peach'
+    | 'yellow'
+    | 'powderBlue';
   size?: 'sm' | 'md';
   dot?: boolean;
   pulseDot?: boolean;
@@ -21,21 +32,31 @@ export const Badge: React.FC<BadgeProps> = ({
     'inline-flex items-center font-medium rounded-full transition-colors select-none';
 
   const variants = {
-    neutral: 'bg-slate-100 text-slate-700 border border-slate-200',
-    success: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
-    ai: 'bg-violet-50 text-violet-700 border border-violet-200/70',
-    paypal: 'bg-sky-50 text-[#004B87] border border-sky-200',
-    warning: 'bg-amber-50 text-amber-800 border border-amber-200/70',
-    danger: 'bg-rose-50 text-rose-700 border border-rose-200/60',
+    neutral: 'bg-[#F1F3FA] text-[#777B91] border border-[#E9EAF2]',
+    success: 'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]',
+    ai: 'bg-[#F5F3FF] text-[#6D28D9] border border-[#DDD6FE]',
+    paypal: 'bg-[#EBF4FA] text-[#0070BA] border border-[#BFDBFE]',
+    warning: 'bg-[#FEFCE8] text-[#A16207] border border-[#FEF08A]',
+    danger: 'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]',
+    lavender: 'bg-[#F5F3FF] text-[#6D28D9] border border-[#DDD6FE]',
+    mint: 'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]',
+    peach: 'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]',
+    yellow: 'bg-[#FEFCE8] text-[#A16207] border border-[#FEF08A]',
+    powderBlue: 'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]',
   };
 
   const dotColors = {
-    neutral: 'bg-slate-400',
-    success: 'bg-emerald-500',
-    ai: 'bg-violet-500',
+    neutral: 'bg-[#777B91]',
+    success: 'bg-[#86DDBB]',
+    ai: 'bg-[#A78BFA]',
     paypal: 'bg-[#0070BA]',
-    warning: 'bg-amber-500',
-    danger: 'bg-rose-500',
+    warning: 'bg-[#FDE68A]',
+    danger: 'bg-[#FDBA9A]',
+    lavender: 'bg-[#A78BFA]',
+    mint: 'bg-[#86DDBB]',
+    peach: 'bg-[#FDBA9A]',
+    yellow: 'bg-[#FDE68A]',
+    powderBlue: 'bg-[#93C5FD]',
   };
 
   const sizes = {

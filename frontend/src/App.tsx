@@ -7,7 +7,11 @@ import { ProjectsPage } from '@/pages/ProjectsPage';
 import { MilestonesPage } from '@/pages/MilestonesPage';
 import { EvidencePage } from '@/pages/EvidencePage';
 import { VerificationPage } from '@/pages/VerificationPage';
+import { MilestoneVerificationPage } from '@/pages/MilestoneVerificationPage';
 import { PaymentsPage } from '@/pages/PaymentsPage';
+import { PaymentActivityPage } from '@/pages/PaymentActivityPage';
+import { IntegrationsPage } from '@/pages/IntegrationsPage';
+import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
 export const App: React.FC = () => {
@@ -24,7 +28,12 @@ export const App: React.FC = () => {
           <Route path="/milestones" element={<MilestonesPage />} />
           <Route path="/evidence" element={<EvidencePage />} />
           <Route path="/verification" element={<VerificationPage />} />
-          <Route path="/payments" element={<PaymentsPage />} />
+          <Route path="/milestone-verification" element={<MilestoneVerificationPage />} />
+          <Route path="/agents" element={<VerificationPage />} />
+          <Route path="/payments" element={<PaymentActivityPage />} />
+          <Route path="/invoices" element={<PaymentsPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

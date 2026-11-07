@@ -3,7 +3,18 @@ import { cn } from '@/utils/cn';
 import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'paypal' | 'danger' | 'ai';
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'outline'
+    | 'ghost'
+    | 'paypal'
+    | 'danger'
+    | 'ai'
+    | 'lavender'
+    | 'mint'
+    | 'peach'
+    | 'powderBlue';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -30,19 +41,27 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 shadow-sm border border-transparent',
+        'bg-[#25263A] text-white hover:bg-[#1A1B29] focus:ring-[#93C5FD] shadow-card-subtle border border-transparent',
       secondary:
-        'bg-slate-100 text-slate-800 hover:bg-slate-200 focus:ring-slate-300 border border-slate-200/80',
+        'bg-[#F1F3FA] text-[#25263A] hover:bg-[#E9EAF2] focus:ring-[#93C5FD] border border-[#E9EAF2]',
       outline:
-        'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300 focus:ring-fintech-paypal-blue shadow-sm',
+        'bg-white text-[#25263A] hover:bg-[#F7F8FC] hover:border-[#93C5FD] border border-[#E9EAF2] focus:ring-[#93C5FD] shadow-card-subtle',
       ghost:
-        'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:ring-slate-200',
+        'bg-transparent text-[#777B91] hover:bg-[#F1F3FA] hover:text-[#25263A] focus:ring-[#93C5FD]',
       paypal:
-        'bg-fintech-paypal-blue text-white hover:bg-fintech-paypal-dark focus:ring-fintech-paypal-blue shadow-sm font-semibold tracking-wide',
+        'bg-[#0070BA] text-white hover:bg-[#003087] focus:ring-[#93C5FD] shadow-card-subtle font-semibold tracking-wide border border-transparent',
       danger:
-        'bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500 shadow-sm',
+        'bg-[#FFF7ED] text-[#C2410C] hover:bg-[#FFEDD5] border border-[#FED7AA] focus:ring-[#FDBA9A] shadow-card-subtle',
       ai:
-        'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 focus:ring-violet-500 shadow-sm',
+        'bg-gradient-to-r from-[#A78BFA] to-[#818CF8] text-white hover:from-[#9061F9] hover:to-[#6366F1] focus:ring-[#A78BFA] shadow-card-subtle',
+      lavender:
+        'bg-[#F5F3FF] text-[#6D28D9] border border-[#DDD6FE] hover:bg-[#EDE9FE] focus:ring-[#A78BFA]',
+      mint:
+        'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0] hover:bg-[#DCFCE7] focus:ring-[#86DDBB]',
+      peach:
+        'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] hover:bg-[#FFEDD5] focus:ring-[#FDBA9A]',
+      powderBlue:
+        'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] hover:bg-[#DBEAFE] focus:ring-[#93C5FD]',
     };
 
     const sizes = {
@@ -59,7 +78,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          <Loader2 className="w-4 h-4 animate-spin text-current shrink-0" />
         ) : (
           leftIcon && <span className="shrink-0">{leftIcon}</span>
         )}
@@ -69,5 +88,4 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
-
 Button.displayName = 'Button';

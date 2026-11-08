@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DevFlowLogo } from '@/components/common';
+import { DevFlowLogo, BrandHeroBanner } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -176,7 +176,16 @@ export const LandingPage: React.FC = () => {
         {/* Subtle background ambient glow */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-blue-600/10 via-cyan-500/5 to-purple-600/10 blur-3xl pointer-events-none rounded-full" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-12">
+          {/* Centered Hero Branding Banner */}
+          <div className="flex flex-col items-center justify-center text-center">
+            <BrandHeroBanner
+              className="max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-3xl"
+              glow
+              priority
+            />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             {/* Left Column: Headline & CTA */}
             <div className="lg:col-span-5 space-y-6 text-left">
@@ -220,7 +229,7 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px]">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    LIVE TELEMETRY
+                    LIVE TELEMETRY &bull; SANDBOX DEMO
                   </div>
                 </div>
 
@@ -269,7 +278,7 @@ export const LandingPage: React.FC = () => {
                         </div>
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                            <span>Order Routing & Webhooks</span>
+                            <span>Order Routing &amp; Webhooks</span>
                             <span>100%</span>
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-[#1E293B] overflow-hidden">
@@ -279,10 +288,10 @@ export const LandingPage: React.FC = () => {
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] text-slate-400 font-mono">
                             <span>AST Syntax Verification</span>
-                            <span>75%</span>
+                            <span>94.2%</span>
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-[#1E293B] overflow-hidden">
-                            <div className="h-full bg-blue-500 w-3/4 rounded-full" />
+                            <div className="h-full bg-blue-500 w-[94%] rounded-full" />
                           </div>
                         </div>
                       </div>
@@ -290,7 +299,7 @@ export const LandingPage: React.FC = () => {
                       <div className="p-2.5 rounded-xl bg-[#0F172A] border border-[#1E293B] flex flex-col justify-between">
                         <span className="text-[10px] text-slate-400 font-medium">Expected Volume</span>
                         <div>
-                          <div className="text-lg font-bold font-mono text-white">$10,000.00</div>
+                          <div className="text-lg font-bold font-mono text-white">$18,500.00</div>
                           <span className="text-[10px] text-emerald-400 font-mono">4 Milestones</span>
                         </div>
                       </div>
@@ -301,12 +310,12 @@ export const LandingPage: React.FC = () => {
                       <div className="flex items-center justify-between text-slate-400">
                         <span className="flex items-center gap-1.5">
                           <GitHubIcon className="w-3.5 h-3.5 text-slate-300" />
-                          <span>Tharunnagabramhagna/DevFlow</span>
+                          <span>northstar-studio/payment-gateway</span>
                         </span>
                         <span className="text-blue-400">main</span>
                       </div>
                       <div className="text-[10px] text-slate-300 truncate bg-[#080D1B] p-1.5 rounded border border-[#1E293B]">
-                        commit <span className="text-amber-400">54813f0</span> &bull; chore: initialize DevFlow monorepo structure
+                        commit <span className="text-amber-400">a1e9482</span> &bull; feat(payments): implement PayPal webhook verification and signature check
                       </div>
                     </div>
                   </div>
@@ -314,27 +323,30 @@ export const LandingPage: React.FC = () => {
               </div>
 
               {/* Overlapping Floating "Payment Status" Panel (Matches Reference) */}
-              <div className="sm:absolute sm:-bottom-6 sm:-right-4 mt-4 sm:mt-0 bg-[#0F172A] border border-[#1E293B] rounded-2xl p-4 shadow-2xl space-y-3 w-full sm:w-64 backdrop-blur-md">
+              <div className="sm:absolute sm:-bottom-6 sm:-right-4 mt-4 sm:mt-0 bg-[#0F172A] border border-[#1E293B] rounded-2xl p-4 shadow-2xl space-y-3 w-full sm:w-72 backdrop-blur-md">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-[#1E293B] pb-2">
-                  <span>Payment Status</span>
-                  <div className="flex items-center gap-1 text-[11px] text-emerald-400">
+                  <div className="flex items-center gap-1.5">
+                    <span>Payment Status</span>
+                    <span className="text-[9px] font-mono font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-1.5 py-0.5 rounded">DEMO</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
                     <Check className="w-3.5 h-3.5" />
-                    <span>Settled</span>
+                    <span>Settled (Sandbox)</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-blue-950/70 border border-blue-800/50 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-blue-950/70 border border-blue-800/50 flex items-center justify-center">
                       <PayPalIcon className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-xs font-bold text-white">PayPal Invoicing</div>
-                      <div className="text-[10px] text-slate-400 font-mono">Instant Payout</div>
+                      <div className="text-[10px] text-slate-400 font-mono">Instant Payout &bull; Milestone 2</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-bold font-mono text-emerald-400">$3,200.00</div>
+                    <div className="text-sm font-bold font-mono text-emerald-400">$4,500.00</div>
                     <div className="text-[9px] text-slate-500">USD Net</div>
                   </div>
                 </div>
@@ -342,9 +354,9 @@ export const LandingPage: React.FC = () => {
                 <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-[#1E293B]/70 font-mono">
                   <span className="flex items-center gap-1">
                     <GitHubIcon className="w-3 h-3 text-slate-400" />
-                    <span>SHA 54813f0</span>
+                    <span>SHA a1e9482</span>
                   </span>
-                  <span className="text-blue-400 font-sans">Verified</span>
+                  <span className="text-blue-400 font-sans">Human Sign-off</span>
                 </div>
               </div>
             </div>
@@ -688,7 +700,7 @@ export const LandingPage: React.FC = () => {
               {/* Mini UI Preview */}
               <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] flex items-center justify-between text-slate-300">
                 <span>Client Gatekeeper</span>
-                <span className="text-blue-400 font-semibold">Alex Mercer &bull; Approved</span>
+                <span className="text-blue-400 font-semibold">Marcus Vance (Meridian Labs) &bull; Approved</span>
               </div>
             </div>
 
@@ -825,7 +837,7 @@ export const LandingPage: React.FC = () => {
                   <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
                     <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Scope</div>
                     <div className="text-lg font-bold font-mono text-white mt-1">4 Deliverables</div>
-                    <div className="text-[10px] text-slate-500">Tharunnagabramhagna/DevFlow</div>
+                    <div className="text-[10px] text-slate-500">northstar-studio/payment-gateway</div>
                   </div>
                 </div>
 
@@ -839,15 +851,15 @@ export const LandingPage: React.FC = () => {
                         <span>Git Proof-of-Work</span>
                       </div>
                       <span className="font-mono text-[10px] bg-purple-950/60 text-purple-400 border border-purple-800/50 px-2 py-0.5 rounded">
-                        SHA 54813f0
+                        SHA a1e9482
                       </span>
                     </div>
                     <p className="text-xs text-slate-300 font-mono">
-                      chore: initialize DevFlow monorepo project structure
+                      feat(payments): implement PayPal webhook verification and signature check
                     </p>
                     <div className="p-2.5 rounded-lg bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono space-y-1">
-                      <div className="text-emerald-400">+1240 lines &bull; docker-compose.yml</div>
-                      <div className="text-blue-400">+ AST validation satisfied req_01_arch</div>
+                      <div className="text-emerald-400">+182 lines &bull; webhook.service.ts</div>
+                      <div className="text-blue-400">+ AST validation satisfied req_02_paypal</div>
                     </div>
                   </div>
 
@@ -967,6 +979,11 @@ export const LandingPage: React.FC = () => {
               </svg>
             </div>
 
+            {/* Brand Banner in CTA */}
+            <div className="relative z-10 flex justify-center mb-2">
+              <BrandHeroBanner className="max-w-xs sm:max-w-sm md:max-w-md" glow={false} />
+            </div>
+
             <div className="relative z-10 space-y-3">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
                 Your work deserves a <br className="hidden sm:inline" />
@@ -1004,7 +1021,7 @@ export const LandingPage: React.FC = () => {
               </p>
               <div className="flex items-center gap-3 pt-1">
                 <a
-                  href="https://github.com/Tharunnagabramhagna/DevFlow"
+                  href="https://github.com/northstar-studio/payment-gateway"
                   target="_blank"
                   rel="noreferrer"
                   className="w-8 h-8 rounded-lg bg-[#0F172A] border border-[#1E293B] flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
@@ -1084,12 +1101,12 @@ export const LandingPage: React.FC = () => {
               <ul className="space-y-1.5">
                 <li>
                   <a
-                    href="https://github.com/Tharunnagabramhagna/DevFlow"
+                    href="https://github.com/northstar-studio/payment-gateway"
                     target="_blank"
                     rel="noreferrer"
                     className="hover:text-white transition-colors"
                   >
-                    GitHub Monorepo
+                    GitHub Repository
                   </a>
                 </li>
                 <li>

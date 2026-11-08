@@ -18,8 +18,10 @@ export const App: React.FC = () => {
   return (
     <HashRouter>
       <Routes>
-        {/* Public Landing Page */}
+        {/* Public Landing & Get Started Pages */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/get-started" element={<LandingPage />} />
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
         {/* Dashboard Workspace Routes */}
         <Route element={<AppLayout />}>

@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "devflow",
   "version": "0.1.0",
   "private": true,
@@ -11,12 +11,23 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
-    "preview": "npm run preview --prefix frontend"
+    "preview": "npm run preview --prefix frontend",
+    "db:generate": "prisma generate --schema database/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",
+    "db:migrate:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma",
+    "db:seed": "prisma db seed --schema database/prisma/schema.prisma",
+    "db:reset": "prisma migrate reset --schema database/prisma/schema.prisma",
+    "db:studio": "prisma studio --schema database/prisma/schema.prisma",
+    "db:test": "tsx database/prisma/validate.ts"
+  },
+  "prisma": {
+    "seed": "tsx database/prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"
   },
   "devDependencies": {
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "tsx": "^4.23.15"
   }
 }

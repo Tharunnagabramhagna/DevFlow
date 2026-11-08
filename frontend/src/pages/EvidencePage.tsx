@@ -1,13 +1,7 @@
-import { DevFlowLogo } from '@/components/common';
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  FileText,
-  Settings,
-  Sliders,
-  Bell,
+            Bell,
   Search,
   HelpCircle,
   GitCommit,
@@ -15,8 +9,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ExternalLink,
-  ChevronRight,
-  Copy,
+    Copy,
   Check,
   X,
   Menu,
@@ -129,10 +122,9 @@ export interface UnifiedEvidenceItem {
 }
 
 export const EvidencePage: React.FC = () => {
-  const navigate = useNavigate();
 
   // Navigation & UI States
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { openMobileSidebar } = useSidebar();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [createReportModalOpen, setCreateReportModalOpen] = useState(false);
@@ -456,155 +448,12 @@ export const EvidencePage: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
-      {/* 1. FIXED DARK ENTERPRISE SIDEBAR */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
-          {/* Logo Header */}
-          <div className="flex items-center justify-between px-3">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Items */}
-          <div className="space-y-1.5 text-xs">
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/dashboard');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4 text-slate-400" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/projects');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <FolderGit2 className="w-4 h-4 text-slate-400" />
-              <span>Projects</span>
-            </button>
-
-            {/* Evidence Active Pill */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/evidence');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#2563EB] text-white font-semibold shadow-md shadow-blue-600/30"
-            >
-              <FileText className="w-4 h-4 text-white" />
-              <span>Evidence</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                setCreateReportModalOpen(true);
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <ListChecks className="w-4 h-4 text-slate-400" />
-              <span>Reports</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/settings');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <Settings className="w-4 h-4 text-slate-400" />
-              <span>Settings</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/settings');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <Sliders className="w-4 h-4 text-slate-400" />
-              <span>Integrations</span>
-            </button>
-          </div>
-
-          {/* Linked Repositories */}
-          <div className="pt-4 border-t border-[#26344B]/60 space-y-2">
-            <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
-              Linked Repositories
-            </span>
-            <div className="px-3">
-              <a
-                href="https://github.com/northstar-studio/payment-gateway"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#152238] hover:bg-[#1B2D4F] border border-[#26344B] text-xs text-slate-200 font-medium transition-colors group"
-              >
-                <GitHubIcon className="w-4 h-4 text-slate-300 group-hover:text-white" />
-                <span className="truncate">Payment Gateway Integration</span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Bottom Nav User Profile */}
-        <div className="p-3 border-t border-[#26344B] flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2.5">
-            <img
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces"
-              alt="Alex Morgan"
-              className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/40"
-            />
-            <span className="font-semibold text-slate-200">Alex Morgan</span>
-          </div>
-          <button
-            onClick={() => navigate('/')}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#152238] transition-colors"
-            title="Logout / Exit to Landing"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Sidebar Backdrop */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* 2. MAIN CONTENT VIEWPORT */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 1: PAGE HEADER */}
         <header className="h-16 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setMobileSidebarOpen(true)}
+              onClick={openMobileSidebar}
               className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg"
             >
               <Menu className="w-5 h-5" />
@@ -1209,7 +1058,6 @@ export const EvidencePage: React.FC = () => {
             </div>
           </div>
         </main>
-      </div>
 
       {/* MODAL 1: VIEW DIFF MODAL */}
       {diffModalOpen && (

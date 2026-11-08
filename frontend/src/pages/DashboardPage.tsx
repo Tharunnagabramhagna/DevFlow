@@ -1,6 +1,7 @@
-import { DevFlowLogo } from '@/components/common';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { devFlowApi } from '@/services/api';
 import {
   Project,
@@ -8,35 +9,46 @@ import {
   DeveloperTelemetry,
 } from '@/types';
 import {
-  LayoutDashboard,
   FolderGit2,
-  CheckCircle2,
   Sparkles,
-  ShieldCheck,
   CreditCard,
   Bell,
-  Settings,
   Search,
   Plus,
   ChevronDown,
   MoreVertical,
   Menu,
   X,
-  FileText,
-  Zap,
   FileCode,
+  LogOut,
+  BriefcaseBusiness,
+  Code2,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { openMobileSidebar } = useSidebar();
+  const { user, role, logout } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [isMockData, setIsMockData] = useState(false);
   const [telemetry, setTelemetry] = useState<DeveloperTelemetry | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
 
-  // Mobile sidebar state
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // User Profile Dropdown state
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [userMenuOpen]);
 
   // New Project Modal State
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
@@ -52,38 +64,33 @@ export const DashboardPage: React.FC = () => {
   // Notifications dropdown state
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  // User name from localStorage or default
-  const [userName] = useState<string>(() => {
-    try {
-      const raw = localStorage.getItem('devflow_user_profile_preferences');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.name) {
-          return parsed.name.split(' ')[0];
-        }
-      }
-    } catch {}
-    return 'Alex';
-  });
+  // User details from auth context or profile storage
+  const displayName = user?.name || 'Alex Morgan';
+  const firstName = displayName.split(' ')[0];
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'AM';
+
+  const isClientRole = role === 'CLIENT';
+  const roleBadgeLabel = isClientRole ? 'Client' : 'Developer';
 
   useEffect(() => {
     async function loadDashboard() {
       setLoading(true);
       try {
-        const [telemetryRes, projectsRes, milestonesRes, commitsRes, invoicesRes] = await Promise.all([
+        const [telemetryRes, projectsRes, milestonesRes] = await Promise.all([
           devFlowApi.getTelemetry(),
           devFlowApi.getProjects(),
           devFlowApi.getMilestones(),
-          devFlowApi.getGitHubCommits(),
-          devFlowApi.getInvoices(),
         ]);
 
         setTelemetry(telemetryRes.data);
         setProjects(projectsRes.data);
         setMilestones(milestonesRes.data);
-        setIsMockData(
-          telemetryRes.isMock || projectsRes.isMock || milestonesRes.isMock || commitsRes.isMock || invoicesRes.isMock
-        );
       } catch (err) {
         console.error('Failed to load dashboard telemetry:', err);
       } finally {
@@ -131,199 +138,23 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
-      {/* 1. FIXED DARK NAVY SIDEBAR */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
-          {/* Logo Header */}
-          <div className="flex items-center justify-between px-3">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#080D18]">
+      {/* TOP HEADER */}
+      <header className="h-14 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0">
+        {/* Header Left */}
+        <div className="flex items-center gap-3">
+          {/* Mobile Slide-in Drawer Trigger */}
+          <button
+            onClick={openMobileSidebar}
+            className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D] transition-colors"
+            aria-label="Open mobile navigation menu"
+            title="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
 
-          {/* Navigation Groups */}
-          <div className="space-y-6 text-xs">
-            {/* GROUP: WORKSPACE */}
-            <div className="space-y-1">
-              <div className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-                WORKSPACE
-              </div>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/dashboard');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1B2A47] text-white font-semibold shadow-xs"
-              >
-                <LayoutDashboard className="w-4 h-4 text-[#2563EB]" />
-                <span>Dashboard</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/projects');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <FolderGit2 className="w-4 h-4 text-slate-400" />
-                <span>Projects</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/milestones');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <CheckCircle2 className="w-4 h-4 text-slate-400" />
-                <span>Milestones</span>
-              </button>
-            </div>
-
-            {/* GROUP: INTELLIGENCE */}
-            <div className="space-y-1">
-              <div className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-                INTELLIGENCE
-              </div>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/verification');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>AI Agents</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/evidence');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <FileCode className="w-4 h-4 text-slate-400" />
-                <span>Evidence</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/verification');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Verification</span>
-              </button>
-            </div>
-
-            {/* GROUP: FINANCE */}
-            <div className="space-y-1">
-              <div className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-                FINANCE
-              </div>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/payments');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <FileText className="w-4 h-4 text-slate-400" />
-                <span>Invoices</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/payments');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <CreditCard className="w-4 h-4 text-blue-400" />
-                <span>Payments</span>
-              </button>
-            </div>
-
-            {/* GROUP: SYSTEM */}
-            <div className="space-y-1">
-              <div className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-                SYSTEM
-              </div>
-              <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Bell className="w-4 h-4 text-slate-400" />
-                <span>Notifications</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/settings');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Zap className="w-4 h-4 text-slate-400" />
-                <span>Integrations</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/settings');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Settings className="w-4 h-4 text-slate-400" />
-                <span>Settings</span>
-              </button>
-            </div>
-          </div>
+          <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">Dashboard</h1>
         </div>
-
-        {/* Sidebar Footer Info */}
-        <div className="p-3 border-t border-[#26344B] text-[10px] text-slate-500 flex items-center justify-between">
-          <span>DevFlow Sandbox v2.4 {isMockData ? '(Demo)' : ''}</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-        </div>
-      </aside>
-
-      {/* Mobile Backdrop */}
-      {mobileSidebarOpen && (
-        <div
-          onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-        />
-      )}
-
-      {/* 2. MAIN CONTENT VIEWPORT */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#080D18]">
-        {/* TOP HEADER */}
-        <header className="h-14 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0">
-          {/* Header Left */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D]"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">Dashboard</h1>
-          </div>
 
           {/* Header Right */}
           <div className="flex items-center gap-3 sm:gap-4">
@@ -372,19 +203,84 @@ export const DashboardPage: React.FC = () => {
               )}
             </div>
 
-            {/* User Profile */}
-            <div
-              onClick={() => navigate('/settings')}
-              className="flex items-center gap-2.5 pl-2 border-l border-[#26344B] cursor-pointer hover:opacity-90 transition-opacity"
-            >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-sm">
-                AM
+            {/* User Profile with Dropdown */}
+            <div ref={userMenuRef} className="relative pl-2 border-l border-[#26344B]">
+              <div
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                <div
+                  className={`w-8 h-8 rounded-lg ${
+                    isClientRole
+                      ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+                      : 'bg-gradient-to-tr from-purple-600 to-indigo-400'
+                  } text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-xs`}
+                >
+                  {initials}
+                </div>
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="text-xs font-semibold text-white leading-tight">{displayName}</span>
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded-full border ${
+                        isClientRole
+                          ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
+                          : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                      }`}
+                    >
+                      {roleBadgeLabel}
+                    </span>
+                  </div>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </div>
-              <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-semibold text-white leading-tight">Alex Morgan</span>
-                <span className="text-[10px] text-slate-400">Project Administrator</span>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3.5 py-2 border-b border-[#26344B]/70">
+                    <p className="font-bold text-white truncate">{displayName}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{user?.email || 'user@devflow.io'}</p>
+                    <span
+                      className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1.5 border ${
+                        isClientRole
+                          ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
+                          : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                      }`}
+                    >
+                      {isClientRole ? (
+                        <BriefcaseBusiness className="w-2.5 h-2.5" />
+                      ) : (
+                        <Code2 className="w-2.5 h-2.5" />
+                      )}
+                      <span>{roleBadgeLabel} Account</span>
+                    </span>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        navigate('/settings');
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-slate-300 hover:text-white hover:bg-[#1B2A47] transition-colors"
+                    >
+                      Account Settings
+                    </button>
+                  </div>
+                  <div className="border-t border-[#26344B]/70 pt-1">
+                    <button
+                      onClick={async () => {
+                        setUserMenuOpen(false);
+                        await logout();
+                        navigate('/login');
+                      }}
+                      className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-400 hover:bg-rose-500/10 transition-colors text-left"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -396,14 +292,22 @@ export const DashboardPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  Welcome back, {userName}
+                  Welcome back, {firstName}
                 </h2>
-                <span className="text-[10px] font-mono font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full">
-                  DEMO MODE
+                <span
+                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                    isClientRole
+                      ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
+                      : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                  }`}
+                >
+                  {roleBadgeLabel.toUpperCase()}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                Project Administrator &bull; Northstar Digital Studio &bull; Real-time telemetry and milestone intelligence.
+                {isClientRole
+                  ? `${user?.organization || 'Meridian Labs'} \u2022 Milestone approvals, AST proof audits and PayPal invoice release.`
+                  : `${user?.organization || 'Northstar Digital Studio'} \u2022 Real-time telemetry, commit proofs and milestone intelligence.`}
               </p>
             </div>
             <button
@@ -770,7 +674,6 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
         </main>
-      </div>
 
       {/* NEW PROJECT MODAL */}
       {isNewProjectModalOpen && (

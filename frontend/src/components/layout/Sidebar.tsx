@@ -1,229 +1,321 @@
-import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { cn } from '@/utils/cn';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { DevFlowLogo, ThemeToggle } from '@/components/common';
 import {
   LayoutDashboard,
   FolderGit2,
   CheckCircle2,
-  GitBranch,
   Sparkles,
-  CreditCard,
+  FileCode,
+  ShieldCheck,
   FileText,
-  Link2,
+  CreditCard,
   Bell,
+  Zap,
   Settings,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
   X,
-  ExternalLink,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  LogOut,
+  BriefcaseBusiness,
+  Code2,
 } from 'lucide-react';
-import { Badge, DevFlowLogo } from '@/components/common';
 
-export interface SidebarProps {
-  isMobileOpen: boolean;
-  onMobileClose: () => void;
-  onOpenCommandPalette?: () => void;
-}
+export const Sidebar: React.FC = () => {
+  const {
+    isSidebarCollapsed,
+    toggleSidebar,
+    isMobileOpen,
+    closeMobileSidebar,
+  } = useSidebar();
+  const { user, role, logout } = useAuth();
 
-interface NavItem {
-  name: string;
-  to: string;
-  icon: React.ElementType;
-  badge?: string;
-  badgeVariant?: 'neutral' | 'ai' | 'paypal' | 'success' | 'lavender' | 'mint' | 'powderBlue';
-}
-
-const navItems: NavItem[] = [
-  { name: 'Overview', to: '/dashboard', icon: LayoutDashboard },
-  { name: 'Projects', to: '/projects', icon: FolderGit2, badge: '2', badgeVariant: 'neutral' },
-  { name: 'Milestones', to: '/milestones', icon: CheckCircle2, badge: '4', badgeVariant: 'neutral' },
-  { name: 'GitHub Evidence', to: '/evidence', icon: GitBranch },
-  { name: 'AI Verification', to: '/verification', icon: Sparkles, badge: '94%', badgeVariant: 'lavender' },
-  { name: 'Invoices', to: '/invoices', icon: FileText, badge: 'Active', badgeVariant: 'powderBlue' },
-  { name: 'Payments', to: '/payments', icon: CreditCard },
-  { name: 'Integrations', to: '/integrations', icon: Link2 },
-  { name: 'Notifications', to: '/notifications', icon: Bell },
-  { name: 'Settings', to: '/settings', icon: Settings },
-];
-
-export const Sidebar: React.FC<SidebarProps> = ({
-  isMobileOpen,
-  onMobileClose,
-  onOpenCommandPalette,
-}) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const renderContent = () => (
-    <div className="flex flex-col h-full bg-white text-[#25263A] border-r border-[#E9EAF2] select-none">
-      {/* Brand & Logo Header */}
-      <div
-        className={cn(
-          'h-16 flex items-center px-4 border-b border-[#E9EAF2] transition-all duration-200',
-          isCollapsed ? 'justify-center' : 'justify-between'
-        )}
-      >
-        <a
-          href="#/"
-          className="flex items-center gap-3 overflow-hidden group"
-          title="Return to Landing Page"
-        >
-          {isCollapsed ? (
-            <DevFlowLogo variant="icon" size="sm" />
-          ) : (
-            <DevFlowLogo variant="horizontal" theme="dark" size="sm" />
-          )}
-        </a>
+  const handleNavigate = (path: string) => {
+    closeMobileSidebar();
+    navigate(path);
+  };
 
-        {/* Desktop Collapse Toggle */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden lg:flex p-1.5 rounded-lg text-[#777B91] hover:text-[#25263A] hover:bg-[#F1F3FA] transition-colors"
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+  const handleLogout = async () => {
+    closeMobileSidebar();
+    await logout();
+    navigate('/login');
+  };
 
-        {/* Mobile Close Button */}
-        <button
-          onClick={onMobileClose}
-          className="lg:hidden p-2 rounded-lg text-[#777B91] hover:text-[#25263A] hover:bg-[#F1F3FA] transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-          aria-label="Close navigation"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+  const userName = user?.name || 'Alex Morgan';
+  const initials = userName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'AM';
 
-      {/* Navigation Links */}
-      <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-        <div className={cn('px-2.5 mb-2', isCollapsed && 'sr-only')}>
-          <span className="text-[11px] font-semibold text-[#9D9EAF] uppercase tracking-wider">
-            Workspace
-          </span>
-        </div>
+  const isActive = (path: string): boolean => {
+    const current = location.pathname;
+    if (path === '/dashboard') return current === '/dashboard' || current === '/';
+    if (path === '/projects') return current.startsWith('/projects');
+    if (path === '/milestones') return current.startsWith('/milestones') || current === '/milestone-verification';
+    if (path === '/agents') return current === '/agents';
+    if (path === '/evidence') return current.startsWith('/evidence');
+    if (path === '/verification') return current === '/verification';
+    if (path === '/invoices') return current === '/invoices';
+    if (path === '/payments') return current === '/payments';
+    if (path === '/notifications') return current === '/notifications';
+    if (path === '/integrations') return current === '/integrations';
+    if (path === '/settings') return current === '/settings';
+    return current === path;
+  };
 
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.to;
-
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => onMobileClose()}
-              className={cn(
-                'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                isActive
-                  ? 'bg-[#EFF6FF] text-[#1D4ED8] shadow-xs'
-                  : 'text-[#777B91] hover:bg-[#F7F8FC] hover:text-[#25263A]',
-                isCollapsed && 'justify-center px-2'
-              )}
-              title={isCollapsed ? item.name : undefined}
-            >
-              <Icon
-                className={cn(
-                  'w-4 h-4 shrink-0 transition-colors',
-                  isActive ? 'text-[#1D4ED8]' : 'text-[#777B91] group-hover:text-[#25263A]'
-                )}
-              />
-              {!isCollapsed && (
-                <>
-                  <span className="truncate flex-1">{item.name}</span>
-                  {item.badge && (
-                    <Badge variant={item.badgeVariant || 'neutral'} size="sm">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </>
-              )}
-            </NavLink>
-          );
-        })}
-
-        {/* Quick Command Trigger in Sidebar */}
-        {onOpenCommandPalette && (
-          <div className="pt-3 px-1">
-            <button
-              onClick={onOpenCommandPalette}
-              className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[#777B91] bg-[#F1F3FA] hover:bg-[#E9EAF2] hover:text-[#25263A] transition-colors border border-[#E9EAF2]',
-                isCollapsed && 'justify-center px-2'
-              )}
-              title="Quick Command Palette (Ctrl+K)"
-            >
-              <span className="text-xs font-mono">⌘K</span>
-              {!isCollapsed && <span>Quick Search</span>}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Footer / Status Area */}
-      <div className="p-3 border-t border-[#E9EAF2] bg-[#F8F9FC]/60">
-        {!isCollapsed ? (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs px-1">
-              <span className="flex items-center gap-1.5 font-medium text-[#25263A]">
-                <span className="w-2 h-2 rounded-full bg-[#86DDBB] animate-pulse" />
-                <span>Sandbox Active</span>
-              </span>
-              <span className="text-[11px] text-[#777B91]">v0.1.0</span>
-            </div>
-            <a
-              href="https://github.com/northstar-studio/payment-gateway"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[#777B91] hover:bg-white hover:text-[#25263A] transition-colors border border-transparent hover:border-[#E9EAF2]"
-            >
-              <span>GitHub Repository</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        ) : (
-          <div className="flex justify-center" title="PayPal Sandbox Active">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#86DDBB] animate-pulse" />
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const navGroups = [
+    {
+      title: 'WORKSPACE',
+      items: [
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-[#2563EB]' },
+        { name: 'Projects', path: '/projects', icon: FolderGit2, iconColor: 'text-[#2563EB]' },
+        { name: 'Milestones', path: '/milestones', icon: CheckCircle2, iconColor: 'text-[#2563EB]' },
+      ],
+    },
+    {
+      title: 'INTELLIGENCE',
+      items: [
+        { name: 'AI Agents', path: '/agents', icon: Sparkles, iconColor: 'text-purple-400' },
+        { name: 'Evidence', path: '/evidence', icon: FileCode, iconColor: 'text-slate-400' },
+        { name: 'Verification', path: '/verification', icon: ShieldCheck, iconColor: 'text-emerald-400' },
+      ],
+    },
+    {
+      title: 'FINANCE',
+      items: [
+        { name: 'Invoices', path: '/invoices', icon: FileText, iconColor: 'text-slate-400' },
+        { name: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-blue-400' },
+      ],
+    },
+    {
+      title: 'SYSTEM',
+      items: [
+        { name: 'Notifications', path: '/notifications', icon: Bell, iconColor: 'text-slate-400' },
+        { name: 'Integrations', path: '/integrations', icon: Zap, iconColor: 'text-slate-400' },
+        { name: 'Settings', path: '/settings', icon: Settings, iconColor: 'text-slate-400' },
+      ],
+    },
+  ];
 
   return (
-    <>
-      {/* Desktop Persistent Sidebar */}
-      <aside
-        className={cn(
-          'hidden lg:flex flex-col shrink-0 h-screen sticky top-0 transition-all duration-200 z-30',
-          isCollapsed ? 'w-20' : 'w-64'
-        )}
-      >
-        {renderContent()}
-      </aside>
+    <aside
+      className={`fixed lg:static inset-y-0 left-0 z-50 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
+        isMobileOpen
+          ? 'translate-x-0 w-60'
+          : '-translate-x-full lg:translate-x-0'
+      } ${
+        isSidebarCollapsed
+          ? 'lg:w-16'
+          : 'lg:w-60'
+      }`}
+    >
+      <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
+        {/* Top Branding Section & Global Collapse/Expand Toggle */}
+        <div className="flex items-center justify-between px-1 mb-2">
+          {/* Desktop Collapsed View: Centered Expand Button inside remaining rail */}
+          <div className={`w-full ${isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'} flex-col items-center justify-center gap-2`}>
+            <button
+              onClick={toggleSidebar}
+              className="items-center justify-center w-10 h-10 text-slate-300 hover:text-white rounded-lg hover:bg-[#1B2A47] border border-[#26344B]/70 hover:border-[#2563EB] transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="w-5 h-5 text-slate-300 hover:text-white transition-colors" />
+            </button>
+            <ThemeToggle className="w-10 h-10" />
+          </div>
 
-      {/* Mobile Drawer Navigation */}
-      {isMobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="fixed inset-0 bg-[#25263A]/40 backdrop-blur-xs transition-opacity"
-            onClick={onMobileClose}
-            aria-hidden="true"
-          />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-drawer-elevated transform transition ease-in-out duration-300">
-            {renderContent()}
+          {/* Expanded View (and always full on Mobile) */}
+          <div className={`w-full ${isSidebarCollapsed ? 'flex lg:hidden' : 'flex'} items-center justify-between`}>
+            <div
+              onClick={() => handleNavigate('/')}
+              className="flex items-center gap-2.5 cursor-pointer group"
+              title="Return to Landing Page"
+            >
+              <DevFlowLogo variant="horizontal" theme="auto" size="sm" />
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {/* Global Theme Toggle */}
+              <ThemeToggle className="p-1.5" />
+
+              {/* Desktop Global Sidebar Collapse Toggle */}
+              <button
+                onClick={toggleSidebar}
+                className="hidden lg:flex items-center justify-center p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1B2A47] border border-transparent hover:border-[#26344B] transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+              >
+                <PanelLeftClose className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+              </button>
+
+              {/* Mobile Close Button */}
+              <button
+                onClick={closeMobileSidebar}
+                className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E] transition-colors"
+                aria-label="Close navigation"
+                title="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
-      )}
-    </>
+
+        {/* Navigation Groups */}
+        <div className="space-y-6 text-xs">
+          {navGroups.map((group) => (
+            <div key={group.title} className="space-y-1">
+              <div
+                className={`px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500 ${
+                  isSidebarCollapsed ? 'block lg:hidden' : 'block'
+                }`}
+              >
+                {group.title}
+              </div>
+
+              {group.items.map((item) => {
+                const active = isActive(item.path);
+                const Icon = item.icon;
+
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => handleNavigate(item.path)}
+                    className={`w-full flex items-center ${
+                      isSidebarCollapsed
+                        ? 'gap-2.5 px-3 py-2 lg:justify-center lg:px-0 lg:py-2.5'
+                        : 'gap-2.5 px-3 py-2'
+                    } rounded-lg transition-colors ${
+                      active
+                        ? 'bg-[#1B2A47] text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-white hover:bg-[#152238]'
+                    }`}
+                    title={item.name}
+                  >
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${
+                        active ? item.iconColor : 'text-slate-400'
+                      }`}
+                    />
+                    <span className={isSidebarCollapsed ? 'inline lg:hidden' : 'inline'}>
+                      {item.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* User Session Profile & Logout */}
+      <div className="border-t border-[#26344B] p-2.5 shrink-0 bg-[#0C1424]/60">
+        {isSidebarCollapsed ? (
+          <div className="hidden lg:flex flex-col items-center gap-2">
+            <div
+              className={`w-9 h-9 rounded-lg ${
+                role === 'CLIENT'
+                  ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+                  : 'bg-gradient-to-tr from-purple-600 to-indigo-400'
+              } text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-xs`}
+              title={`${userName} (${role === 'CLIENT' ? 'Client' : 'Developer'})`}
+            >
+              {initials}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-[#1B2A47] rounded-lg transition-colors focus:outline-none"
+              title="Sign Out"
+              aria-label="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : null}
+
+        <div className={isSidebarCollapsed ? 'lg:hidden flex items-center justify-between gap-2' : 'flex items-center justify-between gap-2'}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className={`w-8 h-8 rounded-lg ${
+                role === 'CLIENT'
+                  ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+                  : 'bg-gradient-to-tr from-purple-600 to-indigo-400'
+              } text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B] shadow-xs`}
+            >
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-white truncate leading-tight">
+                {userName}
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span
+                  className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
+                    role === 'CLIENT'
+                      ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
+                      : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                  }`}
+                >
+                  {role === 'CLIENT' ? (
+                    <BriefcaseBusiness className="w-2.5 h-2.5" />
+                  ) : (
+                    <Code2 className="w-2.5 h-2.5" />
+                  )}
+                  <span>{role === 'CLIENT' ? 'Client' : 'Developer'}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-[#1B2A47] rounded-lg transition-colors shrink-0 focus:outline-none"
+            title="Sign Out"
+            aria-label="Sign Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Sidebar Footer Info */}
+      <div
+        className={`p-3 border-t border-[#26344B] text-[10px] text-slate-500 items-center justify-between shrink-0 ${
+          isSidebarCollapsed ? 'flex lg:hidden' : 'flex'
+        }`}
+      >
+        <span>DevFlow Sandbox v2.4 (Demo)</span>
+        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+      </div>
+
+      <div
+        className={`p-3 border-t border-[#26344B] text-[10px] text-slate-500 items-center justify-center shrink-0 ${
+          isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'
+        }`}
+        title="DevFlow Sandbox v2.4 (Demo)"
+      >
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+      </div>
+    </aside>
   );
 };
 
 export const MobileMenuTrigger: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     onClick={onClick}
-    className="lg:hidden p-2 rounded-lg text-[#777B91] hover:text-[#25263A] hover:bg-[#F1F3FA] transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-    aria-label="Open mobile navigation menu"
+    className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D]"
   >
     <Menu className="w-5 h-5" />
   </button>
 );
+
+export default Sidebar;

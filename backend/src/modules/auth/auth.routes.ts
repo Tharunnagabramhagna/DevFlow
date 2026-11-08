@@ -32,6 +32,16 @@ authRouter.post('/reset-password', validateBody(ResetPasswordSchema), (req, res,
 authRouter.get('/github', (req, res, next) => authController.initiateGitHubOAuth(req, res, next));
 authRouter.get('/github/callback', validateQuery(GitHubCallbackQuerySchema), (req, res, next) => authController.handleGitHubCallback(req, res, next));
 
+// Google & Facebook Social OAuth 2.0
+authRouter.get('/oauth/providers', (req, res) => authController.getOAuthProviders(req, res));
+authRouter.get('/oauth/google', (req, res, next) => authController.initiateGoogleOAuth(req, res, next));
+authRouter.post('/oauth/google/initiate', (req, res, next) => authController.initiateGoogleOAuth(req, res, next));
+authRouter.get('/oauth/google/callback', (req, res) => authController.handleGoogleOAuthCallback(req, res));
+authRouter.get('/oauth/facebook', (req, res, next) => authController.initiateFacebookOAuth(req, res, next));
+authRouter.post('/oauth/facebook/initiate', (req, res, next) => authController.initiateFacebookOAuth(req, res, next));
+authRouter.get('/oauth/facebook/callback', (req, res) => authController.handleFacebookOAuthCallback(req, res));
+authRouter.post('/oauth/mock', (req, res, next) => authController.mockSocialAuth(req, res, next));
+
 // OAuth Exchange & Account Linking Flow
 authRouter.post('/oauth/exchange', validateBody(OAuthExchangeSchema), (req, res, next) => authController.exchangeOAuthCode(req, res, next));
 authRouter.get('/oauth/link-account/status', (req, res, next) => authController.getAccountLinkingStatus(req, res, next));

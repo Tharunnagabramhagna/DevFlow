@@ -459,4 +459,185 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
       );
     });
   });
+
+  describe('Google & Facebook Social OAuth with Role Preservation', () => {
+    it('returns provider readiness status for Google and Facebook', () => {
+      const status = authService.getOAuthProvidersStatus();
+      expect(status).toHaveProperty('google');
+      expect(status).toHaveProperty('facebook');
+      expect(typeof status.google.configured).toBe('boolean');
+      expect(typeof status.facebook.configured).toBe('boolean');
+    });
+
+    it('creates new CLIENT user with exchange code when new user authenticates with Google as Client', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'usr-client-new',
+        email: 'client@gmail.com',
+        name: 'Client Google User',
+        role: 'CLIENT',
+        avatarUrl: 'https://google.com/avatar.png',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockPrisma.oAuthExchangeCode.create.mockResolvedValue({ id: 'code-1' });
+
+      const result = await authService.handleSocialUserResolution({
+        provider: 'google',
+        email: 'client@gmail.com',
+        name: 'Client Google User',
+        avatarUrl: 'https://google.com/avatar.png',
+        selectedRole: 'CLIENT',
+        intent: 'signup',
+      });
+
+      expect(result.user.role).toBe('CLIENT');
+      expect(result.exchangeCode).toBeDefined();
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: 'client@gmail.com',
+            role: 'CLIENT',
+          }),
+        })
+      );
+    });
+
+    it('creates new DEVELOPER (FREELANCER) user when authenticating with Facebook as Developer', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'usr-dev-new',
+        email: 'dev@facebook.com',
+        name: 'Developer FB User',
+        role: 'FREELANCER',
+        avatarUrl: 'https://fb.com/avatar.png',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockPrisma.oAuthExchangeCode.create.mockResolvedValue({ id: 'code-2' });
+
+      const result = await authService.handleSocialUserResolution({
+        provider: 'facebook',
+        email: 'dev@facebook.com',
+        name: 'Developer FB User',
+        avatarUrl: 'https://fb.com/avatar.png',
+        selectedRole: 'FREELANCER',
+        intent: 'signup',
+      });
+
+      expect(result.user.role).toBe('FREELANCER');
+      expect(result.exchangeCode).toBeDefined();
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: 'dev@facebook.com',
+            role: 'FREELANCER',
+          }),
+        })
+      );
+    });
+
+    it('authenticates existing user when roles match and updates avatar', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'usr-existing-client',
+        email: 'existing@client.com',
+        name: 'Existing Client',
+        role: 'CLIENT',
+        avatarUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockPrisma.user.update.mockResolvedValue({});
+      mockPrisma.oAuthExchangeCode.create.mockResolvedValue({ id: 'code-3' });
+
+      const result = await authService.handleSocialUserResolution({
+        provider: 'google',
+        email: 'existing@client.com',
+        name: 'Existing Client',
+        avatarUrl: 'https://new-avatar.jpg',
+        selectedRole: 'CLIENT',
+        intent: 'login',
+      });
+
+      expect(result.user.id).toBe('usr-existing-client');
+      expect(result.exchangeCode).toBeDefined();
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'usr-existing-client' },
+          data: { avatarUrl: 'https://new-avatar.jpg' },
+        })
+      );
+    });
+
+    it('strictly prevents role mismatch: Client account attempting social login as Developer', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'usr-client-1',
+        email: 'conflict@example.com',
+        role: 'CLIENT',
+        name: 'Real Client',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await expect(
+        authService.handleSocialUserResolution({
+          provider: 'google',
+          email: 'conflict@example.com',
+          name: 'Real Client',
+          selectedRole: 'FREELANCER',
+          intent: 'login',
+        })
+      ).rejects.toThrow(
+        'Role mismatch: This account is registered as a Client. Please select the Client role option to log in.'
+      );
+    });
+
+    it('strictly prevents role mismatch: Developer account attempting social login as Client', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'usr-dev-1',
+        email: 'conflict@example.com',
+        role: 'FREELANCER',
+        name: 'Real Developer',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await expect(
+        authService.handleSocialUserResolution({
+          provider: 'facebook',
+          email: 'conflict@example.com',
+          name: 'Real Developer',
+          selectedRole: 'CLIENT',
+          intent: 'login',
+        })
+      ).rejects.toThrow(
+        'Role mismatch: This account is registered as a Developer. Please select the Developer role option to log in.'
+      );
+    });
+
+    it('mockSocialAuth successfully creates session for development sandbox verification', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'usr-sandbox-dev',
+        email: 'sandbox@developer.io',
+        name: 'Sandbox Developer',
+        role: 'FREELANCER',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockPrisma.refreshToken.create.mockResolvedValue({ id: 'rt-sandbox' });
+
+      const session = await authService.mockSocialAuth({
+        provider: 'google',
+        email: 'sandbox@developer.io',
+        name: 'Sandbox Developer',
+        selectedRole: 'FREELANCER',
+      });
+
+      expect(session.user.email).toBe('sandbox@developer.io');
+      expect(session.user.role).toBe('FREELANCER');
+      expect(session.accessToken).toBeDefined();
+      expect(session.rawRefreshToken).toBeDefined();
+    });
+  });
 });

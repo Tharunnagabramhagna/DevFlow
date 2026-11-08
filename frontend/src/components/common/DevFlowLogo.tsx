@@ -12,7 +12,7 @@ export interface BrandLogoProps {
 }
 
 export interface BrandWordmarkProps {
-  theme?: 'light' | 'dark';
+  theme?: 'light' | 'dark' | 'auto';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   showTagline?: boolean;
@@ -28,8 +28,8 @@ export interface BrandHeroBannerProps {
 export interface DevFlowLogoProps {
   /** 'icon' = standalone symbol only | 'horizontal' = symbol + wordmark */
   variant?: 'icon' | 'horizontal';
-  /** 'light' = white wordmark (dark backgrounds) | 'dark' = dark wordmark (light backgrounds) */
-  theme?: 'light' | 'dark';
+  /** 'light' = white wordmark (dark backgrounds) | 'dark' = dark wordmark (light backgrounds) | 'auto' = adaptive */
+  theme?: 'light' | 'dark' | 'auto';
   /** Controls overall height */
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   className?: string;
@@ -88,7 +88,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
  * BrandWordmark — High-contrast typography component for the "DevFlow" brand mark.
  */
 export const BrandWordmark: React.FC<BrandWordmarkProps> = ({
-  theme = 'light',
+  theme = 'auto',
   size = 'sm',
   className,
   showTagline = false,
@@ -103,7 +103,11 @@ export const BrandWordmark: React.FC<BrandWordmarkProps> = ({
           className={cn(
             'font-black tracking-tight',
             preset.textClass,
-            theme === 'light' ? 'text-white' : 'text-slate-900'
+            theme === 'dark'
+              ? 'text-slate-900'
+              : theme === 'light'
+                ? 'text-white'
+                : 'text-slate-900 dark:text-white'
           )}
         >
           Dev<span className="text-[#0070BA] dark:text-[#38BDF8]">Flow</span>
@@ -152,7 +156,7 @@ export const BrandHeroBanner: React.FC<BrandHeroBannerProps> = ({
  */
 export const DevFlowLogo: React.FC<DevFlowLogoProps> = ({
   variant = 'horizontal',
-  theme = 'light',
+  theme = 'auto',
   size = 'sm',
   className,
   showTagline = false,

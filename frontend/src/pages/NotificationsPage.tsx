@@ -1,25 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { DevFlowLogo } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  CheckCircle2,
-  CreditCard,
-  Bot,
-  Link2,
-  Bell,
+              Bell,
   Settings,
-  X,
-  Menu,
+    Menu,
   Mail,
   MessageSquare,
   Smartphone,
   ExternalLink,
   CheckCheck,
   Flag,
-  RotateCw,
-} from 'lucide-react';
+  } from 'lucide-react';
 
 // GitHub SVG Logo Icon
 const GitHubLogo: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
@@ -90,13 +82,13 @@ export const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Navigation & UI States
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { openMobileSidebar } = useSidebar();
   const [activeTab, setActiveTab] = useState<'All' | 'Unread' | 'Projects' | 'AI Activity' | 'Payments'>('All');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // Toast feedback
-  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' } | null>(null);
+  const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' } | null>(null);
 
   const showToast = (title: string, desc: string, type: 'success' | 'info' = 'success') => {
     setToastMessage({ title, desc, type });
@@ -266,236 +258,8 @@ export const NotificationsPage: React.FC = () => {
     showToast('All Notifications Marked Read', `${unreadCount} notification(s) marked as read.`, 'success');
   };
 
-  // Reset demo notifications
-  const handleResetDemo = () => {
-    setNotifications([
-      {
-        id: 'notif-1',
-        type: 'ai',
-        category: 'AI Activity',
-        title: 'AI Milestone Analysis Completed',
-        description: 'Analysis of Milestone: Sprint 8 Backend API complete.',
-        project: 'Alpha v1.2',
-        projectBadgeColor: 'amber',
-        timestamp: '5 mins ago',
-        read: false,
-        actions: {
-          primaryText: 'View Analysis',
-          primaryAction: () => navigate('/milestone-verification'),
-        },
-      },
-      {
-        id: 'notif-2',
-        type: 'paypal',
-        category: 'Payments',
-        title: 'PayPal Payment Verified',
-        description: 'Invoice INV-2026-004 ($8,000.00) verified as paid.',
-        project: 'Delta Platform',
-        projectBadgeColor: 'blue',
-        timestamp: '10 mins ago',
-        read: false,
-        actions: {
-          primaryText: 'View Invoice',
-          primaryAction: () => navigate('/invoices'),
-          secondaryText: 'View Payment',
-          secondaryAction: () => navigate('/payments'),
-        },
-      },
-      {
-        id: 'notif-3',
-        type: 'github',
-        category: 'Projects',
-        title: 'GitHub Pull Request Detected',
-        description: 'PR #102 created for Apollo Mobile repository.',
-        project: 'Apollo Mobile',
-        projectBadgeColor: 'amber',
-        timestamp: '1 hour ago',
-        read: true,
-        linkText: 'Included text link to PR repository(Project:ApolloMobile)',
-        linkRoute: '/evidence',
-      },
-      {
-        id: 'notif-4',
-        type: 'milestone',
-        category: 'Projects',
-        title: 'Milestone Awaiting Review',
-        description: 'Milestone: Gamma v2.1 Alpha ready for final approval.',
-        project: 'Gamma Analytics',
-        projectBadgeColor: 'slate',
-        timestamp: '2 hours ago',
-        read: true,
-        actions: {
-          primaryText: 'Review Milestone',
-          primaryAction: () => navigate('/milestones'),
-        },
-      },
-    ]);
-    showToast('Feed Reset', 'Sample demo notifications restored.', 'info');
-  };
-
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F1F5F9] font-sans antialiased overflow-hidden select-none">
-      {/* Toast Notification Alert */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-[#172235] border border-[#293B55] shadow-2xl text-xs animate-in fade-in slide-in-from-top duration-200">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              toastMessage.type === 'success' ? 'bg-[#35C987]' : 'bg-[#2879E8]'
-            }`}
-          />
-          <div>
-            <div className="font-bold text-[#F1F5F9]">{toastMessage.title}</div>
-            <div className="text-[#AAB6C8] text-[11px]">{toastMessage.desc}</div>
-          </div>
-        </div>
-      )}
-
-      {/* 1. SIDEBAR (Matching reference: Dashboard, Projects, Milestones, Payments, AI Agents, Integrations, Notifications active) */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101A2D] border-r border-[#1E2D44] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
-          {/* Logo Header */}
-          <div className="flex items-center justify-between px-3">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-[#AAB6C8] hover:text-white rounded-lg hover:bg-[#1E2E48]"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Items Matching Reference */}
-          <div className="space-y-1 text-xs">
-            {/* Dashboard */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/dashboard');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Dashboard</span>
-            </button>
-
-            {/* Projects */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/projects');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <FolderGit2 className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Projects</span>
-            </button>
-
-            {/* Milestones */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/milestones');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Milestones</span>
-            </button>
-
-            {/* Payments */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/payments');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <CreditCard className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Payments</span>
-            </button>
-
-            {/* AI Agents */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/verification');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <Bot className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">AI Agents</span>
-            </button>
-
-            {/* Integrations */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/integrations');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <Link2 className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Integrations</span>
-            </button>
-
-            {/* Notifications (ACTIVE ITEM - Blue highlighted navigation state matching reference) */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/notifications');
-              }}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-[#2879E8] bg-[#2879E8]/10 text-white shadow-sm font-semibold transition-all"
-            >
-              <div className="flex items-center gap-2.5">
-                <Bell className="w-4 h-4 text-[#2879E8]" />
-                <span className="text-[#F1F5F9]">Notifications</span>
-              </div>
-              {unreadCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#2879E8] text-white">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="p-3 border-t border-[#1E2D44] text-[11px] text-[#AAB6C8] flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#35C987] animate-pulse" />
-            DevFlow System
-          </span>
-          <button
-            onClick={handleResetDemo}
-            className="hover:text-white transition-colors"
-            title="Reset demo notifications"
-          >
-            <RotateCw className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Backdrop */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* 2. MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* Scrollable Page Content */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
           <div className="max-w-[1240px] mx-auto space-y-6">
@@ -504,7 +268,7 @@ export const NotificationsPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setMobileSidebarOpen(true)}
+                    onClick={openMobileSidebar}
                     className="lg:hidden p-1.5 -ml-1 text-[#AAB6C8] hover:text-white rounded-lg hover:bg-[#172235]"
                     aria-label="Toggle navigation menu"
                   >
@@ -931,6 +695,5 @@ export const NotificationsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };

@@ -9,3 +9,5 @@ export * from './Toast';
 export * from './Table';
 export * from './CommandPalette';
 export * from './DevFlowLogo';
+export * from './ThemeToggle';
+export * from './SocialAuthButtons';

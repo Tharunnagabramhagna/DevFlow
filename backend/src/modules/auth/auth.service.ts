@@ -733,6 +733,360 @@ export class AuthService {
     });
   }
 
+  /**
+   * Returns provider configuration readiness status for Google and Facebook OAuth.
+   */
+  getOAuthProvidersStatus(): {
+    google: { configured: boolean; clientIdPrefix?: string };
+    facebook: { configured: boolean; appIdPrefix?: string };
+  } {
+    return {
+      google: {
+        configured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+        clientIdPrefix: env.GOOGLE_CLIENT_ID ? `${env.GOOGLE_CLIENT_ID.substring(0, 10)}...` : undefined,
+      },
+      facebook: {
+        configured: Boolean(env.FACEBOOK_APP_ID && env.FACEBOOK_APP_SECRET),
+        appIdPrefix: env.FACEBOOK_APP_ID ? `${env.FACEBOOK_APP_ID.substring(0, 6)}...` : undefined,
+      },
+    };
+  }
+
+  /**
+   * Initiates Google or Facebook OAuth flow with cryptographic role preservation.
+   */
+  async initiateSocialOAuth(params: {
+    provider: 'google' | 'facebook';
+    role: Role;
+    intent: 'login' | 'signup';
+    callbackUrl?: string;
+  }): Promise<{ authUrl: string; rawState: string }> {
+    const isGoogle = params.provider === 'google';
+
+    if (isGoogle) {
+      if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+        throw new BadRequestError(
+          'Google OAuth is not configured on this server. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in backend/.env.',
+          undefined,
+          'GOOGLE_OAUTH_NOT_CONFIGURED'
+        );
+      }
+    } else {
+      if (!env.FACEBOOK_APP_ID || !env.FACEBOOK_APP_SECRET) {
+        throw new BadRequestError(
+          'Facebook OAuth is not configured on this server. Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in backend/.env.',
+          undefined,
+          'FACEBOOK_OAUTH_NOT_CONFIGURED'
+        );
+      }
+    }
+
+    // Embed metadata securely into the state's encrypted verifier payload
+    const metadata = JSON.stringify({
+      provider: params.provider,
+      role: params.role,
+      intent: params.intent,
+      createdAt: Date.now(),
+    });
+
+    const { rawState } = await this.createOAuthState(metadata);
+
+    let authUrl = '';
+
+    if (isGoogle) {
+      const redirectUri =
+        params.callbackUrl ||
+        env.GOOGLE_CALLBACK_URL ||
+        `http://localhost:3001/api/auth/oauth/google/callback`;
+      const query = new URLSearchParams({
+        client_id: env.GOOGLE_CLIENT_ID!,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope: 'openid email profile',
+        state: rawState,
+        access_type: 'offline',
+        prompt: 'select_account',
+      });
+      authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${query.toString()}`;
+    } else {
+      const redirectUri =
+        params.callbackUrl ||
+        env.FACEBOOK_CALLBACK_URL ||
+        `http://localhost:3001/api/auth/oauth/facebook/callback`;
+      const query = new URLSearchParams({
+        client_id: env.FACEBOOK_APP_ID!,
+        redirect_uri: redirectUri,
+        state: rawState,
+        scope: 'email,public_profile',
+        response_type: 'code',
+      });
+      authUrl = `https://www.facebook.com/v19.0/dialog/oauth?${query.toString()}`;
+    }
+
+    return { authUrl, rawState };
+  }
+
+  /**
+   * Resolves social OAuth user identity against database with strict role verification.
+   */
+  async handleSocialUserResolution(params: {
+    provider: 'google' | 'facebook';
+    email: string;
+    name: string;
+    avatarUrl?: string | null;
+    selectedRole: Role;
+    intent: 'login' | 'signup';
+  }): Promise<{ exchangeCode: string; user: SanitizedUser }> {
+    const normalizedEmail = params.email.toLowerCase().trim();
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (existingUser) {
+      // STRICT ROLE VALIDATION: Cross-role social login is strictly blocked!
+      if (existingUser.role !== params.selectedRole) {
+        const expectedRoleLabel = existingUser.role === 'CLIENT' ? 'Client' : 'Developer';
+        throw new ConflictError(
+          `Role mismatch: This account is registered as a ${expectedRoleLabel}. Please select the ${expectedRoleLabel} role option to log in.`
+        );
+      }
+
+      // If user exists and roles match, update avatar if missing
+      if (!existingUser.avatarUrl && params.avatarUrl) {
+        await this.prisma.user.update({
+          where: { id: existingUser.id },
+          data: { avatarUrl: params.avatarUrl },
+        });
+      }
+
+      const exchangeCode = await this.createOAuthExchangeCode(existingUser.id);
+      return {
+        exchangeCode,
+        user: sanitizeUser(existingUser),
+      };
+    }
+
+    // New user provisioning: create account with the preserved selectedRole
+    const newUser = await this.prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        name: params.name || (params.selectedRole === 'CLIENT' ? 'Client User' : 'Developer User'),
+        role: params.selectedRole,
+        avatarUrl: params.avatarUrl || null,
+      },
+    });
+
+    const exchangeCode = await this.createOAuthExchangeCode(newUser.id);
+    return {
+      exchangeCode,
+      user: sanitizeUser(newUser),
+    };
+  }
+
+  /**
+   * Handles Google OAuth callback code exchange and profile retrieval.
+   */
+  async handleGoogleOAuthCallback(params: {
+    code: string;
+    state: string;
+    rawCookieState?: string;
+    callbackUrl?: string;
+  }): Promise<{ exchangeCode: string; user: SanitizedUser }> {
+    const decryptedState = await this.validateOAuthState(params.state, params.rawCookieState);
+    if (!decryptedState) {
+      throw new UnauthorizedError('Invalid or expired OAuth state metadata');
+    }
+
+    let metadata: { provider: string; role: Role; intent: 'login' | 'signup' };
+    try {
+      metadata = JSON.parse(decryptedState);
+    } catch {
+      throw new UnauthorizedError('Corrupt OAuth state payload');
+    }
+
+    const redirectUri =
+      params.callbackUrl ||
+      env.GOOGLE_CALLBACK_URL ||
+      `http://localhost:3001/api/auth/oauth/google/callback`;
+
+    // Exchange code with Google
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: params.code,
+        client_id: env.GOOGLE_CLIENT_ID || '',
+        client_secret: env.GOOGLE_CLIENT_SECRET || '',
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      const errBody = await tokenRes.text().catch(() => '');
+      throw new UnauthorizedError(`Failed to exchange authorization code with Google: ${errBody}`);
+    }
+
+    const tokenData = (await tokenRes.json()) as { access_token: string };
+    const accessToken = tokenData.access_token;
+
+    // Fetch verified profile from Google UserInfo endpoint
+    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!profileRes.ok) {
+      throw new UnauthorizedError('Failed to fetch verified user profile from Google');
+    }
+
+    const profile = (await profileRes.json()) as {
+      email?: string;
+      name?: string;
+      picture?: string;
+    };
+
+    if (!profile.email) {
+      throw new BadRequestError('Google did not return a verified email address');
+    }
+
+    return this.handleSocialUserResolution({
+      provider: 'google',
+      email: profile.email,
+      name: profile.name || 'Google User',
+      avatarUrl: profile.picture || null,
+      selectedRole: metadata.role,
+      intent: metadata.intent,
+    });
+  }
+
+  /**
+   * Handles Facebook OAuth callback code exchange and profile retrieval.
+   */
+  async handleFacebookOAuthCallback(params: {
+    code: string;
+    state: string;
+    rawCookieState?: string;
+    callbackUrl?: string;
+  }): Promise<{ exchangeCode: string; user: SanitizedUser }> {
+    const decryptedState = await this.validateOAuthState(params.state, params.rawCookieState);
+    if (!decryptedState) {
+      throw new UnauthorizedError('Invalid or expired OAuth state metadata');
+    }
+
+    let metadata: { provider: string; role: Role; intent: 'login' | 'signup' };
+    try {
+      metadata = JSON.parse(decryptedState);
+    } catch {
+      throw new UnauthorizedError('Corrupt OAuth state payload');
+    }
+
+    const redirectUri =
+      params.callbackUrl ||
+      env.FACEBOOK_CALLBACK_URL ||
+      `http://localhost:3001/api/auth/oauth/facebook/callback`;
+
+    // Exchange code with Facebook Graph API
+    const tokenQuery = new URLSearchParams({
+      client_id: env.FACEBOOK_APP_ID || '',
+      client_secret: env.FACEBOOK_APP_SECRET || '',
+      redirect_uri: redirectUri,
+      code: params.code,
+    });
+
+    const tokenRes = await fetch(
+      `https://graph.facebook.com/v19.0/oauth/access_token?${tokenQuery.toString()}`
+    );
+    if (!tokenRes.ok) {
+      const errBody = await tokenRes.text().catch(() => '');
+      throw new UnauthorizedError(`Failed to exchange authorization code with Facebook: ${errBody}`);
+    }
+
+    const tokenData = (await tokenRes.json()) as { access_token: string };
+    const accessToken = tokenData.access_token;
+
+    // Fetch user profile from Facebook Graph API
+    const profileRes = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`
+    );
+
+    if (!profileRes.ok) {
+      throw new UnauthorizedError('Failed to retrieve user profile from Facebook');
+    }
+
+    const profile = (await profileRes.json()) as {
+      email?: string;
+      name?: string;
+      picture?: { data?: { url?: string } };
+    };
+
+    if (!profile.email) {
+      throw new BadRequestError(
+        'Facebook did not return a verified email address. Please ensure email permissions are granted, or sign up with email and password.'
+      );
+    }
+
+    return this.handleSocialUserResolution({
+      provider: 'facebook',
+      email: profile.email,
+      name: profile.name || 'Facebook User',
+      avatarUrl: profile.picture?.data?.url || null,
+      selectedRole: metadata.role,
+      intent: metadata.intent,
+    });
+  }
+
+  /**
+   * Sandbox mock social auth for hackathon verification when OAuth credentials are unset.
+   */
+  async mockSocialAuth(params: {
+    provider: 'google' | 'facebook';
+    email: string;
+    name: string;
+    selectedRole: Role;
+    avatarUrl?: string;
+  }): Promise<{ user: SanitizedUser; accessToken: string; rawRefreshToken: string }> {
+    const normalizedEmail = params.email.toLowerCase().trim();
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (existingUser) {
+      if (existingUser.role !== params.selectedRole) {
+        const expectedRoleLabel = existingUser.role === 'CLIENT' ? 'Client' : 'Developer';
+        throw new ConflictError(
+          `Role mismatch: This account is registered as a ${expectedRoleLabel}. Please select the ${expectedRoleLabel} role option to log in.`
+        );
+      }
+
+      const accessToken = this.generateAccessToken(existingUser);
+      const rawRefreshToken = await this.issueRefreshToken(existingUser.id);
+      return {
+        user: sanitizeUser(existingUser),
+        accessToken,
+        rawRefreshToken,
+      };
+    }
+
+    const newUser = await this.prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        name: params.name,
+        role: params.selectedRole,
+        avatarUrl: params.avatarUrl || null,
+      },
+    });
+
+    const accessToken = this.generateAccessToken(newUser);
+    const rawRefreshToken = await this.issueRefreshToken(newUser.id);
+    return {
+      user: sanitizeUser(newUser),
+      accessToken,
+      rawRefreshToken,
+    };
+  }
+
   // Helper: Generates 15-minute in-memory JWT access token
   private generateAccessToken(user: User): string {
     return jwt.sign(

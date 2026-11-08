@@ -220,6 +220,152 @@ export class AuthController {
       next(err);
     }
   }
+
+  getOAuthProviders(_req: Request, res: Response): void {
+    const status = authService.getOAuthProvidersStatus();
+    res.status(200).json(status);
+  }
+
+  async initiateGoogleOAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const role = (req.body.role || req.query.role || 'FREELANCER') as 'CLIENT' | 'FREELANCER';
+      const intent = (req.body.intent || req.query.intent || 'login') as 'login' | 'signup';
+      const callbackUrl = req.body.callbackUrl || (req.query.callbackUrl as string) || undefined;
+
+      const { authUrl, rawState } = await authService.initiateSocialOAuth({
+        provider: 'google',
+        role,
+        intent,
+        callbackUrl,
+      });
+
+      const isProd = env.NODE_ENV === 'production';
+      res.cookie('devflow_oauth_state', rawState, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'lax',
+        maxAge: 10 * 60 * 1000,
+        path: '/',
+      });
+
+      if (req.headers.accept?.includes('application/json') || req.body.role || req.query.json === 'true') {
+        res.status(200).json({ authUrl, rawState });
+      } else {
+        res.redirect(authUrl);
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async handleGoogleOAuthCallback(req: Request, res: Response): Promise<void> {
+    const clientBase = env.CLIENT_URL || 'http://localhost:5173';
+    try {
+      if (req.query.error) {
+        const errorMsg = req.query.error_description || 'Google authentication was cancelled by user.';
+        return res.redirect(`${clientBase}/#/login?error=${encodeURIComponent(String(errorMsg))}`);
+      }
+
+      const code = String(req.query.code || '');
+      const state = String(req.query.state || '');
+      const rawCookieState = req.cookies.devflow_oauth_state;
+
+      const { exchangeCode } = await authService.handleGoogleOAuthCallback({
+        code,
+        state,
+        rawCookieState,
+      });
+
+      res.clearCookie('devflow_oauth_state', { path: '/' });
+      res.redirect(`${clientBase}/#/oauth/callback?code=${exchangeCode}`);
+    } catch (err: any) {
+      res.clearCookie('devflow_oauth_state', { path: '/' });
+      res.redirect(
+        `${clientBase}/#/login?error=${encodeURIComponent(
+          err.message || 'Google authentication failed'
+        )}`
+      );
+    }
+  }
+
+  async initiateFacebookOAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const role = (req.body.role || req.query.role || 'FREELANCER') as 'CLIENT' | 'FREELANCER';
+      const intent = (req.body.intent || req.query.intent || 'login') as 'login' | 'signup';
+      const callbackUrl = req.body.callbackUrl || (req.query.callbackUrl as string) || undefined;
+
+      const { authUrl, rawState } = await authService.initiateSocialOAuth({
+        provider: 'facebook',
+        role,
+        intent,
+        callbackUrl,
+      });
+
+      const isProd = env.NODE_ENV === 'production';
+      res.cookie('devflow_oauth_state', rawState, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'lax',
+        maxAge: 10 * 60 * 1000,
+        path: '/',
+      });
+
+      if (req.headers.accept?.includes('application/json') || req.body.role || req.query.json === 'true') {
+        res.status(200).json({ authUrl, rawState });
+      } else {
+        res.redirect(authUrl);
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async handleFacebookOAuthCallback(req: Request, res: Response): Promise<void> {
+    const clientBase = env.CLIENT_URL || 'http://localhost:5173';
+    try {
+      if (req.query.error) {
+        const errorMsg = req.query.error_description || 'Facebook authentication was cancelled by user.';
+        return res.redirect(`${clientBase}/#/login?error=${encodeURIComponent(String(errorMsg))}`);
+      }
+
+      const code = String(req.query.code || '');
+      const state = String(req.query.state || '');
+      const rawCookieState = req.cookies.devflow_oauth_state;
+
+      const { exchangeCode } = await authService.handleFacebookOAuthCallback({
+        code,
+        state,
+        rawCookieState,
+      });
+
+      res.clearCookie('devflow_oauth_state', { path: '/' });
+      res.redirect(`${clientBase}/#/oauth/callback?code=${exchangeCode}`);
+    } catch (err: any) {
+      res.clearCookie('devflow_oauth_state', { path: '/' });
+      res.redirect(
+        `${clientBase}/#/login?error=${encodeURIComponent(
+          err.message || 'Facebook authentication failed'
+        )}`
+      );
+    }
+  }
+
+  async mockSocialAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { user, accessToken, rawRefreshToken } = await authService.mockSocialAuth({
+        provider: req.body.provider,
+        email: req.body.email,
+        name: req.body.name,
+        selectedRole: req.body.role,
+        avatarUrl: req.body.avatarUrl,
+      });
+
+      res.cookie(getRefreshTokenCookieName(), rawRefreshToken, getRefreshCookieOptions());
+      res.status(200).json({ user, accessToken });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export const authController = new AuthController();

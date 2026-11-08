@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DevFlowLogo, BrandHeroBanner } from '@/components/common';
+import { DevFlowLogo, BrandHeroBanner, ThemeToggle } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -69,7 +69,7 @@ export const LandingPage: React.FC = () => {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
-            <DevFlowLogo variant="horizontal" theme="light" size="md" />
+            <DevFlowLogo variant="horizontal" theme="auto" size="md" />
           </div>
 
           {/* Desktop Nav Links */}
@@ -100,30 +100,40 @@ export const LandingPage: React.FC = () => {
             </button>
           </nav>
 
-          {/* Desktop Right CTA */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Desktop Right CTA: Theme Toggle + Login + Sign Up + Get Started */}
+          <div className="hidden md:flex items-center gap-2.5">
+            <ThemeToggle />
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/login')}
               className="text-xs font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5"
             >
               Login
             </button>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/signup')}
+              className="text-xs font-semibold text-slate-200 hover:text-white bg-[#1A2538] hover:bg-[#22324C] border border-[#2B3E5C] px-3.5 py-1.5 rounded-full transition-all"
+            >
+              Sign Up
+            </button>
+            <button
+              onClick={() => navigate('/signup')}
               className="text-xs font-semibold bg-[#0070BA] hover:bg-[#005ea6] text-white px-4 py-2 rounded-full transition-all shadow-md shadow-[#0070BA]/25 hover:shadow-[#0070BA]/40"
             >
               Get Started
             </button>
           </div>
 
-          {/* Mobile Menu Hamburger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E293B] transition-colors"
-            aria-label="Toggle navigation"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile Right Actions: Theme Toggle + Menu Hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E293B] transition-colors"
+              aria-label="Toggle navigation"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Dropdown Menu */}
@@ -154,14 +164,23 @@ export const LandingPage: React.FC = () => {
               About
             </button>
             <div className="pt-2 flex flex-col gap-2 border-t border-[#1E293B]">
+              <div className="pb-1">
+                <ThemeToggle variant="labeled" />
+              </div>
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/login')}
                 className="w-full text-center py-2 text-xs font-semibold text-slate-300 bg-[#1E293B] rounded-lg"
               >
                 Login
               </button>
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/signup')}
+                className="w-full text-center py-2 text-xs font-semibold text-slate-200 border border-[#334155] bg-[#141E33] rounded-lg"
+              >
+                Sign Up
+              </button>
+              <button
+                onClick={() => navigate('/signup')}
                 className="w-full text-center py-2 text-xs font-semibold text-white bg-[#0070BA] rounded-lg"
               >
                 Get Started
@@ -201,7 +220,7 @@ export const LandingPage: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/signup')}
                   className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-lg shadow-[#0070BA]/30 hover:shadow-[#0070BA]/50 flex items-center gap-2"
                 >
                   Get Started
@@ -996,7 +1015,7 @@ export const LandingPage: React.FC = () => {
 
             <div className="relative z-10 pt-2">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/signup')}
                 className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-sm sm:text-base font-semibold px-8 py-3.5 rounded-full transition-all shadow-xl shadow-[#0070BA]/35 hover:shadow-[#0070BA]/55 inline-flex items-center gap-2"
               >
                 <span>Start with DevFlow</span>
@@ -1014,7 +1033,7 @@ export const LandingPage: React.FC = () => {
             {/* Brand Column */}
             <div className="col-span-2 space-y-3">
               <div className="flex items-center gap-2">
-                <DevFlowLogo variant="horizontal" theme="light" size="sm" />
+                <DevFlowLogo variant="horizontal" theme="auto" size="sm" />
               </div>
               <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
                 From Code to Cash. Autonomous milestone intelligence and PayPal payment platform for modern engineering teams.

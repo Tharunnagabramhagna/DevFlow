@@ -1,24 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { DevFlowLogo } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  CheckCircle2,
-  CreditCard,
-  Settings,
-  Bell,
+            Bell,
   X,
   Menu,
   Search,
   ChevronDown,
   Check,
   RotateCw,
-  FileText,
-  Sparkles,
-  GitBranch,
-  ShieldCheck,
-  ExternalLink,
+          ExternalLink,
   Download,
   Clock,
 } from 'lucide-react';
@@ -67,7 +58,7 @@ export const PaymentActivityPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Navigation & Layout States
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { openMobileSidebar } = useSidebar();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(true);
 
@@ -88,7 +79,7 @@ export const PaymentActivityPage: React.FC = () => {
   const [hoveredMonth, setHoveredMonth] = useState<MonthlyDataPoint | null>(null);
 
   // Toast Notification
-  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ title, desc, type });
@@ -260,7 +251,7 @@ export const PaymentActivityPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#080D18] text-white">
+      <div className="flex-1 flex items-center justify-center bg-[#080D18] text-white">
         <div className="flex items-center gap-2.5 text-xs text-slate-400 font-mono">
           <RotateCw className="w-4 h-4 text-[#2563EB] animate-spin" />
           <span>Synchronizing Payment Telemetry...</span>
@@ -297,216 +288,12 @@ export const PaymentActivityPage: React.FC = () => {
   const areaD = `${pathD} L ${points[points.length - 1].x} ${chartHeight - paddingBottom} L ${points[0].x} ${chartHeight - paddingBottom} Z`;
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
-      {/* Toast Notification Banner */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl text-xs text-white animate-in fade-in slide-in-from-top duration-200">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <div>
-            <div className="font-semibold text-white">{toastMessage.title}</div>
-            <div className="text-[11px] text-slate-400">{toastMessage.desc}</div>
-          </div>
-        </div>
-      )}
-
-      {/* 1. FIXED DARK NAVY SIDEBAR */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out shrink-0 ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
-          {/* Brand Logo Header */}
-          <div className="flex items-center justify-between px-3">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
-            </div>
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Links */}
-          <div className="space-y-6 text-xs">
-            {/* WORKSPACE */}
-            <div className="space-y-1">
-              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
-                Workspace
-              </span>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/dashboard');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                <span>Dashboard</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/projects');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <FolderGit2 className="w-4 h-4 text-slate-400" />
-                <span>Projects</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/milestones');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <CheckCircle2 className="w-4 h-4 text-slate-400" />
-                <span>Milestones</span>
-              </button>
-            </div>
-
-            {/* INTELLIGENCE */}
-            <div className="space-y-1">
-              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
-                Intelligence
-              </span>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/verification');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>AI Agents</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/evidence');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <GitBranch className="w-4 h-4 text-slate-400" />
-                <span>Evidence</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/verification');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Verification</span>
-              </button>
-            </div>
-
-            {/* FINANCE */}
-            <div className="space-y-1">
-              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
-                Finance
-              </span>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/invoices');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <FileText className="w-4 h-4 text-slate-400" />
-                <span>Invoices</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/payments');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1B2A47] text-white font-semibold shadow-xs"
-              >
-                <CreditCard className="w-4 h-4 text-[#2563EB]" />
-                <span>Payments &amp; Activity</span>
-              </button>
-            </div>
-
-            {/* SYSTEM */}
-            <div className="space-y-1">
-              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
-                System
-              </span>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/integrations');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Settings className="w-4 h-4 text-slate-400" />
-                <span>Integrations</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/notifications');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Bell className="w-4 h-4 text-slate-400" />
-                <span>Notifications</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileSidebarOpen(false);
-                  navigate('/settings');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-              >
-                <Settings className="w-4 h-4 text-slate-400" />
-                <span>Settings</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Footer User Profile */}
-        <div
-          onClick={() => navigate('/settings')}
-          className="p-3 border-t border-[#26344B] flex items-center justify-between cursor-pointer hover:bg-[#152238] transition-colors"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B]">
-              AM
-            </div>
-            <div className="flex flex-col text-left truncate">
-              <span className="text-xs font-semibold text-white truncate leading-tight">Alex Morgan</span>
-              <span className="text-[10px] text-slate-400">Project Administrator</span>
-            </div>
-          </div>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-        </div>
-      </aside>
-
-      {/* Mobile Sidebar Backdrop */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* 2. MAIN CONTENT VIEWPORT */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* PAGE HEADER */}
         <header className="h-14 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setMobileSidebarOpen(true)}
+              onClick={openMobileSidebar}
               className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D]"
             >
               <Menu className="w-5 h-5" />
@@ -860,7 +647,6 @@ export const PaymentActivityPage: React.FC = () => {
             )}
           </div>
         </main>
-      </div>
     </div>
   );
 };

@@ -47,3 +47,22 @@ export const AccountLinkingOtpSchema = z.object({
 
 export type AccountLinkingOtpDto = z.infer<typeof AccountLinkingOtpSchema>;
 
+export const SocialOAuthInitiateSchema = z.object({
+  role: z.enum(['FREELANCER', 'CLIENT']).default('FREELANCER'),
+  intent: z.enum(['login', 'signup']).default('login'),
+  callbackUrl: z.string().url().optional(),
+});
+
+export type SocialOAuthInitiateDto = z.infer<typeof SocialOAuthInitiateSchema>;
+
+export const MockSocialAuthSchema = z.object({
+  provider: z.enum(['google', 'facebook']),
+  email: z.string().email('Invalid email address format').toLowerCase().trim(),
+  name: z.string().min(1, 'Name is required'),
+  role: z.enum(['FREELANCER', 'CLIENT']),
+  avatarUrl: z.string().url().optional(),
+});
+
+export type MockSocialAuthDto = z.infer<typeof MockSocialAuthSchema>;
+
+

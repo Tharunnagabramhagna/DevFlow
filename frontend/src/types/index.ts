@@ -197,3 +197,22 @@ export interface DeveloperTelemetry {
   totalProjects: number;
   currency: string;
 }
+
+// User & Role-Based Authentication Types
+export type UserRole = 'CLIENT' | 'DEVELOPER' | 'ADMIN';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  organization?: string;
+  createdAt?: string;
+}
+
+export interface AuthSession {
+  user: AuthUser;
+  accessToken: string;
+}

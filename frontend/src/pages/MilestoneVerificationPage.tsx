@@ -1,16 +1,8 @@
-import { DevFlowLogo } from '@/components/common';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  FileCode,
-  ShieldCheck,
-  Users,
-  Settings,
-  Bell,
-  User,
-  ChevronDown,
+                  ChevronDown,
   ChevronUp,
   CheckCircle2,
   AlertTriangle,
@@ -96,8 +88,7 @@ export const MilestoneVerificationPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Navigation & Layout States
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { openMobileSidebar } = useSidebar();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // Milestone Selector States
@@ -126,7 +117,7 @@ export const MilestoneVerificationPage: React.FC = () => {
   const [reviewState, setReviewState] = useState<'pending' | 'approved' | 'evidence_requested' | 'further_review'>('pending');
 
   // Toast Notification
-  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ title, desc, type });
@@ -324,7 +315,7 @@ export const MilestoneVerificationPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#080D18] text-white">
+      <div className="flex-1 flex items-center justify-center bg-[#080D18] text-white">
         <div className="flex items-center gap-2.5 text-xs text-slate-400 font-mono">
           <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] animate-ping" />
           <span>Loading Milestone Verification Engine...</span>
@@ -334,157 +325,13 @@ export const MilestoneVerificationPage: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-[#111C30] border border-[#2563EB]/40 shadow-xl shadow-blue-900/30 text-xs animate-in fade-in slide-in-from-top duration-200">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-400'
-                : toastMessage.type === 'error'
-                ? 'bg-rose-400'
-                : 'bg-blue-400'
-            }`}
-          />
-          <div>
-            <div className="font-bold text-white">{toastMessage.title}</div>
-            <div className="text-slate-400 text-[11px]">{toastMessage.desc}</div>
-          </div>
-        </div>
-      )}
-
-      {/* 1. FIXED DARK ENTERPRISE SIDEBAR (Matching reference: Dashboard, Projects, Repositories, Verification, Team) */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
-          {/* Logo Header */}
-          <div className="flex items-center justify-between px-3">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Items */}
-          <div className="space-y-1.5 text-xs">
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/dashboard');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4 text-slate-400" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/projects');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <FolderGit2 className="w-4 h-4 text-slate-400" />
-              <span>Projects</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/evidence');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <FileCode className="w-4 h-4 text-slate-400" />
-              <span>Repositories</span>
-            </button>
-
-            {/* Verification Active Pill */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/milestone-verification');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#2563EB] text-white font-semibold shadow-md shadow-blue-600/30"
-            >
-              <ShieldCheck className="w-4 h-4 text-white" />
-              <span>Verification</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                showToast('Team Roster', 'Viewing 4 active contributors for Project Alpha.', 'info');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <Users className="w-4 h-4 text-slate-400" />
-              <span>Team</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Sidebar Bottom Nav (settings, Notifications, User) */}
-        <div className="p-3 border-t border-[#26344B] space-y-1 text-xs">
-          <button
-            onClick={() => navigate('/settings')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-          >
-            <Settings className="w-4 h-4 text-slate-400" />
-            <span>settings</span>
-          </button>
-
-          <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <Bell className="w-4 h-4 text-slate-400" />
-              <span>Notifications</span>
-            </div>
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-          </button>
-
-          <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-          >
-            <User className="w-4 h-4 text-slate-400" />
-            <span>User</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Sidebar Backdrop */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* 2. MAIN CONTENT VIEWPORT */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 1: PAGE HEADER & MILESTONE SELECTOR */}
         <header className="px-4 sm:px-8 pt-5 pb-4 border-b border-[#26344B] bg-[#0A101D] shrink-0 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setMobileSidebarOpen(true)}
+                onClick={openMobileSidebar}
                 className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg"
               >
                 <Menu className="w-5 h-5" />
@@ -1011,7 +858,6 @@ export const MilestoneVerificationPage: React.FC = () => {
             </div>
           </div>
         </main>
-      </div>
 
       {/* CONFIRMATION MODAL 1: APPROVE FOR CLIENT REVIEW */}
       {approveModalOpen && (

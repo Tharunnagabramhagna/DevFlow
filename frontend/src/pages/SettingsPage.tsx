@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { DevFlowLogo } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  CheckCircle2,
-  CreditCard,
-  Bot,
-  Link2,
-  Bell,
+              Bell,
   Settings,
   X,
   Menu,
@@ -141,9 +136,17 @@ export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Navigation & Layout states
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { openMobileSidebar } = useSidebar();
+  const { theme: currentTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<'Profile' | 'Account' | 'Security' | 'Notifications' | 'Integrations' | 'AI Preferences'>('Profile');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  useEffect(() => {
+    setAccount((prev) => ({
+      ...prev,
+      theme: currentTheme === 'light' ? 'Light' : 'Dark',
+    }));
+  }, [currentTheme]);
+
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // Modals
@@ -155,7 +158,7 @@ export const SettingsPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Toast feedback
-  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ title, desc, type });
@@ -331,176 +334,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F1F5F9] font-sans antialiased overflow-hidden select-none">
-      {/* Toast Notification Alert */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-[#172235] border border-[#293B55] shadow-2xl text-xs animate-in fade-in slide-in-from-top duration-200">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              toastMessage.type === 'success'
-                ? 'bg-[#35C987]'
-                : toastMessage.type === 'error'
-                ? 'bg-rose-500'
-                : 'bg-[#2879E8]'
-            }`}
-          />
-          <div>
-            <div className="font-bold text-[#F1F5F9]">{toastMessage.title}</div>
-            <div className="text-[#AAB6C8] text-[11px]">{toastMessage.desc}</div>
-          </div>
-        </div>
-      )}
-
-      {/* 1. SIDEBAR (Matching reference: Dashboard, Projects, Milestones, Payments, AI Agents, Integrations, Notifications, Settings active) */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101A2D] border-r border-[#1E2D44] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
-          {/* Logo Header */}
-          <div className="flex items-center justify-between px-3">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-[#AAB6C8] hover:text-white rounded-lg hover:bg-[#1E2E48]"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Items Matching Reference */}
-          <div className="space-y-1 text-xs">
-            {/* Dashboard */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/dashboard');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Dashboard</span>
-            </button>
-
-            {/* Projects */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/projects');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <FolderGit2 className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Projects</span>
-            </button>
-
-            {/* Milestones */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/milestones');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Milestones</span>
-            </button>
-
-            {/* Payments */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/payments');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <CreditCard className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Payments</span>
-            </button>
-
-            {/* AI Agents */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/verification');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <Bot className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">AI Agents</span>
-            </button>
-
-            {/* Integrations */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/integrations');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <Link2 className="w-4 h-4 text-[#AAB6C8]" />
-              <span className="font-medium">Integrations</span>
-            </button>
-
-            {/* Notifications */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/notifications');
-              }}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#172235] transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <Bell className="w-4 h-4 text-[#AAB6C8]" />
-                <span className="font-medium">Notifications</span>
-              </div>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#172235] border border-[#293B55] text-[#AAB6C8]">
-                2
-              </span>
-            </button>
-
-            {/* Settings (ACTIVE ITEM - Blue highlighted container matching reference) */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/settings');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#2879E8] bg-[#2879E8]/10 text-white shadow-sm font-semibold transition-all"
-            >
-              <Settings className="w-4 h-4 text-[#2879E8]" />
-              <span className="text-[#F1F5F9]">Settings</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="p-3 border-t border-[#1E2D44] text-[11px] text-[#AAB6C8] flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#35C987] animate-pulse" />
-            Config Verified
-          </span>
-          <span className="text-[10px] font-mono text-slate-500">v1.2.0</span>
-        </div>
-      </aside>
-
-      {/* Mobile Backdrop */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* 2. MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* Scrollable Page Content */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
           <div className="max-w-[1240px] mx-auto space-y-6">
@@ -509,7 +343,7 @@ export const SettingsPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setMobileSidebarOpen(true)}
+                    onClick={openMobileSidebar}
                     className="lg:hidden p-1.5 -ml-1 text-[#AAB6C8] hover:text-white rounded-lg hover:bg-[#172235]"
                     aria-label="Toggle navigation menu"
                   >
@@ -1236,7 +1070,11 @@ export const SettingsPage: React.FC = () => {
                     <label className="block text-[11px] text-[#AAB6C8] mb-1">Theme</label>
                     <select
                       value={account.theme}
-                      onChange={(e) => setAccount({ ...account, theme: e.target.value })}
+                      onChange={(e) => {
+                        const newTheme = e.target.value;
+                        setAccount({ ...account, theme: newTheme });
+                        setTheme(newTheme.toLowerCase() as 'dark' | 'light');
+                      }}
                       className="w-full px-3 py-1.5 rounded-lg bg-[#101A2D] border border-[#293B55] text-xs text-white focus:outline-hidden"
                     >
                       {THEME_OPTIONS.map((opt) => (
@@ -1279,12 +1117,10 @@ export const SettingsPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
-
+      </div>
+      </div>
       {/* MODAL 1: CHANGE PASSWORD (Demo Simulated With Clear Disclosures) */}
       {passwordModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">

@@ -25,6 +25,16 @@ export const CombinedEnvSchema = z.object({
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   PAYPAL_BASE_URL: z.string().url().default('https://api-m.sandbox.paypal.com'),
   PAYPAL_WEBHOOK_ID: z.string().optional(),
+
+  // Google OAuth Configuration
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().url().optional(),
+
+  // Facebook OAuth Configuration
+  FACEBOOK_APP_ID: z.string().optional(),
+  FACEBOOK_APP_SECRET: z.string().optional(),
+  FACEBOOK_CALLBACK_URL: z.string().url().optional(),
 }).superRefine((parsed, ctx) => {
   // Reject insecure JWT defaults
   const blacklist = ['secret', 'password', 'change_me', 'super_secret'];

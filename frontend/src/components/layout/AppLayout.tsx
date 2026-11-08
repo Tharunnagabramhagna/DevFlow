@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { Header } from './Header';
+import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { CommandPalette } from '@/components/common';
 
-export const AppLayout: React.FC = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+const AppLayoutInner: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const { isMobileOpen, closeMobileSidebar } = useSidebar();
+  const location = useLocation();
 
   // Global Ctrl+K / Cmd+K shortcut listener
   useEffect(() => {
@@ -21,30 +22,26 @@ export const AppLayout: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Close mobile sidebar whenever route changes
+  useEffect(() => {
+    closeMobileSidebar();
+  }, [location.pathname, closeMobileSidebar]);
+
   return (
-    <div className="flex h-screen bg-[#F8F9FC] overflow-hidden font-sans antialiased text-[#25263A]">
-      {/* Sidebar navigation */}
-      <Sidebar
-        isMobileOpen={isMobileMenuOpen}
-        onMobileClose={() => setIsMobileMenuOpen(false)}
-        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-      />
+    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
+      {/* 1. SINGLE SHARED COLLAPSIBLE DARK NAVY SIDEBAR */}
+      <Sidebar />
 
-      {/* Main Content Viewport */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Header */}
-        <Header
-          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+      {/* 2. SHARED MOBILE BACKDROP OVERLAY */}
+      {isMobileOpen && (
+        <div
+          onClick={closeMobileSidebar}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
         />
+      )}
 
-        {/* Scrollable Page Outlet */}
-        <main className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 bg-[#F8F9FC]">
-          <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      {/* 3. MAIN CONTENT VIEWPORT (RENDERED BY OUTLET) */}
+      <Outlet />
 
       {/* Global Command Palette */}
       <CommandPalette
@@ -54,3 +51,13 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
+
+export const AppLayout: React.FC = () => {
+  return (
+    <SidebarProvider>
+      <AppLayoutInner />
+    </SidebarProvider>
+  );
+};
+
+export default AppLayout;

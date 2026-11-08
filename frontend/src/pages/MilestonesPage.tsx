@@ -1,16 +1,12 @@
-import { DevFlowLogo } from '@/components/common';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
 import { devFlowApi } from '@/services/api';
 import { Milestone, Requirement, Project } from '@/types';
 import {
-  LayoutDashboard,
-  FolderGit2,
   CheckCircle2,
   Sparkles,
-  CreditCard,
   Bell,
-  Settings,
   Search,
   Plus,
   ChevronDown,
@@ -20,11 +16,9 @@ import {
   ChevronsLeft,
   ChevronsRight,
   X,
-  FileText,
   Check,
   AlertTriangle,
   Menu,
-  Users,
   Flag,
   Clock,
   MessageSquare,
@@ -88,22 +82,12 @@ export const MilestonesPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   // Mobile sidebar state
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { openMobileSidebar } = useSidebar();
 
   // Notifications Popover
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // User Profile
-  const [userName] = useState<string>(() => {
-    try {
-      const raw = localStorage.getItem('devflow_user_profile_preferences');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.name) return parsed.name;
-      }
-    } catch {}
-    return 'Alex Morgan';
-  });
 
   useEffect(() => {
     loadMilestonesData();
@@ -299,7 +283,7 @@ export const MilestonesPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#080D18] text-white">
+      <div className="flex-1 flex items-center justify-center bg-[#080D18] text-white">
         <div className="flex items-center gap-2.5 text-xs text-slate-400 font-mono">
           <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] animate-ping" />
           <span>Loading DevFlow Milestones...</span>
@@ -309,181 +293,7 @@ export const MilestonesPage: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
-      {/* 1. FIXED DARK NAVY SIDEBAR */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-5">
-          {/* Logo Header */}
-          <div className="flex items-center justify-between px-3">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <DevFlowLogo variant="horizontal" theme="light" size="sm" />
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Items Matching Reference */}
-          <div className="space-y-1 text-xs">
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/dashboard');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4 text-slate-400" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/projects');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <FolderGit2 className="w-4 h-4 text-slate-400" />
-              <span>Projects</span>
-            </button>
-
-            {/* Active Route: Milestones */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/milestones');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1B2A47] text-[#38BDF8] font-semibold border-l-2 border-[#2563EB]"
-            >
-              <Flag className="w-4 h-4 text-[#38BDF8]" />
-              <span className="text-white">Milestones</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/payments');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <FileText className="w-4 h-4 text-slate-400" />
-              <span>Invoices</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/verification');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <span>AI Agents</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/settings');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
-            >
-              <Settings className="w-4 h-4 text-slate-400" />
-              <span>Settings</span>
-            </button>
-          </div>
-
-          {/* Sub-section: Workspace */}
-          <div className="pt-2 border-t border-[#26344B]/70 space-y-1.5 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3">
-              Workspace
-            </span>
-            <div className="flex items-center gap-2 px-3 py-1 text-slate-300">
-              <span className="w-5 h-5 rounded bg-slate-800 text-[10px] font-bold text-slate-300 flex items-center justify-center">
-                AC
-              </span>
-              <span>Acme Dev Team</span>
-            </div>
-          </div>
-
-          {/* Sub-section: Quick Actions */}
-          <div className="pt-2 border-t border-[#26344B]/70 space-y-1 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3">
-              Quick Actions
-            </span>
-            <button
-              onClick={() => setIsNewModalOpen(true)}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5 text-blue-400" />
-              <span>Create Milestone</span>
-            </button>
-            <button
-              onClick={() => navigate('/payments')}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg transition-colors"
-            >
-              <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
-              <span>New Invoice</span>
-            </button>
-          </div>
-
-          {/* Sub-section: Your Team */}
-          <div className="pt-2 border-t border-[#26344B]/70 space-y-1 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3">
-              Your Team
-            </span>
-            <div className="flex items-center gap-2 px-3 py-1 text-slate-400">
-              <Users className="w-3.5 h-3.5" />
-              <span>4 Active Members</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Footer User Profile */}
-        <div className="p-3 border-t border-[#26344B] space-y-2">
-          <div
-            onClick={() => navigate('/settings')}
-            className="flex items-center justify-between cursor-pointer hover:bg-[#152238] p-1.5 rounded-lg transition-colors"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B]">
-                AM
-              </div>
-              <div className="truncate">
-                <div className="text-xs font-semibold text-white truncate leading-tight">{userName}</div>
-                <div className="text-[10px] text-slate-400 truncate">Project Administrator</div>
-              </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-slate-500 px-1 pt-1 font-mono">
-            <span>Last Synced: 2m ago</span>
-            <span className="w-12 h-1 bg-emerald-500 rounded-full" />
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile Backdrop */}
-      {mobileSidebarOpen && (
-        <div
-          onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-        />
-      )}
-
-      {/* 2. MAIN CONTENT VIEWPORT */}
+    
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#080D18]">
         {/* Toast Alert Banner */}
         {toastMessage && (
@@ -507,7 +317,7 @@ export const MilestonesPage: React.FC = () => {
             <div className="space-y-0.5">
               <div className="flex items-center gap-2.5">
                 <button
-                  onClick={() => setMobileSidebarOpen(true)}
+                  onClick={openMobileSidebar}
                   className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D]"
                 >
                   <Menu className="w-5 h-5" />
@@ -988,7 +798,6 @@ export const MilestonesPage: React.FC = () => {
             </div>
           </div>
         </main>
-      </div>
 
       {/* CREATE NEW MILESTONE MODAL */}
       {isNewModalOpen && (

@@ -164,3 +164,203 @@
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   DevFlow Light Mode Theme Specifications
+   ========================================================================== */
+
+/* 1. Base Theme Configuration */
+html.dark {
+  color-scheme: dark;
+  background-color: #080D18;
+  color: #F8FAFC;
+}
+
+html.dark body {
+  background-color: #080D18;
+  color: #F8FAFC;
+}
+
+html.light {
+  color-scheme: light;
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
+html.light body {
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
+/* 2. Page & Shell Backgrounds */
+html.light .bg-\[\#080D18\],
+html.light .bg-\[\#080D1B\],
+html.light .bg-\[\#060A15\],
+html.light .bg-\[\#0A0F1D\],
+html.light .bg-\[\#0A101D\] {
+  background-color: #F8FAFC !important;
+}
+
+/* 3. Headers & Top Bars */
+html.light header,
+html.light header.bg-\[\#080D18\]\/90,
+html.light header.bg-\[\#080D1B\]\/85,
+html.light header.bg-\[\#0A101D\],
+html.light header.bg-\[\#0A101D\]\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+/* 4. Left Sidebar & Rails */
+html.light aside,
+html.light aside.bg-\[\#101A2D\] {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light aside button:hover:not([class*="bg-"]) {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+html.light aside button.bg-\[\#1B2A47\] {
+  background-color: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border-color: #BFDBFE !important;
+}
+
+/* 5. Cards, Panels, Modals, Drawers & Popovers */
+html.light .bg-\[\#111C30\],
+html.light .bg-\[\#101A2D\],
+html.light .bg-\[\#0C1524\],
+html.light .bg-\[\#172235\],
+html.light .bg-\[\#0D1526\],
+html.light .bg-\[\#0F172A\]:not(button):not(a):not([class*="text-"]):not(.hero-banner) {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* 6. Subtle Surfaces, Pill Tags, Table Headers, Inset Boxes */
+html.light .bg-\[\#152238\],
+html.light .bg-\[\#1E2E4E\],
+html.light .bg-\[\#16233B\],
+html.light .bg-\[\#1B2A47\]:not(aside button) {
+  background-color: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* 7. Hover States */
+html.light .hover\:bg-\[\#152238\]:hover,
+html.light .hover\:bg-\[\#1B2A47\]:hover,
+html.light .hover\:bg-\[\#1E2E4E\]:hover,
+html.light .hover\:bg-\[\#1E293B\]:hover,
+html.light .hover\:bg-\[\#101A2D\]:hover {
+  background-color: #F1F5F9 !important;
+}
+
+/* 8. Standard Structural Borders */
+html.light .border-\[\#26344B\],
+html.light .border-\[\#293B55\],
+html.light .border-\[\#1E293B\],
+html.light .border-\[\#1E2D44\],
+html.light .border-\[\#1E293B\]\/60,
+html.light .border-\[\#26344B\]\/70,
+html.light .border-\[\#26344B\]\/40,
+html.light .border-\[\#26344B\]\/60,
+html.light .border-\[\#293B55\]\/70 {
+  border-color: #E2E8F0 !important;
+}
+
+/* 9. Typography & High-Contrast Text */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light h5,
+html.light h6 {
+  color: #0F172A !important;
+}
+
+html.light .text-white:not(button[class*="bg-blue"]):not(button[class*="bg-[#2563EB]"]):not(button[class*="bg-[#0070BA]"]):not(button[class*="bg-[#2879E8]"]):not(button.bg-blue-600):not(button.bg-blue-500):not(a[class*="bg-[#0070BA]"]):not(a[class*="bg-[#2563EB]"]):not([class*="bg-gradient-to-tr"]):not([class*="bg-emerald-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]) {
+  color: #0F172A !important;
+}
+
+/* Secondary muted text */
+html.light .text-slate-400,
+html.light .text-slate-300:not(button[class*="bg-blue"]):not(a[class*="bg-blue"]),
+html.light .text-slate-500,
+html.light .text-\[\#AAB6C8\],
+html.light .text-\[\#777B91\] {
+  color: #64748B !important;
+}
+
+/* 10. Form Controls, Search Bars, Selects & Textareas */
+html.light input:not([type="checkbox"]):not([type="radio"]),
+html.light select,
+html.light textarea {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* 11. Modal & Drawer Backdrops */
+html.light .bg-black\/70,
+html.light .bg-black\/60 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+/* 12. Badges & Status Chips in Light Mode */
+html.light .bg-blue-950\/80 {
+  background-color: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+  color: #1D4ED8 !important;
+}
+
+html.light .bg-emerald-950\/80 {
+  background-color: #F0FDF4 !important;
+  border-color: #BBF7D0 !important;
+  color: #15803D !important;
+}
+
+html.light .bg-amber-950\/80 {
+  background-color: #FEFCE8 !important;
+  border-color: #FEF08A !important;
+  color: #A16207 !important;
+}
+
+/* 13. Light-Mode Scrollbars */
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1 !important;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8 !important;
+}
+
+/* 14. Preserve Primary Action Buttons & Avatars */
+html.light button.bg-\[\#2563EB\],
+html.light button.bg-\[\#0070BA\],
+html.light button.bg-\[\#2879E8\],
+html.light button.bg-blue-600,
+html.light button.bg-blue-500,
+html.light a.bg-\[\#0070BA\],
+html.light a.bg-\[\#2563EB\],
+html.light [class*="bg-gradient-to-tr"] {
+  color: #FFFFFF !important;
+}
+
+html.light button.bg-\[\#2563EB\] *,
+html.light button.bg-\[\#0070BA\] *,
+html.light button.bg-\[\#2879E8\] *,
+html.light button.bg-blue-600 *,
+html.light a.bg-\[\#0070BA\] *,
+html.light a.bg-\[\#2563EB\] *,
+html.light [class*="bg-gradient-to-tr"] * {
+  color: #FFFFFF !important;
+}

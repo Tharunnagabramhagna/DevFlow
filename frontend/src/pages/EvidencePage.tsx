@@ -194,7 +194,7 @@ export const EvidencePage: React.FC = () => {
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '12 days ago',
       status: 'Verified',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/commit/8c92a10',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/commit/8c92a10',
       sha: '8c92a10d4812f',
       description: 'Rotate cryptographic refresh tokens and invalidate stale session cookies on logout.',
       changedFilesCount: 4,
@@ -207,12 +207,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-101',
       type: 'PR',
       title: 'PR #102: Implemented Update',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '12 days ago',
       status: 'Pending Review',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/101',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/101',
       sha: '3e41b99a81cc',
       description: 'Incremental bugfixes and UI adjustments for authentication modal transitions.',
       changedFilesCount: 6,
@@ -225,12 +225,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '13 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '7b91d4e231fa',
       description: 'Implement secure OAuth2 login flow with refresh tokens.',
       changedFilesCount: 12,
@@ -243,12 +243,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102-dup1',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '12 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '9f24c01e6a88',
       description: 'Implement secure OAuth2 login flow with refresh tokens (Branch patch).',
       changedFilesCount: 12,
@@ -261,12 +261,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102-v',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow v...',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '13 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '1a54b321c7d0',
       description: 'Integration test suite for OAuth2 authorization code grant.',
       changedFilesCount: 8,
@@ -279,12 +279,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102-dup2',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '13 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '5c20d189ef94',
       description: 'Configuration parameters for GitHub and Google client IDs.',
       changedFilesCount: 3,
@@ -297,12 +297,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102-dup3',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '12 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '4d87e120bc91',
       description: 'Implements rate limiter on auth token exchange routes.',
       changedFilesCount: 5,
@@ -315,12 +315,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102-u',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow u...',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '13 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '6e19f443ad20',
       description: 'User profile mapping for third-party OAuth provider payloads.',
       changedFilesCount: 7,
@@ -333,12 +333,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102-dup4',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '13 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '2b77a904fe11',
       description: 'Added documentation and OpenAPI spec for OAuth routes.',
       changedFilesCount: 2,
@@ -351,12 +351,12 @@ export const EvidencePage: React.FC = () => {
       id: 'pr-102-dup5',
       type: 'PR',
       title: 'PR #102: Implemented OAuth2 flow',
-      contributor: 'Dev Alex',
+      contributor: 'Alex Morgan',
       contributorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
       relatedMilestone: 'Alpha Launch v1.0',
       timestamp: '13 days ago',
       status: 'AI-Matched',
-      sourceUrl: 'https://github.com/Tharunnagabramhagna/DevFlow/pull/102',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway/pull/102',
       sha: '8a12c984de33',
       description: 'End-to-end Cypress test flow verifying login redirect.',
       changedFilesCount: 4,
@@ -558,13 +558,13 @@ export const EvidencePage: React.FC = () => {
             </span>
             <div className="px-3">
               <a
-                href="https://github.com/Tharunnagabramhagna/DevFlow"
+                href="https://github.com/northstar-studio/payment-gateway"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#152238] hover:bg-[#1B2D4F] border border-[#26344B] text-xs text-slate-200 font-medium transition-colors group"
               >
                 <GitHubIcon className="w-4 h-4 text-slate-300 group-hover:text-white" />
-                <span className="truncate">Acme Platform</span>
+                <span className="truncate">Payment Gateway Integration</span>
               </a>
             </div>
           </div>
@@ -575,10 +575,10 @@ export const EvidencePage: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <img
               src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces"
-              alt="Dev Alex"
+              alt="Alex Morgan"
               className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/40"
             />
-            <span className="font-semibold text-slate-200">Dev Alex</span>
+            <span className="font-semibold text-slate-200">Alex Morgan</span>
           </div>
           <button
             onClick={() => navigate('/')}
@@ -702,12 +702,12 @@ export const EvidencePage: React.FC = () => {
                 <div>
                   <span className="text-[11px] text-slate-400 block">Connected Repository</span>
                   <a
-                    href="https://github.com/Tharunnagabramhagna/DevFlow"
+                    href="https://github.com/northstar-studio/payment-gateway"
                     target="_blank"
                     rel="noreferrer"
                     className="font-semibold text-white hover:text-blue-400 transition-colors truncate block"
                   >
-                    Acme-Corp/Acme-Platform
+                    northstar-studio/payment-gateway
                   </a>
                 </div>
                 <div>
@@ -852,7 +852,7 @@ export const EvidencePage: React.FC = () => {
                   className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="All">Contributor: All</option>
-                  <option value="Dev Alex">Dev Alex</option>
+                  <option value="Alex Morgan">Alex Morgan</option>
                   <option value="Contributor">Contributor</option>
                 </select>
               </div>
@@ -1349,7 +1349,7 @@ export const EvidencePage: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-slate-400 text-[11px]">
                   <span>Repository:</span>
-                  <strong className="text-white font-mono">Acme-Corp/Acme-Platform</strong>
+                  <strong className="text-white font-mono">northstar-studio/payment-gateway</strong>
                 </div>
                 <div className="flex justify-between text-slate-400 text-[11px]">
                   <span>Auditor Engine:</span>

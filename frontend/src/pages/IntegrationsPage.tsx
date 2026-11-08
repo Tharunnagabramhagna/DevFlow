@@ -21,6 +21,8 @@ import {
   Brain,
   FileText,
   AlertTriangle,
+  ShieldCheck,
+  Terminal,
 } from 'lucide-react';
 
 // GitHub SVG Logo Icon
@@ -44,7 +46,7 @@ const PayPalLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
     <path
       d="M19.068 7.378c-.783 2.113-2.22 3.613-4.27 4.457-.866.357-1.892.538-3.05.538H9.362a.788.788 0 0 0-.777.66l-.992 5.093a.64.64 0 0 1-.517.596H2.47a.641.641 0 0 1-.633-.74L4.944 3.72"
       fill="#00457C"
-      opacity="0.3"
+      opacity="0.5"
     />
     <path
       d="M9.135 12.373l.865-4.444.027-.142A.789.789 0 0 1 10.804 7.1h5.05c2.02 0 3.513.486 4.212 1.37.562.712.67 1.706.324 2.953-.61 2.19-2.074 3.42-4.137 3.42h-2.126a.788.788 0 0 0-.777.66l-.68 3.49-.135.68h-3.4zm7.68-4.273h-3.93a.473.473 0 0 0-.466.395l-.624 3.204h1.53c1.47 0 2.515-.878 2.952-2.443.207-.743.085-1.156-.462-1.156z"
@@ -79,13 +81,13 @@ export const IntegrationsPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Webhook Event Stream
+  // Webhook Event Stream (Transparent Sandbox Telemetry)
   const webhookEvents = useMemo(() => [
-    { id: 'wh-1', event: 'GitHub push - Delivered (demo)', timestamp: '5 mins ago', status: 'Delivered' },
-    { id: 'wh-2', event: 'PayPal payment - (DEMO STATE)', timestamp: '12 mins ago', status: 'Delivered' },
-    { id: 'wh-3', event: 'GitHub push - Delivered (demo)', timestamp: '24 mins ago', status: 'Delivered' },
-    { id: 'wh-4', event: 'PayPal payment - Sent (demo)', timestamp: '1 hour ago', status: 'Sent' },
-    { id: 'wh-5', event: 'PayPal payment - (DEMO STATE)', timestamp: '3 hours ago', status: 'Delivered' },
+    { id: 'wh-1', event: 'GitHub push (northstar-studio/payment-gateway) - Verified [DEMO]', timestamp: '5 mins ago', status: 'Delivered', httpStatus: '200 OK' },
+    { id: 'wh-2', event: 'PayPal sandbox invoice webhook (INV-2026-0842) - Sample [DEMO]', timestamp: '12 mins ago', status: 'Delivered', httpStatus: '200 OK' },
+    { id: 'wh-3', event: 'GitHub pull_request closed (Milestone #2) - Verified [DEMO]', timestamp: '24 mins ago', status: 'Delivered', httpStatus: '200 OK' },
+    { id: 'wh-4', event: 'PayPal payout notification - Sandbox [DEMO]', timestamp: '1 hour ago', status: 'Sent', httpStatus: '200 OK' },
+    { id: 'wh-5', event: 'AI code verification payload - Complete [DEMO]', timestamp: '3 hours ago', status: 'Delivered', httpStatus: '200 OK' },
   ], []);
 
   const handleDisconnect = () => {
@@ -104,29 +106,29 @@ export const IntegrationsPage: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#F4F6FA] text-[#111827] font-sans antialiased overflow-hidden select-none">
+    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-slate-200 shadow-xl text-xs animate-in fade-in slide-in-from-top duration-200">
+        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl text-xs text-white animate-in fade-in slide-in-from-top duration-200">
           <span
             className={`w-2 h-2 rounded-full ${
               toastMessage.type === 'success'
-                ? 'bg-emerald-500'
+                ? 'bg-emerald-400'
                 : toastMessage.type === 'error'
                 ? 'bg-rose-500'
-                : 'bg-blue-500'
+                : 'bg-blue-400'
             }`}
           />
           <div>
-            <div className="font-bold text-slate-900">{toastMessage.title}</div>
-            <div className="text-slate-500 text-[11px]">{toastMessage.desc}</div>
+            <div className="font-semibold text-white">{toastMessage.title}</div>
+            <div className="text-[11px] text-slate-400">{toastMessage.desc}</div>
           </div>
         </div>
       )}
 
-      {/* 1. FIXED DARK SIDEBAR (Matching reference: Dashboard, Projects, Milestones, Payments, Users, Configurations, Integrations) */}
+      {/* 1. FIXED DARK NAVY SIDEBAR */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101D32] border-r border-[#1B2D4A] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out shrink-0 ${
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -155,7 +157,7 @@ export const IntegrationsPage: React.FC = () => {
                 setMobileSidebarOpen(false);
                 navigate('/dashboard');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
             >
               <LayoutDashboard className="w-4 h-4 text-slate-400" />
               <span>Dashboard</span>
@@ -166,7 +168,7 @@ export const IntegrationsPage: React.FC = () => {
                 setMobileSidebarOpen(false);
                 navigate('/projects');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
             >
               <FolderGit2 className="w-4 h-4 text-slate-400" />
               <span>Projects</span>
@@ -177,7 +179,7 @@ export const IntegrationsPage: React.FC = () => {
                 setMobileSidebarOpen(false);
                 navigate('/milestones');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
             >
               <CheckCircle2 className="w-4 h-4 text-slate-400" />
               <span>Milestones</span>
@@ -188,7 +190,7 @@ export const IntegrationsPage: React.FC = () => {
                 setMobileSidebarOpen(false);
                 navigate('/payments');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
             >
               <CreditCard className="w-4 h-4 text-slate-400" />
               <span>Payments</span>
@@ -197,9 +199,9 @@ export const IntegrationsPage: React.FC = () => {
             <button
               onClick={() => {
                 setMobileSidebarOpen(false);
-                showToast('User Management', 'Viewing workspace administrators.', 'info');
+                showToast('Team Access', 'Northstar Digital Studio project administrators.', 'info');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
             >
               <Users className="w-4 h-4 text-slate-400" />
               <span>Users</span>
@@ -210,19 +212,19 @@ export const IntegrationsPage: React.FC = () => {
                 setMobileSidebarOpen(false);
                 navigate('/settings');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
             >
               <Settings className="w-4 h-4 text-slate-400" />
               <span>Configurations</span>
             </button>
 
-            {/* Integrations Active Pill (Solid Bright Blue with Link Icon) */}
+            {/* Integrations Active Pill (Solid Bright Blue) */}
             <button
               onClick={() => {
                 setMobileSidebarOpen(false);
                 navigate('/integrations');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1683ED] text-white font-semibold shadow-md shadow-blue-600/30"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/30"
             >
               <Link2 className="w-4 h-4 text-white" />
               <span>Integrations</span>
@@ -231,20 +233,20 @@ export const IntegrationsPage: React.FC = () => {
         </div>
 
         {/* Sidebar Bottom Nav (+ Quick-add, Help center) */}
-        <div className="p-3 border-t border-[#1B2D4A] space-y-1 text-xs">
+        <div className="p-3 border-t border-[#26344B] space-y-1 text-xs">
           <button
             onClick={() => setManageModal('github')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-[#152744] transition-colors font-medium"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-[#152238] transition-colors font-medium"
           >
-            <Plus className="w-4 h-4 text-[#1683ED]" />
-            <span>+ Quick-add</span>
+            <Plus className="w-4 h-4 text-blue-400" />
+            <span>+ Quick-add webhook</span>
           </button>
           <button
             onClick={() => showToast('Help Center', 'Developer API & Webhook documentation.', 'info')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
           >
             <HelpCircle className="w-4 h-4 text-slate-400" />
-            <span>Help center</span>
+            <span>Documentation</span>
           </button>
         </div>
       </aside>
@@ -252,28 +254,33 @@ export const IntegrationsPage: React.FC = () => {
       {/* Mobile Sidebar Backdrop */}
       {mobileSidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
           onClick={() => setMobileSidebarOpen(false)}
         />
       )}
 
       {/* 2. MAIN CONTENT VIEWPORT */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* PHASE 4: PAGE HEADER */}
-        <header className="h-16 px-4 sm:px-8 border-b border-[#DCE2EA] bg-white flex items-center justify-between shrink-0">
+        {/* PAGE HEADER */}
+        <header className="h-16 px-4 sm:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#1E2E4E] rounded-lg"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#111827] tracking-tight leading-none">
-                Integrations
-              </h1>
-              <p className="text-xs text-[#64748B] mt-1 hidden sm:block">
-                Connect the tools that power your development and payment workflows.
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+                  Integrations &amp; Webhooks
+                </h1>
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+                  SANDBOX
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1 hidden sm:block">
+                Connect and monitor the services powering code verification, telemetry, and PayPal settlement.
               </p>
             </div>
           </div>
@@ -283,7 +290,7 @@ export const IntegrationsPage: React.FC = () => {
             {/* Settings Gear */}
             <button
               onClick={() => navigate('/settings')}
-              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-2 text-slate-400 hover:text-white hover:bg-[#1E2E4E] rounded-lg transition-colors"
               title="Settings"
             >
               <Settings className="w-4 h-4" />
@@ -293,29 +300,29 @@ export const IntegrationsPage: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg relative transition-colors"
+                className="p-2 text-slate-400 hover:text-white hover:bg-[#1E2E4E] rounded-lg relative transition-colors"
                 title="Notifications"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#080D18]" />
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 z-50 space-y-2 text-xs">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 font-bold text-slate-900">
+                <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 space-y-2 text-xs">
+                  <div className="flex items-center justify-between border-b border-[#26344B] pb-2 font-bold text-white">
                     <span>Integration Telemetry</span>
                     <button
                       onClick={() => setNotificationsOpen(false)}
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-slate-400 hover:text-white"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="p-2 rounded-lg bg-emerald-50 text-[11px] text-emerald-800 border border-emerald-100">
-                    <span className="font-semibold">GitHub Synced:</span> 15 commits verified 5 mins ago.
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-[11px] text-emerald-300 border border-emerald-500/20">
+                    <span className="font-semibold">GitHub Synced:</span> 15 commits verified on northstar-studio/payment-gateway.
                   </div>
-                  <div className="p-2 rounded-lg bg-blue-50 text-[11px] text-blue-800 border border-blue-100">
-                    <span className="font-semibold">PayPal Webhook:</span> Listener healthy and active.
+                  <div className="p-2 rounded-lg bg-blue-500/10 text-[11px] text-blue-300 border border-blue-500/20">
+                    <span className="font-semibold">PayPal Webhook:</span> Sandbox listener active and authenticated.
                   </div>
                 </div>
               )}
@@ -324,13 +331,11 @@ export const IntegrationsPage: React.FC = () => {
             {/* User Profile Avatar */}
             <div
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-1.5 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-[#1E2E4E] transition-colors"
             >
-              <img
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces"
-                alt="Tharun"
-                className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/30"
-              />
+              <div className="w-7 h-7 rounded-full bg-blue-600/20 border border-blue-500/40 text-[11px] font-bold text-blue-400 flex items-center justify-center">
+                AM
+              </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
           </div>
@@ -338,49 +343,62 @@ export const IntegrationsPage: React.FC = () => {
 
         {/* Scrollable Dashboard Body */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-6">
-          {/* PHASE 5: CONNECTED INTEGRATIONS (3 CARDS IN A ROW) */}
+          {/* CONNECTED INTEGRATIONS (3 CARDS IN A ROW) */}
           <div className="space-y-2.5">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              CONNECTED INTEGRATIONS
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                CONNECTED INTEGRATIONS
+              </span>
+              <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                All 3 demo services operational
+              </span>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* CARD 1: GITHUB */}
-              <div className="rounded-xl bg-white border border-[#DCE2EA] p-5 shadow-xs flex flex-col justify-between hover:border-[#1683ED]/50 transition-all">
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-5 shadow-xs flex flex-col justify-between hover:border-blue-500/50 transition-all">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0">
-                      <GitHubLogo className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-[#111827]">GITHUB</h3>
-                      {githubConnected ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E7F7EF] text-[#159B62] border border-[#A8E4C7]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#159B62]" />
-                          Connected
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                          Disconnected
-                        </span>
-                      )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#0D1526] border border-[#26344B] text-white flex items-center justify-center shrink-0">
+                        <GitHubLogo className="w-6 h-6 text-slate-200" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-white">GITHUB</h3>
+                        {githubConnected ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            Connected
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                            Disconnected
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-xs text-[#64748B] space-y-1 pt-1">
+                  <div className="text-xs text-slate-400 space-y-1.5 pt-1">
                     <div>
-                      <span className="font-medium text-slate-700">Repository Access:</span> Full access (demo account)
+                      <span className="font-medium text-slate-300">Repository Access:</span>{' '}
+                      <span className="font-mono text-[11px] text-blue-300">northstar-studio/payment-gateway</span>
                     </div>
                     <div>
-                      <span className="font-medium text-slate-700">Last Synchronisation:</span> 5 mins ago
+                      <span className="font-medium text-slate-300">Last Synchronisation:</span> 5 mins ago
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-300">Monitored Branches:</span>{' '}
+                      <span className="font-mono text-[11px] text-slate-300">main, develop</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 mt-4">
+                <div className="pt-4 border-t border-[#26344B] mt-4">
                   <button
                     onClick={() => setManageModal('github')}
-                    className="w-full py-2 rounded-lg border border-[#DCE2EA] hover:border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors"
+                    className="w-full py-2 rounded-lg border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs font-semibold text-slate-200 transition-colors"
                   >
                     Manage connection
                   </button>
@@ -388,43 +406,45 @@ export const IntegrationsPage: React.FC = () => {
               </div>
 
               {/* CARD 2: PAYPAL */}
-              <div className="rounded-xl bg-white border border-[#DCE2EA] p-5 shadow-xs flex flex-col justify-between hover:border-[#1683ED]/50 transition-all">
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-5 shadow-xs flex flex-col justify-between hover:border-blue-500/50 transition-all">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0">
-                      <PayPalLogo className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-[#111827]">PAYPAL</h3>
-                      {paypalConnected ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#1683ED] border border-blue-200">
-                          Active Sandbox
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                          Disconnected
-                        </span>
-                      )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                        <PayPalLogo className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-white">PAYPAL SANDBOX</h3>
+                        {paypalConnected ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            Active Sandbox
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                            Disconnected
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-xs text-[#64748B] space-y-1 pt-1">
+                  <div className="text-xs text-slate-400 space-y-1.5 pt-1">
                     <div>
-                      <span className="font-medium text-slate-700">Invoice Integration:</span> Enabled
+                      <span className="font-medium text-slate-300">Invoice Integration:</span> Enabled (v2 REST API)
                     </div>
                     <div>
-                      <span className="font-medium text-slate-700">Environment:</span> Production (demo state)
+                      <span className="font-medium text-slate-300">Environment:</span> Developer Sandbox Mode
                     </div>
                     <div>
-                      <span className="font-medium text-slate-700">Connection Status:</span> Connected
+                      <span className="font-medium text-slate-300">Settlement Listener:</span> Verified Webhook
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 mt-4">
+                <div className="pt-4 border-t border-[#26344B] mt-4">
                   <button
                     onClick={() => setManageModal('paypal')}
-                    className="w-full py-2 rounded-lg border border-[#DCE2EA] hover:border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors"
+                    className="w-full py-2 rounded-lg border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs font-semibold text-slate-200 transition-colors"
                   >
                     Manage connection
                   </button>
@@ -432,43 +452,45 @@ export const IntegrationsPage: React.FC = () => {
               </div>
 
               {/* CARD 3: AI PROVIDER */}
-              <div className="rounded-xl bg-white border border-[#DCE2EA] p-5 shadow-xs flex flex-col justify-between hover:border-[#1683ED]/50 transition-all">
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-5 shadow-xs flex flex-col justify-between hover:border-blue-500/50 transition-all">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-[#1683ED] shrink-0">
-                      <Brain className="w-6 h-6 text-[#1683ED]" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-[#111827]">AI PROVIDER</h3>
-                      {aiConnected ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
-                          Active Engine
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                          Disconnected
-                        </span>
-                      )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                        <Brain className="w-6 h-6 text-cyan-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-white">AI PROVIDER</h3>
+                        {aiConnected ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            Active Engine
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                            Disconnected
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-xs text-[#64748B] space-y-1 pt-1">
+                  <div className="text-xs text-slate-400 space-y-1.5 pt-1">
                     <div>
-                      <span className="font-medium text-slate-700">LLM Service:</span> DevFlow AI Engine v1.2
+                      <span className="font-medium text-slate-300">LLM Service:</span> DevFlow AI Engine v1.2
                     </div>
                     <div>
-                      <span className="font-medium text-slate-700">Model:</span> GPT-4o (demo)
+                      <span className="font-medium text-slate-300">Model Policy:</span> Gemini 2.5 Flash + GPT-4o
                     </div>
                     <div>
-                      <span className="font-medium text-slate-700">Connection Status:</span> Active
+                      <span className="font-medium text-slate-300">AST Verification:</span> Strict Syntactic Mode
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 mt-4">
+                <div className="pt-4 border-t border-[#26344B] mt-4">
                   <button
                     onClick={() => setManageModal('ai')}
-                    className="w-full py-2 rounded-lg border border-[#DCE2EA] hover:border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors"
+                    className="w-full py-2 rounded-lg border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs font-semibold text-slate-200 transition-colors"
                   >
                     Manage settings
                   </button>
@@ -477,79 +499,80 @@ export const IntegrationsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* LOWER GRID: INTEGRATION DETAILS & SECURITY (LEFT 6 COLS) + WEBHOOK CONFIGURATION (RIGHT 6 COLS) */}
+          {/* LOWER GRID: INTEGRATION DETAILS & SECURITY + WEBHOOK CONFIGURATION */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* LEFT 6 COLS: INTEGRATION DETAILS & SECURITY */}
             <div className="lg:col-span-6 space-y-6">
               {/* INTEGRATION DETAILS TABLE */}
               <div className="space-y-2.5">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                   INTEGRATION DETAILS
                 </span>
 
-                <div className="rounded-xl bg-white border border-[#DCE2EA] shadow-xs overflow-hidden">
+                <div className="rounded-xl bg-[#111C30] border border-[#26344B] shadow-xs overflow-hidden">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#DCE2EA] text-[11px] text-slate-500 font-semibold bg-slate-50">
-                        <th className="py-2.5 px-4">Permission</th>
-                        <th className="py-2.5 px-4">Account</th>
+                      <tr className="border-b border-[#26344B] text-[11px] text-slate-400 font-semibold bg-[#0D1526]">
+                        <th className="py-2.5 px-4">Service</th>
+                        <th className="py-2.5 px-4">Workspace / Project</th>
                         <th className="py-2.5 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-[#26344B]">
                       {/* Row 1: GITHUB */}
-                      <tr className="hover:bg-slate-50 transition-colors">
+                      <tr className="hover:bg-[#152238]/60 transition-colors">
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2 font-bold text-slate-900">
-                            <GitHubLogo className="w-4 h-4 text-slate-800" />
+                          <div className="flex items-center gap-2 font-bold text-white">
+                            <GitHubLogo className="w-4 h-4 text-slate-300" />
                             <span>GITHUB</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-700 font-medium">Apollo Mobile</td>
+                        <td className="py-3 px-4 text-slate-300 font-mono text-[11px]">northstar-studio/payment-gateway</td>
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => setViewLogsModalOpen(true)}
-                            className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                            className="px-2.5 py-1 rounded bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 border border-[#26344B] text-xs font-semibold inline-flex items-center gap-1 transition-colors"
                           >
-                            <span>= View Logs</span>
+                            <Terminal className="w-3 h-3 text-blue-400" />
+                            <span>View Logs</span>
                           </button>
                         </td>
                       </tr>
 
                       {/* Row 2: PAYPAL */}
-                      <tr className="hover:bg-slate-50 transition-colors">
+                      <tr className="hover:bg-[#152238]/60 transition-colors">
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2 font-bold text-slate-900">
+                          <div className="flex items-center gap-2 font-bold text-white">
                             <PayPalLogo className="w-4 h-4 text-[#0079C1]" />
                             <span>PAYPAL</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-700 font-medium">Alpha Portal</td>
+                        <td className="py-3 px-4 text-slate-300 font-medium">Meridian Labs (Demo Sandbox)</td>
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => setDisconnectItem('PayPal')}
-                            className="px-2.5 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                            className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
                           >
-                            <span>✕ Disconnect</span>
+                            <span>Disconnect</span>
                           </button>
                         </td>
                       </tr>
 
                       {/* Row 3: AI PROVIDER */}
-                      <tr className="hover:bg-slate-50 transition-colors">
+                      <tr className="hover:bg-[#152238]/60 transition-colors">
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2 font-bold text-slate-900">
-                            <Brain className="w-4 h-4 text-[#1683ED]" />
+                          <div className="flex items-center gap-2 font-bold text-white">
+                            <Brain className="w-4 h-4 text-cyan-400" />
                             <span>AI PROVIDER</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-700 font-medium">DevFlow AI Engine</td>
+                        <td className="py-3 px-4 text-slate-300 font-medium">DevFlow Autonomous Engine</td>
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => setDisconnectItem('AI Provider')}
-                            className="px-2.5 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                            className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
                           >
-                            <span>✕ Disconnect</span>
+                            <span>Disconnect</span>
                           </button>
                         </td>
                       </tr>
@@ -560,37 +583,37 @@ export const IntegrationsPage: React.FC = () => {
 
               {/* SECURITY SECTION (TWO CARDS) */}
               <div className="space-y-2.5">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                  SECURITY
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  SECURITY &amp; AUDIT INTEGRITY
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Security Card 1 */}
-                  <div className="p-3.5 rounded-xl bg-white border border-[#DCE2EA] shadow-xs flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-slate-100 text-slate-600 shrink-0 mt-0.5">
+                  <div className="p-3.5 rounded-xl bg-[#111C30] border border-[#26344B] shadow-xs flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 shrink-0 mt-0.5 border border-blue-500/20">
                       <Lock className="w-4 h-4" />
                     </div>
                     <div className="text-xs">
-                      <span className="font-bold text-slate-900 block leading-tight">
-                        Secure and credentials
+                      <span className="font-bold text-white block leading-tight">
+                        HMAC Signature Verification
                       </span>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                        Secure handled credentials and permissions across projects.
+                      <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        Every incoming GitHub and PayPal webhook payload is cryptographically authenticated with SHA-256 tokens.
                       </p>
                     </div>
                   </div>
 
                   {/* Security Card 2 */}
-                  <div className="p-3.5 rounded-xl bg-white border border-[#DCE2EA] shadow-xs flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-slate-100 text-slate-600 shrink-0 mt-0.5">
-                      <Lock className="w-4 h-4" />
+                  <div className="p-3.5 rounded-xl bg-[#111C30] border border-[#26344B] shadow-xs flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0 mt-0.5 border border-emerald-500/20">
+                      <ShieldCheck className="w-4 h-4" />
                     </div>
                     <div className="text-xs">
-                      <span className="font-bold text-slate-900 block leading-tight">
-                        Handling & permissions
+                      <span className="font-bold text-white block leading-tight">
+                        Human-in-the-Loop Sign-off
                       </span>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                        Inverted to secure credentials and allows and permissions.
+                      <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        AI evaluates AST proof, but invoice creation and PayPal settlement strictly require manual administrator approval.
                       </p>
                     </div>
                   </div>
@@ -600,20 +623,20 @@ export const IntegrationsPage: React.FC = () => {
 
             {/* RIGHT 6 COLS: WEBHOOK CONFIGURATION */}
             <div className="lg:col-span-6 space-y-2.5">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                WEBHOOK CONFIGURATION
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                WEBHOOK CONFIGURATION &amp; EVENT LOGS
               </span>
 
-              <div className="rounded-xl bg-white border border-[#DCE2EA] shadow-xs p-4 sm:p-5 space-y-4">
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] shadow-xs p-4 sm:p-5 space-y-4">
                 {/* System Operational Badge */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#E7F7EF] text-[#159B62] border border-[#A8E4C7]">
+                <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     <Check className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>All Systems Operational</span>
+                    <span>All Webhook Listeners Operational</span>
                   </span>
                   <button
                     onClick={() => showToast('Refreshed', 'Webhook listeners verified against HMAC digest.', 'success')}
-                    className="text-xs text-[#1683ED] hover:underline font-semibold flex items-center gap-1"
+                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 transition-colors"
                   >
                     <RotateCw className="w-3 h-3" /> Refresh
                   </button>
@@ -623,23 +646,23 @@ export const IntegrationsPage: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#DCE2EA] text-[11px] text-slate-500 font-semibold bg-slate-50">
-                        <th className="py-2 px-3">Webhook</th>
-                        <th className="py-2 px-3 text-right">Recent event delivery log</th>
+                      <tr className="border-b border-[#26344B] text-[11px] text-slate-400 font-semibold bg-[#0D1526]">
+                        <th className="py-2 px-3">Webhook Event</th>
+                        <th className="py-2 px-3 text-right">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      <tr className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 font-medium text-slate-800">
-                          GitHub push - Delivered (demo)
+                    <tbody className="divide-y divide-[#26344B]">
+                      <tr className="hover:bg-[#152238]/60">
+                        <td className="py-2.5 px-3 font-medium text-slate-200">
+                          GitHub push: northstar-studio/payment-gateway
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono text-slate-400">–</td>
+                        <td className="py-2.5 px-3 text-right font-mono text-emerald-400 text-[11px]">HTTP 200 OK</td>
                       </tr>
-                      <tr className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 font-medium text-slate-800">
-                          PayPal payment - (DEMO STATE)
+                      <tr className="hover:bg-[#152238]/60">
+                        <td className="py-2.5 px-3 font-medium text-slate-200">
+                          PayPal invoicing: PAYMENT.CAPTURE.COMPLETED (Sandbox)
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono text-slate-400">–</td>
+                        <td className="py-2.5 px-3 text-right font-mono text-emerald-400 text-[11px]">HTTP 200 OK</td>
                       </tr>
                     </tbody>
                   </table>
@@ -647,25 +670,31 @@ export const IntegrationsPage: React.FC = () => {
 
                 {/* Subheader: Recent event delivery log */}
                 <div className="pt-2">
-                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-2">
-                    Recent event delivery log
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    Recent Event Telemetry Log (Sample Data)
                   </span>
                   <div className="space-y-1.5 font-mono text-xs">
-                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-                      <span className="text-slate-800 font-sans font-medium">GitHub push - Delivered (demo)</span>
-                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    <div className="p-2 rounded bg-[#0D1526] border border-[#26344B] flex items-center justify-between">
+                      <span className="text-slate-300 font-sans font-medium text-[11px]">
+                        GitHub push &bull; commit <span className="font-mono text-blue-300">a1e9482f</span>
+                      </span>
+                      <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                         HTTP 200 OK
                       </span>
                     </div>
-                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-                      <span className="text-slate-800 font-sans font-medium">PayPal payment - Sent (demo)</span>
-                      <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                        HTTP 200 OK
+                    <div className="p-2 rounded bg-[#0D1526] border border-[#26344B] flex items-center justify-between">
+                      <span className="text-slate-300 font-sans font-medium text-[11px]">
+                        PayPal invoice &bull; <span className="font-mono text-blue-300">INV-2026-0842</span>
+                      </span>
+                      <span className="text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                        Dispatched
                       </span>
                     </div>
-                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-                      <span className="text-slate-800 font-sans font-medium">PayPal payment - (DEMO STATE)</span>
-                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    <div className="p-2 rounded bg-[#0D1526] border border-[#26344B] flex items-center justify-between">
+                      <span className="text-slate-300 font-sans font-medium text-[11px]">
+                        PayPal payment &bull; <span className="font-mono text-blue-300">PP-DEMO-12345678</span>
+                      </span>
+                      <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                         Verified Webhook
                       </span>
                     </div>
@@ -679,76 +708,76 @@ export const IntegrationsPage: React.FC = () => {
 
       {/* MODAL: MANAGE CONNECTION */}
       {manageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-slate-900 capitalize">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 text-xs">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
+              <h3 className="text-sm font-bold text-white capitalize">
                 Manage {manageModal === 'ai' ? 'AI Provider' : manageModal} Connection
               </h3>
               <button
                 onClick={() => setManageModal(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {manageModal === 'github' && (
-              <div className="space-y-3 text-slate-700">
+              <div className="space-y-3 text-slate-300">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                     Connected GitHub Repository
                   </label>
                   <input
                     type="text"
                     disabled
-                    value="Tharunnagabramhagna/DevFlow"
-                    className="w-full bg-slate-50 text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 font-mono"
+                    value="northstar-studio/payment-gateway"
+                    className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                     Webhook Destination
                   </label>
                   <input
                     type="text"
                     disabled
                     value="https://devflow.team/api/github/webhooks"
-                    className="w-full bg-slate-50 text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 font-mono"
+                    className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B] font-mono"
                   />
                 </div>
-                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
                   <span className="font-semibold block">Full Access (Demo Account):</span>
-                  Synchronizing commit SHAs, PR diffs, and requirements telemetry.
+                  Synchronizing commit SHAs, PR diffs, and test suite telemetry with HMAC validation.
                 </div>
               </div>
             )}
 
             {manageModal === 'paypal' && (
-              <div className="space-y-3 text-slate-700">
+              <div className="space-y-3 text-slate-300">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                     PayPal Sandbox Client ID
                   </label>
                   <input
                     type="password"
                     disabled
                     value="AUJ892X-SANDBOX-PAYPAL-CLIENT-ID-DEVFLOW"
-                    className="w-full bg-slate-50 text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 font-mono"
+                    className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                     Invoicing REST API Environment
                   </label>
                   <input
                     type="text"
                     disabled
                     value="PayPal Sandbox v2 (Demonstration Mode)"
-                    className="w-full bg-slate-50 text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300"
+                    className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B]"
                   />
                 </div>
-                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800">
+                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300">
                   <span className="font-semibold block">Invoice Integration Active:</span>
                   Webhooks listener captures payment settlement events and HMAC signatures.
                 </div>
@@ -756,40 +785,40 @@ export const IntegrationsPage: React.FC = () => {
             )}
 
             {manageModal === 'ai' && (
-              <div className="space-y-3 text-slate-700">
+              <div className="space-y-3 text-slate-300">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                     Selected LLM Service Engine
                   </label>
                   <input
                     type="text"
                     disabled
                     value="DevFlow AI Engine v1.2 (Gemini 2.5 Flash + GPT-4o fallback)"
-                    className="w-full bg-slate-50 text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300"
+                    className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B]"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                     AST Pattern Matching Policy
                   </label>
                   <input
                     type="text"
                     disabled
                     value="Strict Syntactic Parsing (Zero Hallucination Proof)"
-                    className="w-full bg-slate-50 text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300"
+                    className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B]"
                   />
                 </div>
-                <div className="p-3 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-800">
+                <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
                   <span className="font-semibold block">AI Autonomous Mode:</span>
                   Parses git commit diffs to evaluate deliverable requirements before milestone approval.
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#26344B]">
               <button
                 onClick={() => setManageModal(null)}
-                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
+                className="px-4 py-2 rounded-lg bg-[#1E2E4E] hover:bg-[#26344B] text-slate-300 text-xs font-semibold transition-colors"
               >
                 Close
               </button>
@@ -798,7 +827,7 @@ export const IntegrationsPage: React.FC = () => {
                   setManageModal(null);
                   showToast('Configuration Updated', 'Connection settings validated.', 'success');
                 }}
-                className="px-4 py-2 rounded-lg bg-[#1683ED] hover:bg-blue-600 text-white text-xs font-bold"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
               >
                 Save Changes
               </button>
@@ -809,16 +838,16 @@ export const IntegrationsPage: React.FC = () => {
 
       {/* MODAL: VIEW LOGS */}
       {viewLogsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 text-xs">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#1683ED]" />
-                <h3 className="text-sm font-bold text-slate-900">Apollo Mobile &bull; GitHub Event Logs</h3>
+                <FileText className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-bold text-white">northstar-studio/payment-gateway &bull; Event Logs</h3>
               </div>
               <button
                 onClick={() => setViewLogsModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -826,22 +855,22 @@ export const IntegrationsPage: React.FC = () => {
 
             <div className="space-y-2 max-h-72 overflow-y-auto font-mono text-[11px]">
               {webhookEvents.map((evt) => (
-                <div key={evt.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <div key={evt.id} className="p-2.5 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900">{evt.event}</span>
-                    <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 rounded font-semibold">
+                    <span className="font-bold text-slate-200">{evt.event}</span>
+                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-semibold">
                       {evt.status}
                     </span>
                   </div>
-                  <div className="text-slate-500 text-[10px]">Delivered: {evt.timestamp} &bull; Headers: HMAC SHA-256 validated</div>
+                  <div className="text-slate-400 text-[10px]">Delivered: {evt.timestamp} &bull; Headers: HMAC SHA-256 validated &bull; {evt.httpStatus}</div>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="flex justify-end pt-2 border-t border-[#26344B]">
               <button
                 onClick={() => setViewLogsModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-[#1683ED] hover:bg-blue-600 text-white text-xs font-bold"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
               >
                 Close Logs
               </button>
@@ -852,25 +881,25 @@ export const IntegrationsPage: React.FC = () => {
 
       {/* MODAL: CONFIRM DISCONNECT */}
       {disconnectItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 text-xs">
-            <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
-              <AlertTriangle className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 text-xs">
+            <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
+              <AlertTriangle className="w-5 h-5 text-rose-400" />
               <span>Disconnect {disconnectItem}?</span>
             </div>
-            <p className="text-slate-600 leading-relaxed">
+            <p className="text-slate-300 leading-relaxed">
               Disconnecting will pause webhook event ingestion and automated verification sync for this service.
             </p>
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#26344B]">
               <button
                 onClick={() => setDisconnectItem(null)}
-                className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
+                className="px-3.5 py-2 rounded-lg bg-[#1E2E4E] hover:bg-[#26344B] text-slate-300 text-xs font-semibold transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDisconnect}
-                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors"
               >
                 Confirm Disconnect
               </button>
@@ -881,17 +910,17 @@ export const IntegrationsPage: React.FC = () => {
 
       {/* USER PROFILE MODAL */}
       {userMenuOpen && (
-        <div className="fixed top-16 right-6 z-50 w-56 rounded-xl bg-white border border-slate-200 shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150">
-          <div className="font-bold text-slate-900 border-b border-slate-100 pb-2">
-            Tharun
-            <div className="text-[10px] text-slate-500 font-normal">Fintech Invoicing Lead</div>
+        <div className="fixed top-16 right-6 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150 text-slate-200">
+          <div className="font-bold text-white border-b border-[#26344B] pb-2">
+            Alex Morgan
+            <div className="text-[10px] text-slate-400 font-normal">Project Administrator &bull; Northstar Studio</div>
           </div>
           <button
             onClick={() => {
               setUserMenuOpen(false);
               navigate('/settings');
             }}
-            className="w-full text-left py-1 text-slate-700 hover:text-slate-900"
+            className="w-full text-left py-1 text-slate-300 hover:text-white transition-colors"
           >
             Billing Preferences
           </button>
@@ -900,7 +929,7 @@ export const IntegrationsPage: React.FC = () => {
               setUserMenuOpen(false);
               navigate('/');
             }}
-            className="w-full text-left py-1 text-rose-600 hover:text-rose-700"
+            className="w-full text-left py-1 text-rose-400 hover:text-rose-300 transition-colors"
           >
             Sign Out
           </button>
@@ -909,4 +938,3 @@ export const IntegrationsPage: React.FC = () => {
     </div>
   );
 };
-

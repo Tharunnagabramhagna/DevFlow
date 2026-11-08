@@ -71,10 +71,10 @@ interface AiPreferences {
 }
 
 const DEFAULT_PROFILE: ProfileData = {
-  fullName: 'John Smith',
-  email: 'delesmith@gmail.com',
-  role: 'Developer',
-  organization: 'Organisation',
+  fullName: 'Alex Morgan',
+  email: 'alex.morgan@northstar.studio',
+  role: 'Project Administrator',
+  organization: 'Northstar Digital Studio',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=faces',
 };
 
@@ -1534,7 +1534,7 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#AAB6C8]">Monitored Repository:</span>
-                  <span className="text-white truncate max-w-[200px]">Tharunnagabramhagna/DevFlow</span>
+                  <span className="text-white truncate max-w-[200px]">northstar-studio/payment-gateway</span>
                 </div>
               </div>
 

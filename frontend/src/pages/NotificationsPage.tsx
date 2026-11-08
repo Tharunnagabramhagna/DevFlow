@@ -531,7 +531,7 @@ export const NotificationsPage: React.FC = () => {
                   >
                     <img
                       src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
-                      alt="Alex Mercer"
+                      alt="Alex Morgan"
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -540,8 +540,8 @@ export const NotificationsPage: React.FC = () => {
                   {userMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#172235] border border-[#293B55] shadow-2xl p-2 z-50 text-xs animate-in fade-in duration-150">
                       <div className="px-3 py-2 border-b border-[#293B55]/70 mb-1">
-                        <div className="font-semibold text-white">Alex Mercer</div>
-                        <div className="text-[11px] text-[#AAB6C8] truncate">alex.mercer@fintechventures.io</div>
+                        <div className="font-semibold text-white">Alex Morgan</div>
+                        <div className="text-[11px] text-[#AAB6C8] truncate">alex.morgan@northstar.studio</div>
                       </div>
                       <button
                         onClick={() => {

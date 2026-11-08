@@ -102,7 +102,7 @@ export const MilestonesPage: React.FC = () => {
         if (parsed.name) return parsed.name;
       }
     } catch {}
-    return 'Alex Mercer';
+    return 'Alex Morgan';
   });
 
   useEffect(() => {
@@ -456,13 +456,13 @@ export const MilestonesPage: React.FC = () => {
             onClick={() => navigate('/settings')}
             className="flex items-center justify-between cursor-pointer hover:bg-[#152238] p-1.5 rounded-lg transition-colors"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B]">
-                {userName.charAt(0)}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B]">
+                AM
               </div>
               <div className="truncate">
-                <div className="text-xs font-semibold text-white truncate">{userName}</div>
-                <div className="text-[10px] text-slate-500 truncate">4 Active Members</div>
+                <div className="text-xs font-semibold text-white truncate leading-tight">{userName}</div>
+                <div className="text-[10px] text-slate-400 truncate">Project Administrator</div>
               </div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -564,10 +564,10 @@ export const MilestonesPage: React.FC = () => {
               {/* User Avatar */}
               <div
                 onClick={() => navigate('/settings')}
-                className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] cursor-pointer shadow-sm"
                 title="Account Settings"
               >
-                {userName.charAt(0)}
+                AM
               </div>
             </div>
           </div>
@@ -580,7 +580,7 @@ export const MilestonesPage: React.FC = () => {
               onChange={(e) => setSelectedProjectFilter(e.target.value)}
               className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB] truncate"
             >
-              <option value="all">Project: Apollo Portal</option>
+              <option value="all">All Projects (Northstar)</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   Project: {p.name}

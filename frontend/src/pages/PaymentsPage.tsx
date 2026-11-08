@@ -630,8 +630,8 @@ export const PaymentsPage: React.FC = () => {
               className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-[#152238] transition-colors"
             >
               <img
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces"
-                alt="Tharun"
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
+                alt="Alex Morgan"
                 className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/40"
               />
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -1587,8 +1587,8 @@ export const PaymentsPage: React.FC = () => {
       {userMenuOpen && (
         <div className="fixed bottom-16 left-4 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150">
           <div className="font-bold text-white border-b border-[#26344B] pb-2">
-            Tharun
-            <div className="text-[10px] text-slate-400 font-normal">Fintech Invoicing Lead</div>
+            Alex Morgan
+            <div className="text-[10px] text-slate-400 font-normal">Project Administrator &bull; Northstar Studio</div>
           </div>
           <button
             onClick={() => {

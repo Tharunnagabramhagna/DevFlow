@@ -325,21 +325,21 @@ export const devFlowApi = {
     const milestone = localMilestones.find((m) => m.id === milestoneId);
     const invoice: PayPalInvoice = {
       id: `inv_${Date.now()}`,
-      invoiceNumber: `INV-DEVFLOW-00${localMilestones.length + 1}`,
+      invoiceNumber: `INV-2026-084${localMilestones.length + 1}`,
       milestoneId,
       projectId: milestone?.projectId || 'proj_devflow_01',
-      recipientEmail: 'alex.mercer@fintechventures.io',
-      recipientName: 'Alex Mercer',
+      recipientEmail: 'marcus@meridianlabs.io',
+      recipientName: 'Marcus Vance',
       amount: milestone?.amount || 2500.0,
       currency: 'USD',
       status: 'SENT', // Invoice sent, not paid yet!
-      paypalInvoiceId: `INV2-${Math.random().toString(36).substring(2, 6).toUpperCase()}-SANDBOX`,
+      paypalInvoiceId: `INV2-DEMO-${Math.random().toString(36).substring(2, 6).toUpperCase()}-SANDBOX`,
       createdAt: new Date().toISOString(),
       sentAt: new Date().toISOString(),
       dueDate: new Date(Date.now() + 14 * 86400000).toISOString(),
       subtotal: milestone?.amount || 2500.0,
       tax: 0,
-      notes: `Invoice generated for deliverable: ${milestone?.title || 'Milestone deliverable'}`,
+      notes: `Invoice generated for deliverable: ${milestone?.title || 'Milestone deliverable'} (Demo Mode)`,
       items: [
         {
           id: `item_${Date.now()}`,
@@ -353,13 +353,13 @@ export const devFlowApi = {
         {
           event: 'INVOICE_CREATED',
           timestamp: new Date().toISOString(),
-          description: 'Invoice created with PayPal Invoicing REST API v2',
-          actor: 'DevFlow Billing Agent',
+          description: 'Invoice drafted via PayPal Invoicing REST simulation',
+          actor: 'DevFlow Invoicing Engine',
         },
         {
           event: 'INVOICE_SENT',
           timestamp: new Date().toISOString(),
-          description: 'Dispatched to alex.mercer@fintechventures.io',
+          description: 'Dispatched to marcus@meridianlabs.io (Sandbox)',
           actor: 'PayPal Gateway',
         },
       ],

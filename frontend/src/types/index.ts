@@ -20,7 +20,7 @@ export interface Project {
   description: string;
   clientName: string;
   clientEmail: string;
-  githubRepo: string; // e.g. "Tharunnagabramhagna/DevFlow"
+  githubRepo: string; // e.g. "northstar-studio/payment-gateway"
   totalBudget: number;
   currency: string;
   createdAt: string;
@@ -37,6 +37,7 @@ export interface Requirement {
   satisfied: boolean;
   aiConfidence?: number; // 0 to 100
   evidenceSource?: string; // Commit SHA or PR link
+  verifiedCommitSha?: string;
 }
 
 export interface DiffLine {
@@ -76,27 +77,39 @@ export interface TestSuiteResult {
 }
 
 export interface GitHubPullRequestEvidence {
+  id?: string;
   number: number;
   title: string;
   author: string;
+  authorAvatar?: string;
   state: 'open' | 'closed' | 'merged';
   url: string;
-  createdAt: string;
+  createdAt?: string;
   mergedAt?: string;
+  headRef?: string;
+  baseRef?: string;
+  additions?: number;
+  deletions?: number;
+  commitsCount?: number;
 }
 
 export interface AIVerificationReport {
   id: string;
   milestoneId: string;
-  overallScore: number; // 0 - 100
-  status: 'passed' | 'review_required' | 'failed';
+  overallScore?: number; // 0 - 100
+  status?: 'passed' | 'review_required' | 'failed';
+  overallStatus?: string;
   summary: string;
-  confidence: number;
-  analyzedAt: string;
+  confidence?: number;
+  confidenceScore?: number;
+  analyzedAt?: string;
+  evaluatedAt?: string;
   engineVersion?: string;
   commitsSampled?: number;
   testSuiteResult?: TestSuiteResult;
-  requirementsAnalysis: {
+  automatedChecks?: any;
+  criteriaBreakdown?: any[];
+  requirementsAnalysis?: {
     requirementId: string;
     requirementTitle: string;
     status: 'satisfied' | 'partial' | 'unsatisfied';
@@ -106,7 +119,7 @@ export interface AIVerificationReport {
     missingEvidence?: string;
   }[];
   recommendations: string[];
-  disclaimer: string;
+  disclaimer?: string;
 }
 
 export interface ClientApproval {

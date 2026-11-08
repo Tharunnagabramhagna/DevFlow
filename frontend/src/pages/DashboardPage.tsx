@@ -6,8 +6,6 @@ import {
   Project,
   Milestone,
   DeveloperTelemetry,
-  GitHubCommitEvidence,
-  PayPalInvoice,
 } from '@/types';
 import {
   LayoutDashboard,
@@ -36,8 +34,6 @@ export const DashboardPage: React.FC = () => {
   const [telemetry, setTelemetry] = useState<DeveloperTelemetry | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [commits, setCommits] = useState<GitHubCommitEvidence[]>([]);
-  const [recentInvoices, setRecentInvoices] = useState<{ milestone: Milestone; invoice: PayPalInvoice }[]>([]);
 
   // Mobile sidebar state
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -46,8 +42,8 @@ export const DashboardPage: React.FC = () => {
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newClientName, setNewClientName] = useState('');
-  const [newRepo, setNewRepo] = useState('Tharunnagabramhagna/DevFlow');
-  const [newBudget, setNewBudget] = useState('10000');
+  const [newRepo, setNewRepo] = useState('northstar-studio/payment-gateway');
+  const [newBudget, setNewBudget] = useState('18500');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Search input state
@@ -67,7 +63,7 @@ export const DashboardPage: React.FC = () => {
         }
       }
     } catch {}
-    return 'Tharun';
+    return 'Alex';
   });
 
   useEffect(() => {
@@ -85,10 +81,8 @@ export const DashboardPage: React.FC = () => {
         setTelemetry(telemetryRes.data);
         setProjects(projectsRes.data);
         setMilestones(milestonesRes.data);
-        setCommits(commitsRes.data);
-        setRecentInvoices(invoicesRes.data.slice(0, 4));
         setIsMockData(
-          telemetryRes.isMock || projectsRes.isMock || milestonesRes.isMock || commitsRes.isMock
+          telemetryRes.isMock || projectsRes.isMock || milestonesRes.isMock || commitsRes.isMock || invoicesRes.isMock
         );
       } catch (err) {
         console.error('Failed to load dashboard telemetry:', err);
@@ -367,46 +361,54 @@ export const DashboardPage: React.FC = () => {
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
                       <div className="font-semibold text-white">Payment Received</div>
-                      <div className="text-[11px] text-slate-400">$3,200 settled via PayPal Webhook</div>
+                      <div className="text-[11px] text-slate-400">$4,500 settled via PayPal Webhook (Sandbox)</div>
                     </div>
                     <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
                       <div className="font-semibold text-white">Milestone Verified</div>
-                      <div className="text-[11px] text-slate-400">94.2% AI score on SHA 54813f0</div>
+                      <div className="text-[11px] text-slate-400">94.2% AI score on SHA a1e9482</div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* User Avatar + Tharun Dropdown */}
+            {/* User Profile */}
             <div
               onClick={() => navigate('/settings')}
-              className="flex items-center gap-2 pl-2 border-l border-[#26344B] cursor-pointer hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2.5 pl-2 border-l border-[#26344B] cursor-pointer hover:opacity-90 transition-opacity"
             >
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B]">
-                {userName.charAt(0)}
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-sm">
+                AM
               </div>
-              <span className="hidden sm:inline text-xs font-semibold text-white">{userName}</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-xs font-semibold text-white leading-tight">Alex Morgan</span>
+                <span className="text-[10px] text-slate-400">Project Administrator</span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
           </div>
         </header>
 
         {/* SCROLLABLE DASHBOARD BODY */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* 3. WELCOME SECTION */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#26344B]/40">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Welcome back, {userName}
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-                Here&apos;s what&apos;s happening across your projects.
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  Welcome back, {userName}
+                </h2>
+                <span className="text-[10px] font-mono font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full">
+                  DEMO MODE
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Project Administrator &bull; Northstar Digital Studio &bull; Real-time telemetry and milestone intelligence.
               </p>
             </div>
             <button
               onClick={() => setIsNewProjectModalOpen(true)}
-              className="self-start sm:self-auto bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-all"
+              className="self-start sm:self-auto bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>New Project</span>
@@ -414,63 +416,58 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* 4. KPI CARDS */}
-          <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              KPI CARDS
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3.5">
+            {/* Card 1: Active Projects */}
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 font-medium">Active Projects</span>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-2xl sm:text-3xl font-bold font-mono text-white">
+                  {String(projects.length || 4).padStart(2, '0')}
+                </span>
+                {/* Mini Trend Sparkline */}
+                <svg className="w-16 h-7 text-[#2563EB]" viewBox="0 0 60 25" fill="none">
+                  <path
+                    d="M2 18 Q 15 5, 28 16 T 58 6"
+                    stroke="#2563EB"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {/* Card 1: Active Projects */}
-              <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-                <span className="text-xs text-slate-400 font-medium">Active Projects</span>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-2xl sm:text-3xl font-bold font-mono text-white">
-                    {String(projects.length || 8).padStart(2, '0')}
-                  </span>
-                  {/* Mini Trend Sparkline */}
-                  <svg className="w-16 h-7 text-[#2563EB]" viewBox="0 0 60 25" fill="none">
-                    <path
-                      d="M2 18 Q 15 5, 28 16 T 58 6"
-                      stroke="#2563EB"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-              </div>
 
-              {/* Card 2: Total Milestones */}
-              <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-                <span className="text-xs text-slate-400 font-medium">Total Milestones</span>
-                <div className="mt-2 text-2xl sm:text-3xl font-bold font-mono text-white">
-                  {String(milestones.length || 24).padStart(2, '0')}
-                </div>
+            {/* Card 2: Total Milestones */}
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 font-medium">Total Milestones</span>
+              <div className="mt-3 text-2xl sm:text-3xl font-bold font-mono text-white">
+                {String(milestones.length || 14).padStart(2, '0')}
               </div>
+            </div>
 
-              {/* Card 3: Pending Approvals */}
-              <div className="p-4 rounded-xl bg-[#171E30] border border-amber-900/60 flex flex-col justify-between">
-                <span className="text-xs text-slate-400 font-medium">Pending Approvals</span>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-bold font-mono text-white">
-                    05
-                  </span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] animate-pulse" />
-                </div>
+            {/* Card 3: Pending Approvals */}
+            <div className="p-4 rounded-xl bg-[#171E30] border border-amber-900/60 flex flex-col justify-between hover:border-amber-700 transition-colors">
+              <span className="text-xs text-slate-400 font-medium">Pending Client Review</span>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-bold font-mono text-amber-400">
+                  02
+                </span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] animate-pulse" />
               </div>
+            </div>
 
-              {/* Card 4: Outstanding Invoices */}
-              <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-                <span className="text-xs text-slate-400 font-medium">Outstanding Invoices</span>
-                <div className="mt-2 text-xl sm:text-2xl font-bold font-mono text-white">
-                  ${telemetry ? telemetry.pendingInvoicesAmount.toLocaleString() : '2,450'}
-                </div>
+            {/* Card 4: Outstanding Invoices */}
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 font-medium">Outstanding Invoices</span>
+              <div className="mt-3 text-xl sm:text-2xl font-bold font-mono text-white">
+                ${telemetry ? telemetry.pendingInvoicesAmount.toLocaleString() : '4,500'}
               </div>
+            </div>
 
-              {/* Card 5: Confirmed Payments */}
-              <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between col-span-2 sm:col-span-1">
-                <span className="text-xs text-slate-400 font-medium">Confirmed Payments</span>
-                <div className="mt-2 text-xl sm:text-2xl font-bold font-mono text-white">
-                  ${telemetry ? telemetry.totalRevenuePaid.toLocaleString() : '8,600'}
-                </div>
+            {/* Card 5: Confirmed Payments */}
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 font-medium">Confirmed Settlements</span>
+              <div className="mt-3 text-xl sm:text-2xl font-bold font-mono text-emerald-400">
+                ${telemetry ? telemetry.totalRevenuePaid.toLocaleString() : '9,500'}
               </div>
             </div>
           </div>
@@ -480,164 +477,130 @@ export const DashboardPage: React.FC = () => {
             {/* Left Column: Project Overview + AI Agent Activity (lg:col-span-8) */}
             <div className="lg:col-span-8 space-y-5">
               {/* SECTION: PROJECT OVERVIEW */}
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  MAIN CONTENT
+              <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
+                {/* Table Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2.5">
+                    <FolderGit2 className="w-4 h-4 text-blue-400" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                      Active Projects &amp; Deliverables
+                    </h3>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 text-[10px] font-bold bg-blue-950/70 border border-blue-800/60 text-blue-400 px-2.5 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    <span>4 Active Projects &bull; Fictional Demo Data</span>
+                  </div>
                 </div>
 
-                <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
-                  {/* Table Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-[#26344B]">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      PROJECT OVERVIEW
-                    </h3>
-                    <div className="inline-flex items-center gap-1.5 text-[10px] font-bold bg-rose-950/70 border border-rose-800/60 text-rose-400 px-2.5 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                      <span>Critical/actionable (Alpha API)</span>
-                    </div>
-                  </div>
-
-                  {/* Overview Table */}
-                  <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-                    <table className="w-full text-left text-xs whitespace-nowrap">
-                      <thead>
-                        <tr className="border-b border-[#26344B]/70 text-[11px] text-slate-500 uppercase tracking-wider">
-                          <th className="pb-2.5 font-semibold">Project Name</th>
-                          <th className="pb-2.5 font-semibold">Client</th>
-                          <th className="pb-2.5 font-semibold">Progress</th>
-                          <th className="pb-2.5 font-semibold">Current Milestone</th>
-                          <th className="pb-2.5 font-semibold">Deadline</th>
-                          <th className="pb-2.5 font-semibold text-right">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#26344B]/40">
-                        {/* Row 1: Alpha API */}
-                        <tr
-                          onClick={() => navigate('/projects')}
-                          className="hover:bg-[#15233D] transition-colors cursor-pointer"
-                        >
-                          <td className="py-3 font-bold text-white">Alpha API</td>
-                          <td className="py-3 text-slate-400">Stripe Inc.</td>
-                          <td className="py-3">
-                            <div className="w-24 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
-                              <div className="bg-[#2563EB] h-full rounded-full w-3/4" />
-                            </div>
-                          </td>
-                          <td className="py-3 font-mono text-slate-300 text-[11px]">
-                            v1.0 API Verification
-                          </td>
-                          <td className="py-3 text-slate-400 font-mono text-[11px]">Nov 12</td>
-                          <td className="py-3 text-right">
-                            <span className="text-[10px] font-bold bg-blue-950/70 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-md">
-                              In Progress
-                            </span>
-                          </td>
-                        </tr>
-
-                        {/* Row 2: Beta App */}
-                        <tr
-                          onClick={() => navigate('/projects')}
-                          className="hover:bg-[#15233D] transition-colors cursor-pointer"
-                        >
-                          <td className="py-3 font-bold text-white">Beta App</td>
-                          <td className="py-3 text-slate-400">Vercel</td>
-                          <td className="py-3">
-                            <div className="w-24 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
-                              <div className="bg-slate-400 h-full rounded-full w-1/4" />
-                            </div>
-                          </td>
-                          <td className="py-3 font-mono text-slate-300 text-[11px]">
-                            v1.0 API Verification
-                          </td>
-                          <td className="py-3 text-slate-400 font-mono text-[11px]">Nov 12</td>
-                          <td className="py-3 text-right">
-                            <span className="text-[10px] font-bold bg-amber-950/70 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded-md">
-                              Review
-                            </span>
-                          </td>
-                        </tr>
-
-                        {/* Additional row from actual project state */}
-                        {projects.map((proj) => (
+                {/* Overview Table */}
+                <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                  <table className="w-full text-left text-xs whitespace-nowrap">
+                    <thead>
+                      <tr className="border-b border-[#26344B]/70 text-[11px] text-slate-400 uppercase tracking-wider">
+                        <th className="pb-3 font-semibold">Project Name</th>
+                        <th className="pb-3 font-semibold">Client</th>
+                        <th className="pb-3 font-semibold">Progress</th>
+                        <th className="pb-3 font-semibold">Current Deliverable</th>
+                        <th className="pb-3 font-semibold">Target Date</th>
+                        <th className="pb-3 font-semibold text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#26344B]/40">
+                      {projects.map((proj, idx) => {
+                        const progress = idx === 0 ? 75 : idx === 1 ? 100 : idx === 2 ? 40 : 25;
+                        const milestoneLabel = idx === 0 ? 'PayPal Webhook Engine' : idx === 1 ? 'Settlement Reconciler' : idx === 2 ? 'REST Route Hardening' : 'AST Evidence Audit';
+                        const statusLabel = idx === 1 ? 'Verified' : idx === 0 ? 'In Review' : 'In Progress';
+                        const statusStyle = idx === 1
+                          ? 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60'
+                          : idx === 0
+                          ? 'bg-amber-950/70 text-amber-400 border-amber-800/60'
+                          : 'bg-blue-950/70 text-blue-400 border-blue-800/60';
+                        return (
                           <tr
                             key={proj.id}
                             onClick={() => navigate('/projects')}
                             className="hover:bg-[#15233D] transition-colors cursor-pointer"
                           >
-                            <td className="py-3 font-bold text-white truncate max-w-[130px]">
-                              {proj.name}
-                            </td>
-                            <td className="py-3 text-slate-400 truncate max-w-[110px]">
-                              {proj.clientName.split('(')[0]}
-                            </td>
-                            <td className="py-3">
-                              <div className="w-24 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
-                                <div className="bg-emerald-400 h-full rounded-full w-2/3" />
+                            <td className="py-3.5 font-bold text-white">{proj.name}</td>
+                            <td className="py-3.5 text-slate-300">{proj.clientName}</td>
+                            <td className="py-3.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
+                                  <div className="bg-[#2563EB] h-full rounded-full" style={{ width: `${progress}%` }} />
+                                </div>
+                                <span className="text-[11px] font-mono text-slate-400">{progress}%</span>
                               </div>
                             </td>
-                            <td className="py-3 font-mono text-slate-300 text-[11px]">
-                              PayPal Webhooks
-                            </td>
-                            <td className="py-3 text-slate-400 font-mono text-[11px]">Nov 20</td>
-                            <td className="py-3 text-right">
-                              <span className="text-[10px] font-bold bg-emerald-950/70 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded-md">
-                                Verified
+                            <td className="py-3.5 font-mono text-slate-300 text-xs">{milestoneLabel}</td>
+                            <td className="py-3.5 text-slate-400 font-mono text-xs">Nov {10 + idx * 3}</td>
+                            <td className="py-3.5 text-right">
+                              <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-md ${statusStyle}`}>
+                                {statusLabel}
                               </span>
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {/* 7. AI AGENT ACTIVITY SECTION */}
               <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
-                <div className="flex items-center justify-between pb-1 border-b border-[#26344B]">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    AI AGENT ACTIVITY
-                  </h3>
-                  <span className="text-[10px] text-slate-500 font-mono">AST Engine Active</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                      Autonomous Verification Agents
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono bg-[#080D18] px-2 py-0.5 rounded border border-[#26344B]">
+                    AST Code Parser &bull; Human-in-the-Loop Governance
+                  </span>
                 </div>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  AI agents validate cryptographic commits and AST proofs against requirement acceptance criteria. Human client sign-off is always required prior to invoice creation and money movement.
+                </p>
 
                 {/* 4 Agent Cards in a Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                  {/* Card 1: Agreement Analyzer */}
+                  {/* Card 1: AST Syntax Auditor */}
                   <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[10px] font-mono text-slate-500">AGENT 01</span>
+                        <span className="text-[10px] font-mono text-slate-400">AGENT 01</span>
                         <MoreVertical className="w-3.5 h-3.5" />
                       </div>
-                      <h4 className="font-bold text-xs text-white mt-1">Agreement Analyzer</h4>
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
-                        <span className="w-2 h-2 rounded-full bg-slate-500" />
-                        <span>Idle</span>
+                      <h4 className="font-bold text-xs text-white mt-1">AST Syntax Auditor</h4>
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 mt-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                        <span>Active &bull; 98% Pass</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-2">Analyzing v1.0 PRs</p>
+                      <p className="text-[11px] text-slate-400 mt-2">Parsed TypeScript abstract syntax trees</p>
                     </div>
-                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer hover:text-slate-300">
-                      <span>Task summary</span>
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1">
+                      <span>Verified commit a1e9482</span>
                     </div>
                   </div>
 
-                  {/* Card 2: GitHub Evidence Agent */}
+                  {/* Card 2: Requirement Matcher */}
                   <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[10px] font-mono text-slate-500">AGENT 02</span>
+                        <span className="text-[10px] font-mono text-slate-400">AGENT 02</span>
                         <MoreVertical className="w-3.5 h-3.5" />
                       </div>
-                      <h4 className="font-bold text-xs text-white mt-1">GitHub Evidence Agent</h4>
+                      <h4 className="font-bold text-xs text-white mt-1">Requirement Matcher</h4>
                       <div className="flex items-center gap-1.5 text-[11px] text-blue-400 mt-1">
                         <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                        <span>Analyzing</span>
+                        <span>Evaluating &bull; 94.2%</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-2">Analyzing v1.0 PRs</p>
+                      <p className="text-[11px] text-slate-400 mt-2">Matching milestone acceptance criteria</p>
                     </div>
-                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer hover:text-slate-300">
-                      <span>Task summary</span>
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1">
+                      <span>4 criteria satisfied</span>
                     </div>
                   </div>
 
@@ -645,18 +608,18 @@ export const DashboardPage: React.FC = () => {
                   <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[10px] font-mono text-slate-500">AGENT 03</span>
+                        <span className="text-[10px] font-mono text-slate-400">AGENT 03</span>
                         <MoreVertical className="w-3.5 h-3.5" />
                       </div>
                       <h4 className="font-bold text-xs text-white mt-1">Milestone Intelligence</h4>
                       <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 mt-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                        <span>Successful</span>
+                        <span>Audit Ready</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-2">Matching invoice to milestones</p>
+                      <p className="text-[11px] text-slate-400 mt-2">Synthesizing evidence audit report</p>
                     </div>
-                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer hover:text-slate-300">
-                      <span>Task summary</span>
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1">
+                      <span>Client review queued</span>
                     </div>
                   </div>
 
@@ -664,18 +627,18 @@ export const DashboardPage: React.FC = () => {
                   <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[10px] font-mono text-slate-500">AGENT 04</span>
+                        <span className="text-[10px] font-mono text-slate-400">AGENT 04</span>
                         <MoreVertical className="w-3.5 h-3.5" />
                       </div>
                       <h4 className="font-bold text-xs text-white mt-1">Payment Assistant</h4>
                       <div className="flex items-center gap-1.5 text-[11px] text-amber-400 mt-1">
                         <span className="w-2 h-2 rounded-full bg-amber-400" />
-                        <span>Drafting</span>
+                        <span>Awaiting Sign-off</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-2">Matching invoice to milestones</p>
+                      <p className="text-[11px] text-slate-400 mt-2">PayPal Invoicing REST client standby</p>
                     </div>
-                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer hover:text-slate-300">
-                      <span>Task summary</span>
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[10px] text-slate-500 flex items-center gap-1">
+                      <span>Awaiting human approval</span>
                     </div>
                   </div>
                 </div>
@@ -684,16 +647,18 @@ export const DashboardPage: React.FC = () => {
 
             {/* Right Column: Financial Overview + Recent Activity (lg:col-span-4) */}
             <div className="lg:col-span-4 space-y-5">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                PENDING ACTIONS
-              </div>
-
               {/* 6. FINANCIAL OVERVIEW CARD */}
               <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
-                <div className="flex items-center justify-between pb-1 border-b border-[#26344B]">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    FINANCIAL OVERVIEW
-                  </h3>
+                <div className="flex items-center justify-between pb-2 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-emerald-400" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                      Financial Telemetry
+                    </h3>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-1.5 py-0.5 rounded">
+                    SANDBOX
+                  </span>
                 </div>
 
                 {/* Submetrics */}
@@ -701,20 +666,20 @@ export const DashboardPage: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
-                      <span>Confirmed</span>
+                      <span>Confirmed (Demo)</span>
                     </div>
-                    <div className="text-base font-bold font-mono text-white mt-0.5">$8,600</div>
+                    <div className="text-base font-bold font-mono text-white mt-0.5">$9,500.00</div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center justify-end gap-1.5 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
-                      <span>Pending</span>
+                      <span>Pending Client</span>
                     </div>
-                    <div className="text-base font-bold font-mono text-white mt-0.5">$2,450</div>
+                    <div className="text-base font-bold font-mono text-white mt-0.5">$4,500.00</div>
                   </div>
                 </div>
 
-                {/* Smooth Two-Line Area Chart Matching Reference */}
+                {/* Smooth Two-Line Area Chart */}
                 <div className="pt-2">
                   <svg className="w-full h-28" viewBox="0 0 300 100" fill="none">
                     <defs>
@@ -723,19 +688,16 @@ export const DashboardPage: React.FC = () => {
                         <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
                       </linearGradient>
                     </defs>
-                    {/* Area under confirmed line */}
                     <path
                       d="M 10 75 Q 70 85, 120 45 T 220 55 T 290 15 L 290 95 L 10 95 Z"
                       fill="url(#areaGradient)"
                     />
-                    {/* Pending line (upper stroke) */}
                     <path
                       d="M 10 75 Q 70 85, 120 45 T 220 55 T 290 15"
                       stroke="#2563EB"
                       strokeWidth="3"
                       strokeLinecap="round"
                     />
-                    {/* Secondary lighter line */}
                     <path
                       d="M 10 90 Q 80 75, 140 70 T 230 40 T 290 35"
                       stroke="#38BDF8"
@@ -756,10 +718,14 @@ export const DashboardPage: React.FC = () => {
 
               {/* 8. RECENT ACTIVITY TIMELINE CARD */}
               <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4 relative overflow-hidden">
-                <div className="flex items-center justify-between pb-1 border-b border-[#26344B]">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    RECENT ACTIVITY
-                  </h3>
+                <div className="flex items-center justify-between pb-2 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2">
+                    <FileCode className="w-4 h-4 text-blue-400" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                      Audit Activity Feed
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">Live Sync</span>
                 </div>
 
                 {/* Timeline */}
@@ -768,42 +734,37 @@ export const DashboardPage: React.FC = () => {
                   <div className="relative">
                     <span className="absolute -left-6 top-0.5 w-3 h-3 rounded-full bg-[#2563EB] ring-4 ring-[#111C30]" />
                     <div className="font-semibold text-white leading-snug">
-                      Commit verification by AI Agent{commits[0]?.sha ? ` (${commits[0].sha.substring(0, 7)})` : ''}
+                      AST code verification passed for Commit a1e9482
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">10m ago</div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">10m ago &bull; 94.2% confidence</div>
                   </div>
 
                   {/* Item 2 */}
                   <div className="relative">
                     <span className="absolute -left-6 top-0.5 w-3 h-3 rounded-full bg-slate-500 ring-4 ring-[#111C30]" />
                     <div className="font-semibold text-white leading-snug">
-                      Invoice #{recentInvoices[0]?.invoice?.invoiceNumber || '204'} created
+                      Sandbox Invoice #INV-2026-0843 drafted ($5,000)
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">1h ago</div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">1h ago &bull; Meridian Labs</div>
                   </div>
 
                   {/* Item 3 */}
                   <div className="relative">
                     <span className="absolute -left-6 top-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-4 ring-[#111C30]" />
-                    <div className="font-semibold text-white leading-snug">v0.9 Approved</div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">3h ago</div>
+                    <div className="font-semibold text-white leading-snug">
+                      Marcus Vance approved Milestone 2 deliverables
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">3h ago &bull; Human Sign-off</div>
                   </div>
 
                   {/* Item 4 */}
                   <div className="relative">
-                    <span className="absolute -left-6 top-0.5 w-3 h-3 rounded-full bg-slate-600 ring-4 ring-[#111C30]" />
+                    <span className="absolute -left-6 top-0.5 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-[#111C30]" />
                     <div className="font-semibold text-white leading-snug">
-                      Payment received $1,500
+                      PayPal Webhook verified PAYMENT.INVOICE.PAID ($4,500)
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">1d ago</div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">1d ago &bull; TXN-DEMO-948124</div>
                   </div>
-                </div>
-
-                {/* Decorative subtle sparkle on bottom right */}
-                <div className="absolute -bottom-4 -right-4 w-16 h-16 opacity-15 pointer-events-none text-blue-400">
-                  <svg viewBox="0 0 100 100" fill="currentColor">
-                    <path d="M50 0 L55 35 L90 40 L60 60 L70 95 L50 70 L30 95 L40 60 L10 40 L45 35 Z" />
-                  </svg>
                 </div>
               </div>
             </div>
@@ -831,7 +792,7 @@ export const DashboardPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Algorithmic Liquidity Router"
+                  placeholder="e.g. Payment Gateway Integration"
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
                   className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#2563EB]"
@@ -843,7 +804,7 @@ export const DashboardPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Stripe Inc."
+                  placeholder="e.g. Meridian Labs"
                   value={newClientName}
                   onChange={(e) => setNewClientName(e.target.value)}
                   className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#2563EB]"

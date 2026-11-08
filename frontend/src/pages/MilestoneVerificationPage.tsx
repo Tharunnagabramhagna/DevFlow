@@ -1142,8 +1142,8 @@ export const MilestoneVerificationPage: React.FC = () => {
       {userMenuOpen && (
         <div className="fixed bottom-16 left-4 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150">
           <div className="font-bold text-white border-b border-[#26344B] pb-2">
-            Alex Mercer
-            <div className="text-[10px] text-slate-400 font-normal">Lead Verification Auditor</div>
+            Alex Morgan
+            <div className="text-[10px] text-slate-400 font-normal">Project Administrator &bull; Northstar Studio</div>
           </div>
           <button
             onClick={() => {

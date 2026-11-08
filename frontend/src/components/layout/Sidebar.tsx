@@ -171,12 +171,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="text-[11px] text-[#777B91]">v0.1.0</span>
             </div>
             <a
-              href="https://github.com/Tharunnagabramhagna/DevFlow"
+              href="https://github.com/northstar-studio/payment-gateway"
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[#777B91] hover:bg-white hover:text-[#25263A] transition-colors border border-transparent hover:border-[#E9EAF2]"
             >
-              <span>GitHub Monorepo</span>
+              <span>GitHub Repository</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>

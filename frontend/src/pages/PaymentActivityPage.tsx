@@ -6,7 +6,6 @@ import {
   FolderGit2,
   CheckCircle2,
   CreditCard,
-  Users,
   Settings,
   Bell,
   X,
@@ -14,9 +13,14 @@ import {
   Search,
   ChevronDown,
   Check,
-  HelpCircle,
-  Plus,
   RotateCw,
+  FileText,
+  Sparkles,
+  GitBranch,
+  ShieldCheck,
+  ExternalLink,
+  Download,
+  Clock,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
 import { Milestone, Project } from '@/types';
@@ -39,7 +43,6 @@ export interface PaymentTransaction {
   payerEmail?: string;
 }
 
-// Monthly Chart Data Point
 interface MonthlyDataPoint {
   month: string;
   amount: number;
@@ -56,8 +59,8 @@ const MONTHLY_TREND: MonthlyDataPoint[] = [
   { month: 'Aug', amount: 13600 },
   { month: 'Sep', amount: 19500 },
   { month: 'Oct', amount: 21800 },
-  { month: 'Nov', amount: 17200 },
-  { month: 'Dec', amount: 28500 },
+  { month: 'Nov', amount: 18500 },
+  { month: 'Dec', amount: 24000 },
 ];
 
 export const PaymentActivityPage: React.FC = () => {
@@ -66,7 +69,6 @@ export const PaymentActivityPage: React.FC = () => {
   // Navigation & Layout States
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(true);
 
   // Data Loading & API Sync
@@ -78,10 +80,9 @@ export const PaymentActivityPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Success' | 'Pending' | 'Failed'>('All');
   const [projectFilter, setProjectFilter] = useState<string>('All');
-  const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Selected Transaction ID (defaulting to INV-2026-002 as depicted in the reference screenshot)
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string>('INV-2026-002');
+  // Selected Transaction ID (defaulting to INV-2026-0842)
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string>('INV-2026-0842');
 
   // Chart Tooltip Hover State
   const [hoveredMonth, setHoveredMonth] = useState<MonthlyDataPoint | null>(null);
@@ -114,149 +115,124 @@ export const PaymentActivityPage: React.FC = () => {
     }
   };
 
-  // Transaction Registry matching reference screenshot
+  // Transaction Registry matching standard demo data
   const initialTransactions: PaymentTransaction[] = useMemo(() => [
     {
       id: 'tx-1',
-      transactionId: 'INV-2026-001',
-      invoiceNumber: 'INV-2026-001',
-      project: 'Apollo Mobile',
-      client: 'Acme Corp',
-      amount: 7500.0,
-      paymentDate: 'Oct 26, 2026',
-      paymentMethod: 'PayPal',
+      transactionId: 'INV-2026-0841',
+      invoiceNumber: 'INV-2026-0841',
+      project: 'Payment Gateway Integration',
+      client: 'Meridian Labs',
+      amount: 5000.0,
+      paymentDate: 'Nov 03, 2026',
+      paymentMethod: 'PayPal Sandbox',
       status: 'Success',
-      paypalReference: 'PP-9847120394',
-      webhookTimestamp: 'Oct 26, 2026 14:22:10 UTC',
-      relatedMilestone: 'Milestone 3: API Integration',
+      paypalReference: 'PP-DEMO-98471203',
+      webhookTimestamp: 'Nov 03, 2026 17:42:10 UTC',
+      relatedMilestone: 'Milestone 1: Core Payment Architecture',
       milestoneRoute: '/milestones',
-      payerEmail: 'billing@acme-corp.com',
+      payerEmail: 'marcus@meridianlabs.io',
     },
     {
       id: 'tx-2',
-      transactionId: 'INV-2026-002',
-      invoiceNumber: 'INV-2026-002',
-      project: 'Alpha Portal',
-      client: 'Acme Corp',
-      amount: 1000.0,
-      paymentDate: 'Nov 15, 2026',
-      paymentMethod: 'PayPal',
+      transactionId: 'INV-2026-0842',
+      invoiceNumber: 'INV-2026-0842',
+      project: 'Payment Gateway Integration',
+      client: 'Meridian Labs',
+      amount: 4500.0,
+      paymentDate: 'Nov 05, 2026',
+      paymentMethod: 'PayPal Sandbox',
       status: 'Success',
-      paypalReference: 'PP-1234567890',
-      webhookTimestamp: '1m ago',
-      relatedMilestone: 'Alpha Launch v1.0',
+      paypalReference: 'PP-DEMO-12345678',
+      webhookTimestamp: 'Nov 05, 2026 18:15:00 UTC',
+      relatedMilestone: 'Milestone 2: Automated Invoicing',
       milestoneRoute: '/milestones',
-      payerEmail: 'accounts@acmepartner.io',
+      payerEmail: 'marcus@meridianlabs.io',
     },
     {
       id: 'tx-3',
-      transactionId: 'INV-2026-003',
-      invoiceNumber: 'INV-2026-003',
-      project: 'Stellar Innovations',
-      client: 'Acme Portal',
-      amount: 1550.0,
-      paymentDate: 'Nov 15, 2028',
-      paymentMethod: 'PayPal',
+      transactionId: 'INV-2026-0843',
+      invoiceNumber: 'INV-2026-0843',
+      project: 'Payment Gateway Integration',
+      client: 'Meridian Labs',
+      amount: 5000.0,
+      paymentDate: 'Nov 07, 2026',
+      paymentMethod: 'PayPal Sandbox',
       status: 'Pending',
-      paypalReference: 'PP-4491028374',
-      webhookTimestamp: 'Awaiting webhook capture',
-      relatedMilestone: 'Security Audit v1.1',
+      paypalReference: 'PP-DEMO-44910283',
+      webhookTimestamp: 'Awaiting client approval & webhook capture',
+      relatedMilestone: 'Milestone 3: AI Milestone Verification',
       milestoneRoute: '/milestones',
-      payerEmail: 'contact@stellarinnov.com',
+      payerEmail: 'marcus@meridianlabs.io',
     },
     {
       id: 'tx-4',
-      transactionId: 'INV-2026-004',
-      invoiceNumber: 'INV-2026-004',
-      project: 'Gamma Analytics',
-      client: 'Global Dynamics',
-      amount: 1500.0,
-      paymentDate: 'Nov 19, 2028',
-      paymentMethod: 'PayPal',
-      status: 'Failed',
-      paypalReference: 'PP-5520194820',
-      webhookTimestamp: 'Nov 19, 2028 09:15:00 UTC',
-      relatedMilestone: 'Telemetry Pipeline v2.0',
+      transactionId: 'INV-2026-0844',
+      invoiceNumber: 'INV-2026-0844',
+      project: 'Analytics Dashboard',
+      client: 'Vertex Systems',
+      amount: 4200.0,
+      paymentDate: 'Nov 06, 2026',
+      paymentMethod: 'PayPal Sandbox',
+      status: 'Success',
+      paypalReference: 'PP-DEMO-55201948',
+      webhookTimestamp: 'Nov 06, 2026 14:10:00 UTC',
+      relatedMilestone: 'Milestone 3: Real-Time Telemetry Pipeline',
       milestoneRoute: '/milestones',
-      payerEmail: 'finance@globaldynamics.io',
+      payerEmail: 'schen@vertexsystems.com',
     },
     {
       id: 'tx-5',
-      transactionId: 'INV-2026-004-b',
-      invoiceNumber: 'INV-2026-004',
-      project: 'Delta Platform',
-      client: 'Future Tech',
-      amount: 8000.0,
-      paymentDate: 'Nov 17, 2026',
-      paymentMethod: 'PayPal',
-      status: 'Failed',
-      paypalReference: 'PP-7719284012',
-      webhookTimestamp: 'Nov 17, 2026 18:40:12 UTC',
-      relatedMilestone: 'Event Streaming v1.0',
+      transactionId: 'INV-2026-0845',
+      invoiceNumber: 'INV-2026-0845',
+      project: 'API Modernization',
+      client: 'BluePeak Technologies',
+      amount: 3200.0,
+      paymentDate: 'Nov 07, 2026',
+      paymentMethod: 'PayPal Sandbox',
+      status: 'Pending',
+      paypalReference: 'PP-DEMO-77192840',
+      webhookTimestamp: 'Invoice dispatched to client portal',
+      relatedMilestone: 'Milestone 2: REST & Rate Limiting',
       milestoneRoute: '/milestones',
-      payerEmail: 'accounts@futuretech.dev',
+      payerEmail: 'rachel@bluepeak.tech',
     },
     {
       id: 'tx-6',
-      transactionId: 'INV-2026-005',
-      invoiceNumber: 'INV-2026-005',
-      project: 'Beta Engine',
-      client: 'TechSolutions',
-      amount: 1500.0,
-      paymentDate: 'Nov 22, 2026',
-      paymentMethod: 'PayPal',
+      transactionId: 'INV-2026-0846',
+      invoiceNumber: 'INV-2026-0846',
+      project: 'Customer Portal',
+      client: 'Meridian Labs',
+      amount: 2800.0,
+      paymentDate: 'Nov 04, 2026',
+      paymentMethod: 'PayPal Sandbox',
       status: 'Success',
-      paypalReference: 'PP-3391028475',
-      webhookTimestamp: 'Nov 22, 2026 11:05:33 UTC',
-      relatedMilestone: 'Worker Engine Scaling',
+      paypalReference: 'PP-DEMO-33910284',
+      webhookTimestamp: 'Nov 04, 2026 11:05:33 UTC',
+      relatedMilestone: 'Milestone 1: Deliverable Verification Shell',
       milestoneRoute: '/milestones',
-      payerEmail: 'invoicing@techsolutions.com',
-    },
-    {
-      id: 'tx-7',
-      transactionId: 'INV-2026-006',
-      invoiceNumber: 'INV-2026-006',
-      project: 'Beta Engine',
-      client: 'Acme Engine',
-      amount: 1500.0,
-      paymentDate: 'Nov 22, 2026',
-      paymentMethod: 'PayPal',
-      status: 'Success',
-      paypalReference: 'PP-8820194721',
-      webhookTimestamp: 'Nov 22, 2026 11:30:19 UTC',
-      relatedMilestone: 'Production Deploy v2.2',
-      milestoneRoute: '/milestones',
-      payerEmail: 'devops@acme-engine.io',
+      payerEmail: 'marcus@meridianlabs.io',
     },
   ], []);
 
-  // Filtered Transactions
+  // Filtered & Searched Transactions
   const filteredTransactions = useMemo(() => {
     return initialTransactions.filter((tx) => {
-      // Search
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matches =
-          tx.transactionId.toLowerCase().includes(q) ||
-          tx.invoiceNumber.toLowerCase().includes(q) ||
-          tx.project.toLowerCase().includes(q) ||
-          tx.client.toLowerCase().includes(q) ||
-          tx.relatedMilestone.toLowerCase().includes(q);
-        if (!matches) return false;
-      }
+      const matchSearch =
+        tx.transactionId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.project.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.relatedMilestone.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Status
-      if (statusFilter !== 'All' && tx.status !== statusFilter) return false;
+      const matchStatus = statusFilter === 'All' || tx.status === statusFilter;
+      const matchProject = projectFilter === 'All' || tx.project === projectFilter;
 
-      // Project
-      if (projectFilter !== 'All' && tx.project !== projectFilter) return false;
-
-      return true;
+      return matchSearch && matchStatus && matchProject;
     });
   }, [initialTransactions, searchQuery, statusFilter, projectFilter]);
 
   // Selected Transaction Object
-  const selectedTransaction = useMemo(() => {
+  const currentTransaction = useMemo(() => {
     return (
       initialTransactions.find((tx) => tx.transactionId === selectedTransactionId) ||
       initialTransactions[1] ||
@@ -264,89 +240,83 @@ export const PaymentActivityPage: React.FC = () => {
     );
   }, [initialTransactions, selectedTransactionId]);
 
-  // Summary Metrics matching reference screenshot ($148,200 | $24,500 | $12,800 | 34)
-  const summaryMetrics = {
-    totalReceived: 148200,
-    pendingPayments: 24500,
-    outstandingAmount: 12800,
-    successfulTransactions: 34,
-  };
+  // Financial Summary KPI Aggregates
+  const summaryMetrics = useMemo(() => {
+    const totalReceived = initialTransactions
+      .filter((t) => t.status === 'Success')
+      .reduce((acc, curr) => acc + curr.amount, 0);
 
-  // SVG Area Chart calculations
-  const chartHeight = 160;
-  const chartWidth = 900;
-  const paddingLeft = 65;
-  const paddingRight = 20;
-  const paddingTop = 20;
-  const paddingBottom = 30;
-  const maxVal = 30000;
+    const pending = initialTransactions
+      .filter((t) => t.status === 'Pending')
+      .reduce((acc, curr) => acc + curr.amount, 0);
 
-  const points = useMemo(() => {
-    const innerW = chartWidth - paddingLeft - paddingRight;
-    const innerH = chartHeight - paddingTop - paddingBottom;
-    return MONTHLY_TREND.map((d, i) => {
-      const x = paddingLeft + (i / (MONTHLY_TREND.length - 1)) * innerW;
-      const y = paddingTop + innerH - (d.amount / maxVal) * innerH;
-      return { x, y, ...d };
-    });
-  }, [chartWidth, paddingLeft, paddingRight, paddingTop, paddingBottom, maxVal]);
+    const totalCount = initialTransactions.length;
+    const verifiedRate = Math.round(
+      (initialTransactions.filter((t) => t.status === 'Success').length / totalCount) * 100
+    );
 
-  const curvePath = useMemo(() => {
-    return points.reduce((acc, curr, idx) => {
-      if (idx === 0) return `M ${curr.x} ${curr.y}`;
-      const prev = points[idx - 1];
-      const cx = (prev.x + curr.x) / 2;
-      return `${acc} C ${cx} ${prev.y}, ${cx} ${curr.y}, ${curr.x} ${curr.y}`;
-    }, '');
-  }, [points]);
-
-  const areaPath = useMemo(() => {
-    const lastX = points[points.length - 1].x;
-    const firstX = points[0].x;
-    const bottomY = chartHeight - paddingBottom;
-    return `${curvePath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
-  }, [curvePath, points, chartHeight, paddingBottom]);
+    return { totalReceived, pending, totalCount, verifiedRate };
+  }, [initialTransactions]);
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#F4F6FA] text-slate-800">
-        <div className="flex items-center gap-2.5 text-xs text-slate-500 font-mono">
-          <RotateCw className="w-4 h-4 text-[#1683ED] animate-spin" />
+      <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#080D18] text-white">
+        <div className="flex items-center gap-2.5 text-xs text-slate-400 font-mono">
+          <RotateCw className="w-4 h-4 text-[#2563EB] animate-spin" />
           <span>Synchronizing Payment Telemetry...</span>
         </div>
       </div>
     );
   }
 
+  // Monthly Chart SVG geometry calculations
+  const chartHeight = 140;
+  const chartWidth = 520;
+  const paddingLeft = 35;
+  const paddingRight = 15;
+  const paddingTop = 20;
+  const paddingBottom = 25;
+
+  const maxAmount = Math.max(...MONTHLY_TREND.map((d) => d.amount));
+  const innerWidth = chartWidth - paddingLeft - paddingRight;
+  const innerHeight = chartHeight - paddingTop - paddingBottom;
+
+  const points = MONTHLY_TREND.map((d, index) => {
+    const x = paddingLeft + (index / (MONTHLY_TREND.length - 1)) * innerWidth;
+    const y = paddingTop + innerHeight - (d.amount / maxAmount) * innerHeight;
+    return { x, y, ...d };
+  });
+
+  const pathD = points.reduce((acc, point, i, arr) => {
+    if (i === 0) return `M ${point.x} ${point.y}`;
+    const prev = arr[i - 1];
+    const cpX = (prev.x + point.x) / 2;
+    return `${acc} C ${cpX} ${prev.y}, ${cpX} ${point.y}, ${point.x} ${point.y}`;
+  }, '');
+
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${chartHeight - paddingBottom} L ${points[0].x} ${chartHeight - paddingBottom} Z`;
+
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#F4F6FA] text-[#111827] font-sans antialiased overflow-hidden select-none">
+    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-slate-200 shadow-xl text-xs animate-in fade-in slide-in-from-top duration-200">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-500'
-                : toastMessage.type === 'error'
-                ? 'bg-rose-500'
-                : 'bg-blue-500'
-            }`}
-          />
+        <div className="fixed top-5 right-5 z-[70] flex items-center gap-3 px-4 py-3 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl text-xs text-white animate-in fade-in slide-in-from-top duration-200">
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <div>
-            <div className="font-bold text-slate-900">{toastMessage.title}</div>
-            <div className="text-slate-500 text-[11px]">{toastMessage.desc}</div>
+            <div className="font-semibold text-white">{toastMessage.title}</div>
+            <div className="text-[11px] text-slate-400">{toastMessage.desc}</div>
           </div>
         </div>
       )}
 
-      {/* 1. FIXED DARK SIDEBAR (Matching reference: Dashboard, Projects, Milestones, Payments, Users, Configurations) */}
+      {/* 1. FIXED DARK NAVY SIDEBAR */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-60 bg-[#101D32] border-r border-[#1B2D4A] flex flex-col justify-between transition-transform duration-200 ease-in-out ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between transition-transform duration-200 ease-in-out shrink-0 ${
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
-          {/* Logo Header */}
+          {/* Brand Logo Header */}
           <div className="flex items-center justify-between px-3">
             <div
               onClick={() => navigate('/')}
@@ -354,7 +324,6 @@ export const PaymentActivityPage: React.FC = () => {
             >
               <DevFlowLogo variant="horizontal" theme="light" size="sm" />
             </div>
-            {/* Mobile Close Button */}
             <button
               onClick={() => setMobileSidebarOpen(false)}
               className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E]"
@@ -363,166 +332,237 @@ export const PaymentActivityPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Navigation Items */}
-          <div className="space-y-1 text-xs">
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/dashboard');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4 text-slate-400" />
-              <span>Dashboard</span>
-            </button>
+          {/* Navigation Links */}
+          <div className="space-y-6 text-xs">
+            {/* WORKSPACE */}
+            <div className="space-y-1">
+              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
+                Workspace
+              </span>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/dashboard');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                <span>Dashboard</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/projects');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <FolderGit2 className="w-4 h-4 text-slate-400" />
+                <span>Projects</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/milestones');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                <span>Milestones</span>
+              </button>
+            </div>
 
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/projects');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
-            >
-              <FolderGit2 className="w-4 h-4 text-slate-400" />
-              <span>Projects</span>
-            </button>
+            {/* INTELLIGENCE */}
+            <div className="space-y-1">
+              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
+                Intelligence
+              </span>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/verification');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span>AI Agents</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/evidence');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <GitBranch className="w-4 h-4 text-slate-400" />
+                <span>Evidence</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/verification');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Verification</span>
+              </button>
+            </div>
 
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/milestones');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4 text-slate-400" />
-              <span>Milestones</span>
-            </button>
+            {/* FINANCE */}
+            <div className="space-y-1">
+              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
+                Finance
+              </span>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/invoices');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <FileText className="w-4 h-4 text-slate-400" />
+                <span>Invoices</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/payments');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1B2A47] text-white font-semibold shadow-xs"
+              >
+                <CreditCard className="w-4 h-4 text-[#2563EB]" />
+                <span>Payments &amp; Activity</span>
+              </button>
+            </div>
 
-            {/* Payments Active Pill (Solid Bright Blue) */}
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/payments');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1683ED] text-white font-semibold shadow-md shadow-blue-600/30"
-            >
-              <CreditCard className="w-4 h-4 text-white" />
-              <span>Payments</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                showToast('Team Directory', 'Viewing authorized billing users.', 'info');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
-            >
-              <Users className="w-4 h-4 text-slate-400" />
-              <span>Users</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileSidebarOpen(false);
-                navigate('/settings');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
-            >
-              <Settings className="w-4 h-4 text-slate-400" />
-              <span>Configurations</span>
-            </button>
+            {/* SYSTEM */}
+            <div className="space-y-1">
+              <span className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 block">
+                System
+              </span>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/integrations');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <Settings className="w-4 h-4 text-slate-400" />
+                <span>Integrations</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/notifications');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <Bell className="w-4 h-4 text-slate-400" />
+                <span>Notifications</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  navigate('/settings');
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152238] transition-colors"
+              >
+                <Settings className="w-4 h-4 text-slate-400" />
+                <span>Settings</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Sidebar Bottom Nav (+ Quick-add, Help center) */}
-        <div className="p-3 border-t border-[#1B2D4A] space-y-1 text-xs">
-          <button
-            onClick={() => {
-              navigate('/invoices');
-              showToast('Navigating', 'Opening Invoice creation workspace.', 'info');
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-[#152744] transition-colors font-medium"
-          >
-            <Plus className="w-4 h-4 text-[#1683ED]" />
-            <span>+ Quick-add</span>
-          </button>
-          <button
-            onClick={() => showToast('Help Center', 'PayPal settlement & escrow documentation.', 'info')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#152744] transition-colors"
-          >
-            <HelpCircle className="w-4 h-4 text-slate-400" />
-            <span>Help center</span>
-          </button>
+        {/* Sidebar Footer User Profile */}
+        <div
+          onClick={() => navigate('/settings')}
+          className="p-3 border-t border-[#26344B] flex items-center justify-between cursor-pointer hover:bg-[#152238] transition-colors"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B]">
+              AM
+            </div>
+            <div className="flex flex-col text-left truncate">
+              <span className="text-xs font-semibold text-white truncate leading-tight">Alex Morgan</span>
+              <span className="text-[10px] text-slate-400">Project Administrator</span>
+            </div>
+          </div>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
         </div>
       </aside>
 
       {/* Mobile Sidebar Backdrop */}
       {mobileSidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
           onClick={() => setMobileSidebarOpen(false)}
         />
       )}
 
       {/* 2. MAIN CONTENT VIEWPORT */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* PHASE 4: PAGE HEADER */}
-        <header className="h-16 px-4 sm:px-8 border-b border-[#DCE2EA] bg-white flex items-center justify-between shrink-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
+        {/* PAGE HEADER */}
+        <header className="h-14 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D]"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#111827] tracking-tight leading-none">
-                Payments
-              </h1>
-              <p className="text-xs text-[#64748B] mt-1 hidden sm:block">
-                Monitor payment activity and financial progress across your projects.
-              </p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold text-white tracking-tight leading-none">
+                  Payment Activity &amp; Settlements
+                </h1>
+                <span className="text-[10px] font-mono font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full">
+                  SANDBOX TELEMETRY
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-3">
-            {/* Settings Gear */}
             <button
-              onClick={() => navigate('/settings')}
-              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Settings"
+              onClick={() => {
+                showToast('Synchronized', 'Payment ledger synchronized with PayPal sandbox webhooks.', 'info');
+              }}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D] transition-colors"
+              title="Refresh ledger"
             >
-              <Settings className="w-4 h-4" />
+              <RotateCw className="w-4 h-4" />
             </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg relative transition-colors"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D] relative transition-colors"
                 title="Notifications"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#080D18]" />
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 z-50 space-y-2 text-xs">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 font-bold text-slate-900">
+                <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 text-xs space-y-2">
+                  <div className="font-bold text-white flex justify-between items-center pb-2 border-b border-[#26344B]">
                     <span>Payment Activity Alerts</span>
-                    <button
-                      onClick={() => setNotificationsOpen(false)}
-                      className="text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                    <span className="text-[10px] text-blue-400 cursor-pointer" onClick={() => setNotificationsOpen(false)}>
+                      Close
+                    </span>
                   </div>
-                  <div className="p-2 rounded-lg bg-emerald-50 text-[11px] text-emerald-800 border border-emerald-100">
-                    <span className="font-semibold">PayPal Webhook:</span> $1,000.00 settled for Alpha Portal.
-                  </div>
-                  <div className="p-2 rounded-lg bg-blue-50 text-[11px] text-blue-800 border border-blue-100">
-                    <span className="font-semibold">Escrow Released:</span> Milestone 3 settled.
+                  <div className="space-y-2">
+                    <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
+                      <div className="font-semibold text-white">Invoice #INV-2026-0842 Settled</div>
+                      <div className="text-[11px] text-slate-400">$4,500.00 confirmed via PayPal Webhook</div>
+                    </div>
+                    <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
+                      <div className="font-semibold text-white">Invoice #INV-2026-0843 Drafted</div>
+                      <div className="text-[11px] text-slate-400">$5,000.00 awaiting human sign-off</div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -530,410 +570,290 @@ export const PaymentActivityPage: React.FC = () => {
 
             {/* User Profile Avatar */}
             <div
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-1.5 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              onClick={() => navigate('/settings')}
+              className="flex items-center gap-2 pl-2 border-l border-[#26344B] cursor-pointer hover:opacity-90 transition-opacity"
             >
-              <img
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces"
-                alt="Tharun"
-                className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/30"
-              />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-sm">
+                AM
+              </div>
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-xs font-semibold text-white leading-tight">Alex Morgan</span>
+                <span className="text-[10px] text-slate-400">Project Administrator</span>
+              </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
           </div>
         </header>
 
         {/* Scrollable Dashboard Workspace */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-5">
-          {/* PHASE 5: FINANCIAL SUMMARY CARDS (4 IN A ROW) */}
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px] w-full mx-auto">
+          {/* FINANCIAL SUMMARY CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: Total Received */}
-            <div className="rounded-xl bg-white border border-[#DCE2EA] p-4 shadow-xs">
-              <span className="text-xs text-[#64748B] block font-medium">Total Received</span>
-              <div className="text-2xl font-bold text-[#111827] font-mono tracking-tight mt-1">
-                ${summaryMetrics.totalReceived.toLocaleString('en-US')}
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 block font-medium">Total Settled (Demo)</span>
+              <div className="text-2xl font-bold text-emerald-400 font-mono tracking-tight mt-1.5">
+                ${summaryMetrics.totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
+              <span className="text-[10px] text-slate-500 font-mono mt-1 block">4 settled milestone invoices</span>
             </div>
 
-            {/* Card 2: Pending Payments */}
-            <div className="rounded-xl bg-white border border-[#DCE2EA] p-4 shadow-xs">
-              <span className="text-xs text-[#64748B] block font-medium">Pending Payments</span>
-              <div className="text-2xl font-bold text-[#111827] font-mono tracking-tight mt-1">
-                ${summaryMetrics.pendingPayments.toLocaleString('en-US')}
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 block font-medium">Pending Client Sign-off</span>
+              <div className="text-2xl font-bold text-amber-400 font-mono tracking-tight mt-1.5">
+                ${summaryMetrics.pending.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
+              <span className="text-[10px] text-slate-500 font-mono mt-1 block">2 deliverables under review</span>
             </div>
 
-            {/* Card 3: Outstanding Amount */}
-            <div className="rounded-xl bg-white border border-[#DCE2EA] p-4 shadow-xs">
-              <span className="text-xs text-[#64748B] block font-medium">Outstanding Amount</span>
-              <div className="text-2xl font-bold text-[#111827] font-mono tracking-tight mt-1">
-                ${summaryMetrics.outstandingAmount.toLocaleString('en-US')}
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 block font-medium">Verification Pass Rate</span>
+              <div className="text-2xl font-bold text-blue-400 font-mono tracking-tight mt-1.5">
+                {summaryMetrics.verifiedRate}%
               </div>
+              <span className="text-[10px] text-slate-500 font-mono mt-1 block">AST requirement matching</span>
             </div>
 
-            {/* Card 4: Successful Transactions */}
-            <div className="rounded-xl bg-white border border-[#DCE2EA] p-4 shadow-xs">
-              <span className="text-xs text-[#64748B] block font-medium">Successful Transactions</span>
-              <div className="text-2xl font-bold text-[#111827] font-mono tracking-tight mt-1">
-                {summaryMetrics.successfulTransactions}
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="text-xs text-slate-400 block font-medium">PayPal Webhooks Active</span>
+              <div className="text-2xl font-bold text-white font-mono tracking-tight mt-1.5">
+                100%
               </div>
+              <span className="text-[10px] text-emerald-400 font-mono mt-1 block">CRC32 / HMAC verified</span>
             </div>
           </div>
 
-          {/* PHASE 6: MONTHLY PAYMENT TREND CHART */}
-          <div className="rounded-xl bg-white border border-[#DCE2EA] p-4 sm:p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-[#111827] tracking-tight">
-                Monthly Payment trend
-              </h3>
-              {hoveredMonth && (
-                <div className="text-xs font-mono font-semibold text-[#1683ED] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
-                  {hoveredMonth.month}: ${hoveredMonth.amount.toLocaleString()}
-                </div>
-              )}
+          {/* MONTHLY SETTLEMENT TREND CHART */}
+          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-5 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#26344B] pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white">Monthly Settlement Volume</h3>
+                <p className="text-xs text-slate-400">Milestone payout history reconciled via PayPal Sandbox</p>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-mono">
+                <span className="flex items-center gap-1.5 text-slate-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
+                  <span>Settled Payouts</span>
+                </span>
+                <span className="text-slate-500">&bull; 2026 Sandbox Timeline</span>
+              </div>
             </div>
 
-            {/* Responsive Smooth Curve Area Chart */}
-            <div className="relative w-full overflow-x-auto">
-              <svg
-                viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                className="w-full min-w-[700px] h-[160px] overflow-visible"
-              >
+            <div className="relative pt-2">
+              <svg className="w-full h-36" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
                 <defs>
-                  <linearGradient id="paymentTrendGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1683ED" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#1683ED" stopOpacity="0.0" />
+                  <linearGradient id="payChartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2563EB" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-
-                {/* Y-Axis Grid Lines & Labels */}
-                {[30000, 20000, 10000, 0].map((val) => {
-                  const innerH = chartHeight - paddingTop - paddingBottom;
-                  const y = paddingTop + innerH - (val / maxVal) * innerH;
-                  return (
-                    <g key={val}>
-                      <text
-                        x={paddingLeft - 10}
-                        y={y + 4}
-                        textAnchor="end"
-                        className="text-[10px] font-mono fill-slate-400 font-medium"
-                      >
-                        ${val.toLocaleString()}
-                      </text>
-                      <line
-                        x1={paddingLeft}
-                        y1={y}
-                        x2={chartWidth - paddingRight}
-                        y2={y}
-                        stroke="#E2E8F0"
-                        strokeDasharray={val === 0 ? '' : '3 3'}
-                        strokeWidth="1"
-                      />
-                    </g>
-                  );
-                })}
-
-                {/* Shaded Area */}
-                <path d={areaPath} fill="url(#paymentTrendGradient)" />
-
-                {/* Blue Curve Line */}
-                <path
-                  d={curvePath}
-                  fill="none"
-                  stroke="#1683ED"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Month Data Points and Hover Target Nodes */}
-                {points.map((pt, idx) => (
-                  <g
-                    key={idx}
-                    className="cursor-pointer group"
+                <path d={areaD} fill="url(#payChartGrad)" />
+                <path d={pathD} fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" />
+                {points.map((pt) => (
+                  <circle
+                    key={pt.month}
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={hoveredMonth?.month === pt.month ? 5 : 3}
+                    className="fill-[#2563EB] stroke-[#080D18] stroke-2 cursor-pointer transition-all"
                     onMouseEnter={() => setHoveredMonth(pt)}
                     onMouseLeave={() => setHoveredMonth(null)}
-                  >
-                    <circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r="4"
-                      className="fill-white stroke-[#1683ED] stroke-2 group-hover:scale-125 group-hover:fill-[#1683ED] transition-transform"
-                    />
-                    <text
-                      x={pt.x}
-                      y={chartHeight - 10}
-                      textAnchor="middle"
-                      className={`text-[10px] font-medium transition-colors ${
-                        hoveredMonth?.month === pt.month ? 'fill-[#1683ED] font-bold' : 'fill-slate-500'
-                      }`}
-                    >
-                      {pt.month}
-                    </text>
-                  </g>
+                  />
                 ))}
               </svg>
+
+              <div className="flex justify-between text-[11px] text-slate-400 font-mono pt-2 px-6">
+                {MONTHLY_TREND.map((d) => (
+                  <span key={d.month}>{d.month}</span>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* MAIN SPLIT: TRANSACTION HISTORY TABLE (LEFT) + PAYMENT DETAILS PANEL (RIGHT) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            {/* PHASE 7: TRANSACTION HISTORY TABLE */}
-            <div
-              className={`${
-                isDetailPanelOpen ? 'lg:col-span-8' : 'lg:col-span-12'
-              } rounded-xl bg-white border border-[#DCE2EA] shadow-xs overflow-hidden transition-all duration-200`}
-            >
-              {/* Table Filter & Search Controls */}
-              <div className="p-3.5 border-b border-[#DCE2EA] flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
-                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                  <div className="relative w-full max-w-xs">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder="Search transactions, invoices..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white text-xs text-slate-900 placeholder-slate-400 pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 focus:border-[#1683ED] focus:outline-hidden"
-                    />
-                  </div>
+          {/* TRANSACTIONS SECTION & SLIDE-OVER DETAIL */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Transactions Table (Left lg:col-span-8 or lg:col-span-7) */}
+            <div className={`${isDetailPanelOpen ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4 transition-all duration-200`}>
+              {/* Filter Toolbar */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl bg-[#111C30] border border-[#26344B]">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search invoices, projects, or clients..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-[#080D18] border border-[#26344B] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#2563EB]"
+                  />
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Project Filter */}
-                  <select
-                    value={projectFilter}
-                    onChange={(e) => setProjectFilter(e.target.value)}
-                    className="bg-white border border-slate-300 text-xs text-slate-700 rounded-lg px-2.5 py-1.5 focus:outline-hidden"
-                  >
-                    <option value="All">Project: All</option>
-                    <option value="Apollo Mobile">Apollo Mobile</option>
-                    <option value="Alpha Portal">Alpha Portal</option>
-                    <option value="Stellar Innovations">Stellar Innovations</option>
-                    <option value="Gamma Analytics">Gamma Analytics</option>
-                    <option value="Delta Platform">Delta Platform</option>
-                    <option value="Beta Engine">Beta Engine</option>
-                  </select>
-
-                  {/* Status Filter */}
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as any)}
-                    className="bg-white border border-slate-300 text-xs text-slate-700 rounded-lg px-2.5 py-1.5 focus:outline-hidden"
+                    className="bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-[#2563EB]"
                   >
-                    <option value="All">Status: All</option>
-                    <option value="Success">Success</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Failed">Failed</option>
+                    <option value="All">All Statuses</option>
+                    <option value="Success">Success / Settled</option>
+                    <option value="Pending">Pending Review</option>
+                    <option value="Failed">Failed / Disputed</option>
                   </select>
 
-                  {!isDetailPanelOpen && (
-                    <button
-                      onClick={() => setIsDetailPanelOpen(true)}
-                      className="text-xs text-[#1683ED] hover:underline font-semibold"
-                    >
-                      Show Detail Panel
-                    </button>
-                  )}
+                  <select
+                    value={projectFilter}
+                    onChange={(e) => setProjectFilter(e.target.value)}
+                    className="bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-[#2563EB]"
+                  >
+                    <option value="All">All Projects</option>
+                    <option value="Payment Gateway Integration">Payment Gateway</option>
+                    <option value="Analytics Dashboard">Analytics Dashboard</option>
+                    <option value="API Modernization">API Modernization</option>
+                    <option value="Customer Portal">Customer Portal</option>
+                  </select>
                 </div>
               </div>
 
-              {/* High-Density Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-[#DCE2EA] text-[11px] text-[#64748B] font-semibold bg-slate-50">
-                      <th className="py-2.5 px-3">Transaction ID</th>
-                      <th className="py-2.5 px-3">Invoice number</th>
-                      <th className="py-2.5 px-3">Project</th>
-                      <th className="py-2.5 px-3">Client</th>
-                      <th className="py-2.5 px-3">Amount</th>
-                      <th className="py-2.5 px-3">Payment date</th>
-                      <th className="py-2.5 px-3">Payment method</th>
-                      <th className="py-2.5 px-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E2E8F0]">
-                    {filteredTransactions.map((tx) => {
-                      const isSelected = tx.transactionId === selectedTransactionId;
-                      return (
-                        <tr
-                          key={tx.id}
-                          onClick={() => {
-                            setSelectedTransactionId(tx.transactionId);
-                            setIsDetailPanelOpen(true);
-                          }}
-                          className={`cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'bg-[#EBF3FC] font-medium text-slate-900'
-                              : 'hover:bg-slate-50 text-slate-700'
-                          }`}
-                        >
-                          {/* Transaction ID */}
-                          <td className="py-2.5 px-3 font-mono font-medium text-xs whitespace-nowrap">
-                            {tx.transactionId}
-                          </td>
+              {/* Transactions Table */}
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs whitespace-nowrap">
+                    <thead>
+                      <tr className="border-b border-[#26344B] text-[11px] text-slate-400 font-semibold bg-[#101A2D]">
+                        <th className="py-3 px-4">Invoice / ID</th>
+                        <th className="py-3 px-4">Project &amp; Client</th>
+                        <th className="py-3 px-4">Amount</th>
+                        <th className="py-3 px-4">Settlement Date</th>
+                        <th className="py-3 px-4 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#26344B]/40">
+                      {filteredTransactions.map((tx) => {
+                        const isSelected = tx.transactionId === selectedTransactionId;
+                        const statusBadge =
+                          tx.status === 'Success'
+                            ? 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60'
+                            : tx.status === 'Pending'
+                            ? 'bg-amber-950/70 text-amber-400 border-amber-800/60'
+                            : 'bg-rose-950/70 text-rose-400 border-rose-800/60';
 
-                          {/* Invoice Number */}
-                          <td className="py-2.5 px-3 font-mono text-xs text-slate-600 whitespace-nowrap">
-                            {tx.invoiceNumber}
-                          </td>
-
-                          {/* Project */}
-                          <td className="py-2.5 px-3 font-semibold text-slate-900 whitespace-nowrap">
-                            {tx.project}
-                          </td>
-
-                          {/* Client */}
-                          <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
-                            {tx.client}
-                          </td>
-
-                          {/* Amount */}
-                          <td className="py-2.5 px-3 font-mono font-semibold text-slate-900 whitespace-nowrap">
-                            ${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </td>
-
-                          {/* Payment Date */}
-                          <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap font-mono text-[11px]">
-                            {tx.paymentDate}
-                          </td>
-
-                          {/* Payment Method */}
-                          <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap font-medium">
-                            {tx.paymentMethod}
-                          </td>
-
-                          {/* Status Pill Badge */}
-                          <td className="py-2.5 px-3 whitespace-nowrap">
-                            <span
-                              className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                tx.status === 'Success'
-                                  ? 'bg-[#E7F7EF] text-[#159B62] border border-[#A8E4C7]'
-                                  : tx.status === 'Pending'
-                                  ? 'bg-[#FEF7EB] text-[#E9A52A] border border-[#FCDCA5]'
-                                  : 'bg-[#FDF2F2] text-[#E45B5B] border border-[#F9BABA]'
-                              }`}
-                            >
-                              {tx.status}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Table Footer */}
-              <div className="p-3 bg-slate-50 border-t border-[#DCE2EA] flex items-center justify-between text-[11px] text-slate-500">
-                <span>Showing {filteredTransactions.length} transaction records</span>
-                <div className="flex items-center gap-1 font-mono">
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    className="p-1 rounded text-slate-600 hover:text-slate-900 disabled:opacity-30"
-                  >
-                    &lt;
-                  </button>
-                  <span className="px-2 font-semibold">1</span>
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled
-                    className="p-1 rounded text-slate-600 hover:text-slate-900 disabled:opacity-30"
-                  >
-                    &gt;
-                  </button>
+                        return (
+                          <tr
+                            key={tx.id}
+                            onClick={() => {
+                              setSelectedTransactionId(tx.transactionId);
+                              setIsDetailPanelOpen(true);
+                            }}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected ? 'bg-[#15233D] border-l-2 border-[#2563EB]' : 'hover:bg-[#15233D]/60'
+                            }`}
+                          >
+                            <td className="py-3 px-4 font-mono font-bold text-white">
+                              {tx.invoiceNumber}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="font-semibold text-white">{tx.project}</div>
+                              <div className="text-[11px] text-slate-400">{tx.client}</div>
+                            </td>
+                            <td className="py-3 px-4 font-mono font-bold text-white">
+                              ${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                              {tx.paymentDate}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-md ${statusBadge}`}>
+                                {tx.status === 'Success' ? 'Settled' : tx.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
 
-            {/* PHASE 8: PAYMENT DETAILS SIDE PANEL */}
-            {isDetailPanelOpen && (
-              <div className="lg:col-span-4 rounded-xl bg-white border border-[#DCE2EA] shadow-xs p-5 space-y-4">
-                {/* Header */}
-                <div className="flex items-center justify-between border-b border-[#DCE2EA] pb-3">
-                  <h3 className="text-sm font-bold text-[#111827]">Payment Detail</h3>
+            {/* Slide-over Transaction Detail Panel (Right lg:col-span-5) */}
+            {isDetailPanelOpen && currentTransaction && (
+              <div className="lg:col-span-5 rounded-xl bg-[#111C30] border border-[#26344B] p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
+                  <div>
+                    <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Transaction Details</span>
+                    <h3 className="text-base font-bold text-white font-mono">{currentTransaction.invoiceNumber}</h3>
+                  </div>
                   <button
                     onClick={() => setIsDetailPanelOpen(false)}
-                    className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100"
-                    title="Close Details Panel"
+                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#101A2D]"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Section 1: PayPal Transaction Reference */}
-                <div className="space-y-1">
-                  <span className="text-xs text-[#64748B] block font-medium">
-                    PayPal Transaction Reference
-                  </span>
-                  <div className="text-xs font-mono font-bold text-slate-900">
-                    {selectedTransaction.paypalReference}
+                <div className="p-3 rounded-lg bg-[#080D18] border border-[#26344B] space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Deliverable Amount:</span>
+                    <span className="font-mono font-bold text-emerald-400 text-sm">
+                      ${currentTransaction.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Payment Status:</span>
+                    <span className="font-semibold text-white flex items-center gap-1">
+                      {currentTransaction.status === 'Success' ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400">Settled (PayPal Webhook)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          <span className="text-amber-400">Pending Review</span>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">PayPal Reference:</span>
+                    <span className="font-mono text-slate-200">{currentTransaction.paypalReference}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Payer / Client:</span>
+                    <span className="text-slate-200">{currentTransaction.payerEmail}</span>
                   </div>
                 </div>
 
-                {/* Section 2: Verified Payment Status */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <span className="text-xs text-[#64748B] block font-medium">
-                    Verified Payment Status
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-[#159B62] flex items-center justify-center text-white shrink-0 shadow-xs">
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <div className="space-y-2 text-xs">
+                  <h4 className="font-bold text-white uppercase text-[11px] tracking-wider">Milestone Verification Proof</h4>
+                  <div className="p-3 rounded-lg bg-[#080D18] border border-[#26344B] space-y-1.5">
+                    <div className="text-slate-200 font-semibold">{currentTransaction.relatedMilestone}</div>
+                    <div className="text-[11px] text-slate-400 font-mono">Project: {currentTransaction.project}</div>
+                    <div className="flex items-center gap-2 pt-1 text-[11px]">
+                      <span className="text-emerald-400 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        AST Passed (94.2%)
+                      </span>
+                      <span className="text-slate-500">&bull;</span>
+                      <span className="text-blue-400">Human Sign-off Confirmed</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Section 3: Webhook Timestamp */}
-                <div className="space-y-1 pt-2 border-t border-slate-100">
-                  <span className="text-xs text-[#64748B] block font-medium">
-                    Webhook Timestamp
-                  </span>
-                  <div className="text-xs font-medium text-slate-800">
-                    {selectedTransaction.webhookTimestamp}
-                  </div>
-                </div>
-
-                {/* Section 4: Related Milestone */}
-                <div className="space-y-1 pt-2 border-t border-slate-100">
-                  <span className="text-xs text-[#64748B] block font-medium">
-                    Related Milestone
-                  </span>
-                  <button
-                    onClick={() => navigate('/milestones')}
-                    className="text-xs font-semibold text-[#1683ED] hover:underline flex items-center gap-1 text-left"
-                  >
-                    <span>{selectedTransaction.relatedMilestone}</span>
-                  </button>
-                </div>
-
-                {/* Extra Context Details */}
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5 mt-2">
-                  <div className="flex justify-between text-slate-600 text-[11px]">
-                    <span>Invoice:</span>
-                    <strong className="text-slate-900 font-mono">{selectedTransaction.invoiceNumber}</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-600 text-[11px]">
-                    <span>Client Payer:</span>
-                    <strong className="text-slate-900">{selectedTransaction.client}</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-600 text-[11px]">
-                    <span>Amount:</span>
-                    <strong className="text-emerald-700 font-mono">
-                      ${selectedTransaction.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex justify-end">
+                <div className="pt-2 flex items-center gap-2">
                   <button
                     onClick={() => {
-                      navigate('/invoices');
-                      showToast('Navigating to Invoice', `Opening details for ${selectedTransaction.invoiceNumber}`, 'info');
+                      showToast('Receipt Exported', `Cryptographic receipt generated for ${currentTransaction.invoiceNumber}`, 'success');
                     }}
-                    className="text-xs text-[#1683ED] hover:underline font-semibold"
+                    className="flex-1 py-2 px-3 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    View Full Invoice Record →
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Receipt</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/milestones')}
+                    className="py-2 px-3 rounded-lg bg-[#080D18] border border-[#26344B] hover:border-slate-500 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>View Milestone</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -941,34 +861,6 @@ export const PaymentActivityPage: React.FC = () => {
           </div>
         </main>
       </div>
-
-      {/* USER PROFILE MODAL */}
-      {userMenuOpen && (
-        <div className="fixed top-16 right-6 z-50 w-56 rounded-xl bg-white border border-slate-200 shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150">
-          <div className="font-bold text-slate-900 border-b border-slate-100 pb-2">
-            Tharun
-            <div className="text-[10px] text-slate-500 font-normal">Fintech Invoicing Lead</div>
-          </div>
-          <button
-            onClick={() => {
-              setUserMenuOpen(false);
-              navigate('/settings');
-            }}
-            className="w-full text-left py-1 text-slate-700 hover:text-slate-900"
-          >
-            Billing Preferences
-          </button>
-          <button
-            onClick={() => {
-              setUserMenuOpen(false);
-              navigate('/');
-            }}
-            className="w-full text-left py-1 text-rose-600 hover:text-rose-700"
-          >
-            Sign Out
-          </button>
-        </div>
-      )}
     </div>
   );
 };

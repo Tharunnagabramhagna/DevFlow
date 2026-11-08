@@ -148,8 +148,8 @@ export const ProjectsPage: React.FC = () => {
   const [projectName, setProjectName] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [githubRepo, setGithubRepo] = useState('Tharunnagabramhagna/DevFlow');
-  const [totalBudget, setTotalBudget] = useState('12500');
+  const [githubRepo, setGithubRepo] = useState('northstar-studio/payment-gateway');
+  const [totalBudget, setTotalBudget] = useState('18500');
   const [projectDesc, setProjectDesc] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -168,7 +168,7 @@ export const ProjectsPage: React.FC = () => {
         if (parsed.name) return parsed.name;
       }
     } catch {}
-    return 'Alex Mercer';
+    return 'Alex Morgan';
   });
 
   useEffect(() => {
@@ -495,11 +495,14 @@ export const ProjectsPage: React.FC = () => {
           onClick={() => navigate('/settings')}
           className="p-3 border-t border-[#26344B] flex items-center justify-between cursor-pointer hover:bg-[#152238] transition-colors"
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B]">
-              {userName.charAt(0)}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B]">
+              AM
             </div>
-            <span className="text-xs font-semibold text-white truncate">{userName}</span>
+            <div className="flex flex-col text-left truncate">
+              <span className="text-xs font-semibold text-white truncate leading-tight">{userName}</span>
+              <span className="text-[10px] text-slate-400">Project Administrator</span>
+            </div>
           </div>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
         </div>
@@ -565,12 +568,12 @@ export const ProjectsPage: React.FC = () => {
                     </div>
                     <div className="space-y-2">
                       <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
-                        <div className="font-semibold text-white">Nebula API Gateway</div>
-                        <div className="text-[11px] text-slate-400">Milestone 3 passed AI AST analysis</div>
+                        <div className="font-semibold text-white">Payment Gateway Integration</div>
+                        <div className="text-[11px] text-slate-400">Milestone 3 passed AI AST analysis (94.2%)</div>
                       </div>
                       <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
-                        <div className="font-semibold text-white">DeFi Staking Hub</div>
-                        <div className="text-[11px] text-slate-400">Payment of $32,000 ready for settlement</div>
+                        <div className="font-semibold text-white">Analytics Dashboard</div>
+                        <div className="text-[11px] text-slate-400">Settlement of $4,500.00 confirmed via PayPal Webhook</div>
                       </div>
                     </div>
                   </div>

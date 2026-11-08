@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: '1',
       category: 'payments',
       title: 'Milestone 2 Verified & Paid',
-      desc: 'PayPal webhook verified PAYMENT.INVOICING.INVOICE.PAID ($4,400.00)',
+      desc: 'PayPal webhook verified PAYMENT.INVOICING.INVOICE.PAID ($4,500.00)',
       time: '12m ago',
       type: 'success',
       read: false,
@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: '2',
       category: 'ai',
       title: 'AI Analysis Completed',
-      desc: 'Milestone 3 scored 90% confidence across 5 commit hashes',
+      desc: 'Milestone 3 scored 94.2% confidence across 5 commit hashes',
       time: '1h ago',
       type: 'ai',
       read: false,
@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: '3',
       category: 'milestones',
       title: 'Client Review Pending',
-      desc: 'Alex Mercer opened Milestone 3 evidence submission',
+      desc: 'Marcus Vance opened Milestone 3 evidence submission for review',
       time: '2h ago',
       type: 'warning',
       read: false,
@@ -123,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: '4',
       category: 'payments',
       title: 'Sandbox Invoice Draft Ready',
-      desc: 'Invoice #INV-2026-004 created for Algorithmic Liquidity Router',
+      desc: 'Invoice #INV-2026-0843 created for Payment Gateway Integration',
       time: '5h ago',
       type: 'info',
       read: true,
@@ -326,7 +326,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Help Button */}
           <button
-            onClick={() => window.open('https://github.com/Tharunnagabramhagna/DevFlow#readme', '_blank')}
+            onClick={() => window.open('https://github.com/northstar-studio/payment-gateway#readme', '_blank')}
             className="p-2 rounded-xl text-[#777B91] hover:text-[#25263A] hover:bg-[#F1F3FA] transition-colors"
             title="DevFlow Architecture Docs"
             aria-label="DevFlow Docs"
@@ -344,12 +344,12 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl hover:bg-[#F1F3FA] transition-colors"
               aria-label="User profile menu"
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#A78BFA] to-[#818CF8] text-white flex items-center justify-center font-bold text-xs shadow-card-subtle">
-                S
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shadow-card-subtle">
+                AM
               </div>
               <div className="hidden lg:flex flex-col text-left">
-                <span className="text-xs font-semibold text-[#25263A] leading-tight">Sowjanya S.</span>
-                <span className="text-[10px] text-[#777B91]">Frontend Lead</span>
+                <span className="text-xs font-semibold text-[#25263A] leading-tight">Alex Morgan</span>
+                <span className="text-[10px] text-[#777B91]">Project Administrator</span>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-[#9D9EAF]" />
             </button>
@@ -357,11 +357,11 @@ export const Header: React.FC<HeaderProps> = ({
             {isProfileOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-modal-elevated border border-[#E9EAF2] py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3.5 py-2 border-b border-[#E9EAF2]">
-                  <p className="text-xs font-bold text-[#25263A]">Sowjanya Sappala</p>
-                  <p className="text-[11px] text-[#777B91] truncate">sowjanya@devflow.team</p>
+                  <p className="text-xs font-bold text-[#25263A]">Alex Morgan</p>
+                  <p className="text-[11px] text-[#777B91] truncate">alex.morgan@northstar.studio</p>
                   <div className="mt-1.5 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#86DDBB]" />
-                    <span className="text-[10px] text-[#15803D] font-medium">Team Member #2 (Frontend)</span>
+                    <span className="text-[10px] text-[#15803D] font-medium">Northstar Digital Studio</span>
                   </div>
                 </div>
 

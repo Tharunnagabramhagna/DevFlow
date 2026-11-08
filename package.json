@@ -12,5 +12,11 @@
     "build": "npm run build --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
     "preview": "npm run preview --prefix frontend"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }

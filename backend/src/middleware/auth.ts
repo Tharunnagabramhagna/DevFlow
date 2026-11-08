@@ -67,6 +67,33 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
 };
 
 /**
+ * Optional authentication: attaches req.user if a valid token is provided,
+ * but allows unauthenticated requests to proceed.
+ */
+export const optionalAuthenticate = (req: Request, _res: Response, next: NextFunction): void => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    req.user = {
+      id: decoded.sub,
+      email: decoded.email,
+      role: decoded.role,
+    };
+  } catch {
+    // Ignore invalid tokens on optional auth
+  }
+
+  next();
+};
+
+/**
  * RBAC guard ensuring authenticated user possesses one of the allowed roles.
  */
 export const requireRole = (allowedRoles: Role[]) => {
@@ -96,4 +123,3 @@ export const requireRole = (allowedRoles: Role[]) => {
     next();
   };
 };
-

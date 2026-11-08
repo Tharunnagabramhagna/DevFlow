@@ -7,6 +7,7 @@ import { UnauthorizedError, ConflictError, BadRequestError } from '../src/utils/
 describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
   let authService: AuthService;
   let mockPrisma: any;
+  let mockMailer: any;
 
   beforeEach(() => {
     mockPrisma = {
@@ -46,7 +47,12 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
       }),
     };
 
-    authService = new AuthService(mockPrisma);
+    mockMailer = {
+      sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+      sendAccountLinkingOtp: vi.fn().mockResolvedValue(undefined),
+    };
+
+    authService = new AuthService(mockPrisma, mockMailer);
   });
 
   describe('User Registration', () => {
@@ -99,6 +105,7 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
         passwordHash,
         name: 'Bob',
         role: 'FREELANCER',
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -120,6 +127,7 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
         id: 'usr-456',
         email: 'bob@example.com',
         passwordHash,
+        isActive: true,
       });
 
       await expect(
@@ -132,7 +140,7 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
   });
 
   describe('Refresh Token Lifecycle & Concurrency', () => {
-    it('rotates valid active token to a new successor within the same family', async () => {
+    it('rotates valid active token to a new successor within the same family atomically', async () => {
       const rawToken = 'valid-refresh-token';
       const tokenHash = hashToken(rawToken);
 
@@ -143,86 +151,122 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
         userId: 'usr-1',
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: null,
+        user: {
+          id: 'usr-1',
+          email: 'usr@example.com',
+          role: 'FREELANCER',
+        },
       });
 
+      mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.refreshToken.create.mockResolvedValue({
         id: 'rt-new',
         familyId: 'fam-uuid-1',
       });
 
-      mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'usr-1',
-        email: 'usr@example.com',
-        role: 'FREELANCER',
-      });
-
       const res = await authService.rotateRefreshToken(rawToken);
 
-      expect(res.isGraceReplay).toBe(false);
       expect(res.rawRefreshToken).toBeDefined();
       expect(res.accessToken).toBeDefined();
+      expect(mockPrisma.refreshToken.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: 'rt-old',
+            revokedAt: null,
+            expiresAt: expect.any(Object),
+          },
+          data: {
+            revokedAt: expect.any(Date),
+          },
+        })
+      );
+      expect(mockPrisma.refreshToken.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            familyId: 'fam-uuid-1',
+          }),
+        })
+      );
       expect(mockPrisma.refreshToken.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'rt-old' },
-          data: expect.objectContaining({
-            replacedByTokenId: 'rt-new',
-          }),
+          data: { replacedByTokenId: 'rt-new' },
         })
       );
     });
 
-    it('allows multi-tab concurrency within 30-second grace period without rotating token again', async () => {
-      const rawToken = 'already-rotated-token';
+    it('REGRESSION: replaying a revoked token commits revocation of every token in its family before rejecting', async () => {
+      const rawToken = 'already-revoked-token';
       const tokenHash = hashToken(rawToken);
+      const familyId = 'fam-compromised-uuid';
 
-      // Token was revoked 5 seconds ago (within 30s grace window)
       mockPrisma.refreshToken.findUnique.mockResolvedValue({
-        id: 'rt-rotated',
-        familyId: 'fam-uuid-1',
+        id: 'rt-revoked',
+        familyId,
         tokenHash,
         userId: 'usr-1',
         expiresAt: new Date(Date.now() + 100000),
-        revokedAt: new Date(Date.now() - 5000),
+        revokedAt: new Date(Date.now() - 5000), // Already revoked 5s ago
+        user: { id: 'usr-1', email: 'usr@example.com', role: 'FREELANCER' },
       });
 
-      mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'usr-1',
-        email: 'usr@example.com',
-        role: 'FREELANCER',
-      });
+      mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 3 }); // 3 tokens in family revoked
 
-      const res = await authService.rotateRefreshToken(rawToken);
+      let errorThrown: any;
+      try {
+        await authService.rotateRefreshToken(rawToken);
+      } catch (err) {
+        errorThrown = err;
+      }
 
-      expect(res.isGraceReplay).toBe(true);
-      expect(res.rawRefreshToken).toBeNull();
-      expect(res.accessToken).toBeDefined();
-      expect(mockPrisma.refreshToken.create).not.toHaveBeenCalled();
-    });
+      // 1. Verify that error was thrown with correct code
+      expect(errorThrown).toBeDefined();
+      expect(errorThrown).toBeInstanceOf(UnauthorizedError);
+      expect(errorThrown.code).toBe('TOKEN_REUSE_DETECTED');
 
-    it('revokes entire token family when rotated token is reused outside grace period', async () => {
-      const rawToken = 'stolen-compromised-token';
-      const tokenHash = hashToken(rawToken);
-
-      // Token was revoked 60 seconds ago (outside 30s grace window)
-      mockPrisma.refreshToken.findUnique.mockResolvedValue({
-        id: 'rt-compromised',
-        familyId: 'fam-uuid-compromised',
-        tokenHash,
-        userId: 'usr-1',
-        expiresAt: new Date(Date.now() + 100000),
-        revokedAt: new Date(Date.now() - 60000),
-      });
-
-      await expect(authService.rotateRefreshToken(rawToken)).rejects.toThrow(
-        /TOKEN_REUSE_DETECTED/
-      );
-
+      // 2. CRITICAL REGRESSION ASSERTION: Verify that updateMany was executed to revoke the ENTIRE family
       expect(mockPrisma.refreshToken.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { familyId: 'fam-uuid-compromised' },
-          data: expect.objectContaining({
-            revokedAt: expect.any(Date),
-          }),
+          where: { familyId },
+          data: { revokedAt: expect.any(Date) },
+        })
+      );
+    });
+
+    it('REGRESSION: concurrent race condition on rotation commits family revocation and throws TOKEN_REUSE_DETECTED', async () => {
+      const rawToken = 'racing-token';
+      const tokenHash = hashToken(rawToken);
+      const familyId = 'fam-race-uuid';
+
+      mockPrisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt-racing',
+        familyId,
+        tokenHash,
+        userId: 'usr-1',
+        expiresAt: new Date(Date.now() + 100000),
+        revokedAt: null, // Appeared active initially
+        user: { id: 'usr-1', email: 'usr@example.com', role: 'FREELANCER' },
+      });
+
+      // Another request won the atomic race -> updateMany count is 0
+      mockPrisma.refreshToken.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      let errorThrown: any;
+      try {
+        await authService.rotateRefreshToken(rawToken);
+      } catch (err) {
+        errorThrown = err;
+      }
+
+      expect(errorThrown).toBeDefined();
+      expect(errorThrown).toBeInstanceOf(UnauthorizedError);
+      expect(errorThrown.code).toBe('TOKEN_REUSE_DETECTED');
+
+      // Must have called updateMany to revoke the entire family
+      expect(mockPrisma.refreshToken.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { familyId },
+          data: { revokedAt: expect.any(Date) },
         })
       );
     });
@@ -235,6 +279,22 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
       const res = await authService.requestPasswordReset('nonexistent@example.com');
       expect(res.success).toBe(true);
       expect(res.resetToken).toBeUndefined();
+      expect(mockMailer.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('dispatches password reset email and creates reset token for existing user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'usr-reset',
+        email: 'user@example.com',
+      });
+      mockPrisma.passwordResetToken.create.mockResolvedValue({ id: 'prt-1' });
+
+      const res = await authService.requestPasswordReset('user@example.com');
+      expect(res.success).toBe(true);
+      expect(mockMailer.sendPasswordResetEmail).toHaveBeenCalledWith(
+        'user@example.com',
+        expect.any(String)
+      );
     });
 
     it('resets password, marks token used, and revokes all active refresh tokens for the user', async () => {
@@ -270,7 +330,24 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
     });
   });
 
-  describe('Account Linking Challenge & OTP Security', () => {
+  describe('Account Linking Challenge & Token Omission', () => {
+    it('creates account linking challenge with null encrypted token (never storing unneeded access tokens)', async () => {
+      mockPrisma.accountLinkingChallenge.create.mockResolvedValue({ id: 'alc-1' });
+
+      const ticket = await authService.createAccountLinkingChallenge('usr-1', 'gh-999');
+
+      expect(ticket).toBeDefined();
+      expect(mockPrisma.accountLinkingChallenge.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId: 'usr-1',
+            githubId: 'gh-999',
+            encryptedGithubToken: null, // Must be null or omitted!
+          }),
+        })
+      );
+    });
+
     it('enforces 60-second cooldown on sending linking OTP', async () => {
       mockPrisma.accountLinkingChallenge.findUnique.mockResolvedValue({
         id: 'alc-1',
@@ -278,6 +355,7 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
         resendCooldownSeconds: 60,
         usedAt: null,
         expiresAt: new Date(Date.now() + 100000),
+        user: { email: 'usr@example.com' },
       });
 
       const res = await authService.sendAccountLinkingOtp('alc-1');

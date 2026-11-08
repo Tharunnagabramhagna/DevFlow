@@ -2,8 +2,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { z } from 'zod';
 
-// Load .env file from backend root
+// Load .env file from backend root or monorepo root
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 export const CombinedEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -12,14 +13,28 @@ export const CombinedEnvSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters long"),
   CLIENT_URL: z.string().url(),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-fA-F]{64}$/, "ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes)").optional(),
-  
+  REFRESH_COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+  UPLOAD_DIR: z.string().default('uploads'),
+
+  // GitHub OAuth Configuration
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+  GITHUB_CALLBACK_URL: z.string().url().optional(),
+
+  // Email / SMTP Configuration
+  EMAIL_HOST: z.string().optional(),
+  EMAIL_PORT: z.coerce.number().default(587),
+  EMAIL_USER: z.string().optional(),
+  EMAIL_PASSWORD: z.string().optional(),
+  EMAIL_FROM: z.string().default('noreply@devflow.dev'),
+
   // AI Configuration
   AI_PROVIDER: z.enum(['mock', 'gemini']).default('mock'),
-  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional().default(process.env.AI_PROVIDER_API_KEY || ''),
   AI_MODEL: z.string().default('gemini-2.0-flash'),
   AI_REQUEST_TIMEOUT_MS: z.coerce.number().default(30000),
   AI_MAX_RETRIES: z.coerce.number().default(2),
-  
+
   // PayPal Configuration
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
@@ -70,4 +85,3 @@ export const validateEnv = (config: Record<string, unknown> = process.env): Vali
 };
 
 export const env = validateEnv(process.env);
-

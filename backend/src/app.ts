@@ -4,9 +4,19 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import { prisma } from './config/database';
-import { generalRateLimiter } from './middleware/rateLimiter';
+import { generalRateLimiter, authRateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
 import { authRouter } from './modules/auth/auth.routes';
+import { projectsRouter } from './modules/projects/projects.routes';
+import { milestonesRouter, projectMilestonesRouter } from './modules/milestones/milestones.routes';
+import { evidenceRouter, milestoneEvidenceRouter } from './modules/evidence/evidence.routes';
+import { invitationsRouter } from './modules/invitations/invitations.routes';
+import { notificationsRouter } from './modules/notifications/notifications.routes';
+import { milestoneAIRouter, projectAIRouter, aiCompatibilityRouter } from './modules/ai/ai.routes';
+import { paymentsRouter, projectPaymentsRouter } from './modules/payments/payments.routes';
+import { webhooksRouter } from './modules/webhooks/webhooks.routes';
+import { telemetryRouter } from './modules/telemetry/telemetry.routes';
+import { githubRouter } from './modules/github/github.routes';
 import logger from './utils/logger';
 
 export const createApp = (): Express => {
@@ -69,8 +79,36 @@ export const createApp = (): Express => {
     });
   });
 
-  // Mount API Module Routes
-  app.use('/api/auth', authRouter);
+  // Mount Auth Module Routes with targeted rate limiter
+  app.use('/api/auth', authRateLimiter, authRouter);
+
+  // Mount Core DevFlow Module Routes (Phase 3)
+  app.use('/api/projects/:projectId/milestones', projectMilestonesRouter);
+  app.use('/api/projects/:id/milestones', projectMilestonesRouter);
+  app.use('/api/projects/:projectId/ai', projectAIRouter);
+  app.use('/api/projects/:id/ai', projectAIRouter);
+  app.use('/api/projects', projectsRouter);
+
+  app.use('/api/milestones/:milestoneId/evidence', milestoneEvidenceRouter);
+  app.use('/api/milestones/:id/evidence', milestoneEvidenceRouter);
+  app.use('/api/milestones/:milestoneId/ai', milestoneAIRouter);
+  app.use('/api/milestones/:id/ai', milestoneAIRouter);
+  app.use('/api/milestones', milestonesRouter);
+
+  app.use('/api/evidence', evidenceRouter);
+  app.use('/api/invitations', invitationsRouter);
+  app.use('/api/notifications', notificationsRouter);
+
+  // Mount Payments and Webhooks Module Routes (Phase 5)
+  app.use('/api/projects/:projectId/payments', projectPaymentsRouter);
+  app.use('/api/projects/:id/payments', projectPaymentsRouter);
+  app.use('/api/payments', paymentsRouter);
+  app.use('/api/webhooks', webhooksRouter);
+
+  // Mount Integration & Telemetry Routes (Phase 6)
+  app.use('/api/telemetry', telemetryRouter);
+  app.use('/api/github', githubRouter);
+  app.use('/api/ai', aiCompatibilityRouter);
 
   // Global Centralized Error Handler
   app.use(errorHandler);

@@ -3,16 +3,22 @@ import { env } from '../../config/env';
 import { authService } from './auth.service';
 
 const getRefreshTokenCookieName = (): string => {
-  return env.NODE_ENV === 'production' ? '__Host-devflow_refresh_token' : 'devflow_refresh_token';
+  const isProd = env.NODE_ENV === 'production';
+  // __Host- requires Secure=true and Path=/ without Domain
+  return isProd && env.REFRESH_COOKIE_SAME_SITE !== 'none'
+    ? '__Host-devflow_refresh_token'
+    : 'devflow_refresh_token';
 };
 
 const getRefreshCookieOptions = (): CookieOptions => {
   const isProd = env.NODE_ENV === 'production';
+  const isNone = env.REFRESH_COOKIE_SAME_SITE === 'none';
+
   return {
     httpOnly: true,
-    secure: isProd,
-    sameSite: 'strict',
-    path: '/api/auth',
+    secure: isProd || isNone,
+    sameSite: env.REFRESH_COOKIE_SAME_SITE,
+    path: '/', // Mandatory for RFC 6265bis __Host- cookies
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 };
@@ -45,9 +51,9 @@ export class AuthController {
       const cookieName = getRefreshTokenCookieName();
       const rawToken = req.cookies[cookieName];
 
-      const { accessToken, rawRefreshToken, isGraceReplay } = await authService.rotateRefreshToken(rawToken);
+      const { accessToken, rawRefreshToken } = await authService.rotateRefreshToken(rawToken);
 
-      if (rawRefreshToken && !isGraceReplay) {
+      if (rawRefreshToken) {
         res.cookie(cookieName, rawRefreshToken, getRefreshCookieOptions());
       }
 
@@ -64,7 +70,13 @@ export class AuthController {
 
       await authService.logout(rawToken);
 
-      res.clearCookie(cookieName, { path: '/api/auth' });
+      res.clearCookie(cookieName, {
+        path: '/',
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production' || env.REFRESH_COOKIE_SAME_SITE === 'none',
+        sameSite: env.REFRESH_COOKIE_SAME_SITE,
+      });
+
       res.status(200).json({ success: true, message: 'Logged out successfully' });
     } catch (err) {
       next(err);
@@ -102,6 +114,56 @@ export class AuthController {
     res.status(200).json({ user: req.user });
   }
 
+  async initiateGitHubOAuth(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { authorizeUrl, rawState } = await authService.initiateGitHubOAuth();
+
+      // State cookie MUST use SameSite=Lax to be sent on incoming top-level redirect from GitHub
+      res.cookie('devflow_oauth_state', rawState, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 10 * 60 * 1000, // 10 minutes
+      });
+
+      res.redirect(authorizeUrl);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async handleGitHubCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { code, state } = req.query as { code: string; state: string };
+      const rawCookieState = req.cookies.devflow_oauth_state;
+
+      // Clear state cookie
+      res.clearCookie('devflow_oauth_state', { path: '/' });
+
+      const result = await authService.handleGitHubCallback(code, state, rawCookieState);
+
+      if (result.action === 'EXCHANGE') {
+        res.redirect(`${env.CLIENT_URL}/oauth/callback?code=${result.code}`);
+        return;
+      }
+
+      if (result.action === 'LINK_REQUIRED') {
+        res.cookie('devflow_linking_challenge', result.ticket, {
+          httpOnly: true,
+          secure: env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+        res.redirect(`${env.CLIENT_URL}/oauth/link-account?ticket=${result.ticket}`);
+        return;
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async exchangeOAuthCode(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { user, accessToken, rawRefreshToken } = await authService.exchangeOAuthCode(req.body.code);
@@ -128,7 +190,7 @@ export class AuthController {
       const ticket = req.cookies.devflow_linking_challenge || (req.body.ticket as string);
       const { user, accessToken, rawRefreshToken } = await authService.verifyAccountLinkingPassword(ticket, req.body.password);
 
-      res.clearCookie('devflow_linking_challenge', { path: '/api/auth' });
+      res.clearCookie('devflow_linking_challenge', { path: '/' });
       res.cookie(getRefreshTokenCookieName(), rawRefreshToken, getRefreshCookieOptions());
       res.status(200).json({ user, accessToken });
     } catch (err) {
@@ -151,7 +213,7 @@ export class AuthController {
       const ticket = req.cookies.devflow_linking_challenge || (req.body.ticket as string);
       const { user, accessToken, rawRefreshToken } = await authService.verifyAccountLinkingOtp(ticket, req.body.otp);
 
-      res.clearCookie('devflow_linking_challenge', { path: '/api/auth' });
+      res.clearCookie('devflow_linking_challenge', { path: '/' });
       res.cookie(getRefreshTokenCookieName(), rawRefreshToken, getRefreshCookieOptions());
       res.status(200).json({ user, accessToken });
     } catch (err) {
@@ -161,4 +223,3 @@ export class AuthController {
 }
 
 export const authController = new AuthController();
-

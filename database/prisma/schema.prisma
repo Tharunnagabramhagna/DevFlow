@@ -280,7 +280,7 @@ model AccountLinkingChallenge {
   challengeHash          String       @unique // SHA-256
   userId                 String
   githubId               String
-  encryptedGithubToken   String
+  encryptedGithubToken   String?
   otpHash                String?      // SHA-256 of 6-digit OTP for passwordless
   otpAttempts            Int          @default(0)
   maxOtpAttempts         Int          @default(5)
@@ -320,6 +320,7 @@ model Project {
   members            ProjectMember[]
   invitations        ProjectInvitation[]
   milestones         Milestone[]
+  aiAnalyses         AIAnalysis[]
   activityLogs       ActivityLog[]
 
   @@index([createdById])
@@ -461,17 +462,20 @@ model VerificationResult {
 }
 
 model AIAnalysis {
-  id                   String             @id @default(uuid())
-  verificationResultId String
-  agentType            String             // "EVIDENCE_VERIFIER", "CODE_AUDITOR", "RISK_ASSESSOR"
+  id                   String              @id @default(uuid())
+  verificationResultId String?
+  projectId            String?
+  agentType            String              // "EVIDENCE_ANALYSIS", "MILESTONE_VERIFICATION", "RISK_DETECTION", "PROJECT_MONITORING", "PAYMENT_COORDINATION"
   promptTokens         Int?
   completionTokens     Int?
   rawResponse          String?
-  createdAt            DateTime           @default(now())
+  createdAt            DateTime            @default(now())
 
-  verificationResult   VerificationResult @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
+  verificationResult   VerificationResult? @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
+  project              Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([verificationResultId])
+  @@index([projectId])
   @@map("ai_analyses")
 }
 

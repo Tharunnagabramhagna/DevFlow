@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { PrismaClient, Role, User } from '@prisma/client';
 import { env } from '../../config/env';
 import { prisma as defaultPrisma } from '../../config/database';
+import { emailService, IEmailService } from '../../services/email.service';
 import {
   hashToken,
   encryptSecret,
@@ -40,7 +41,10 @@ export const sanitizeUser = (user: User): SanitizedUser => ({
 });
 
 export class AuthService {
-  constructor(private prisma: PrismaClient = defaultPrisma) {}
+  constructor(
+    private prisma: PrismaClient = defaultPrisma,
+    private mailer: IEmailService = emailService
+  ) {}
 
   /**
    * Registers a new user with bcrypt password hashing.
@@ -103,55 +107,62 @@ export class AuthService {
   }
 
   /**
-   * 2-Step Atomic Refresh Token Rotation with 30s Grace Period and Family Reuse Revocation.
+   * Strict Single-Use Atomic Refresh Token Rotation.
+   * - Employs atomic conditional update (updateMany) to enforce race-condition safety.
+   * - On reuse detection: transactionally revokes the entire token family, commits to DB, and throws TOKEN_REUSE_DETECTED.
    */
-  async rotateRefreshToken(rawToken: string): Promise<{ accessToken: string; rawRefreshToken: string | null; isGraceReplay: boolean }> {
+  async rotateRefreshToken(rawToken: string): Promise<{ accessToken: string; rawRefreshToken: string }> {
     if (!rawToken) {
       throw new UnauthorizedError('Refresh token required');
     }
 
     const tokenHash = hashToken(rawToken);
 
-    return await this.prisma.$transaction(async (tx) => {
-      // Find token record with row lock
-      const tokenRecord = await tx.refreshToken.findUnique({
-        where: { tokenHash },
+    // 1. Fetch token record to check status
+    const tokenRecord = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!tokenRecord) {
+      throw new UnauthorizedError('Invalid refresh token');
+    }
+
+    // 2. Token was already revoked: Replay attack detected!
+    if (tokenRecord.revokedAt !== null) {
+      // Commit revocation of all tokens in this family first before throwing
+      await this.prisma.refreshToken.updateMany({
+        where: { familyId: tokenRecord.familyId },
+        data: { revokedAt: new Date() },
       });
 
-      if (!tokenRecord) {
-        throw new UnauthorizedError('Invalid refresh token');
+      throw new UnauthorizedError('Token reuse detected. Family revoked.', undefined, 'TOKEN_REUSE_DETECTED');
+    }
+
+    if (tokenRecord.expiresAt < new Date()) {
+      throw new UnauthorizedError('Refresh token has expired');
+    }
+
+    // 3. Atomically claim and rotate in a database transaction
+    const rotationResult = await this.prisma.$transaction(async (tx) => {
+      // Atomic conditional update: only 1 request can revoke the token when revokedAt is null
+      const updateResult = await tx.refreshToken.updateMany({
+        where: {
+          id: tokenRecord.id,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: {
+          revokedAt: new Date(),
+        },
+      });
+
+      if (updateResult.count === 0) {
+        // Concurrency race: another request won the race
+        return { raced: true, successorRaw: null as string | null, accessToken: null as string | null };
       }
 
-      if (tokenRecord.expiresAt < new Date()) {
-        throw new UnauthorizedError('Refresh token has expired');
-      }
-
-      // Check if token was already revoked / rotated
-      if (tokenRecord.revokedAt !== null) {
-        const gracePeriodMs = 30 * 1000; // 30-second token family grace period
-        const isWithinGrace = tokenRecord.revokedAt.getTime() + gracePeriodMs > Date.now();
-
-        if (isWithinGrace) {
-          // Concurrency race across sibling tabs: return active successor access token
-          const user = await tx.user.findUnique({
-            where: { id: tokenRecord.userId },
-          });
-          if (!user) throw new UnauthorizedError('User not found');
-
-          const accessToken = this.generateAccessToken(user);
-          return { accessToken, rawRefreshToken: null, isGraceReplay: true };
-        }
-
-        // Security Breach Detected: Outside grace period reuse -> Revoke entire token family
-        await tx.refreshToken.updateMany({
-          where: { familyId: tokenRecord.familyId },
-          data: { revokedAt: new Date() },
-        });
-
-        throw new UnauthorizedError('TOKEN_REUSE_DETECTED: Token family has been revoked due to reuse');
-      }
-
-      // Normal Rotation: generate successor
+      // Issue single-use successor in the same family
       const successorRaw = generateSecureToken(32);
       const successorHash = hashToken(successorRaw);
       const successorExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
@@ -165,28 +176,29 @@ export class AuthService {
         },
       });
 
-      // Atomically mark current token as revoked and linked to successor
       await tx.refreshToken.update({
         where: { id: tokenRecord.id },
-        data: {
-          revokedAt: new Date(),
-          replacedByTokenId: successor.id,
-        },
+        data: { replacedByTokenId: successor.id },
       });
 
-      const user = await tx.user.findUnique({
-        where: { id: tokenRecord.userId },
-      });
-      if (!user) throw new UnauthorizedError('User not found');
-
-      const accessToken = this.generateAccessToken(user);
-
-      return {
-        accessToken,
-        rawRefreshToken: successorRaw,
-        isGraceReplay: false,
-      };
+      const accessToken = this.generateAccessToken(tokenRecord.user);
+      return { raced: false, successorRaw, accessToken };
     });
+
+    // 4. Handle concurrent race condition: commit family revocation and throw
+    if (rotationResult.raced || !rotationResult.successorRaw || !rotationResult.accessToken) {
+      await this.prisma.refreshToken.updateMany({
+        where: { familyId: tokenRecord.familyId },
+        data: { revokedAt: new Date() },
+      });
+
+      throw new UnauthorizedError('Token reuse detected. Family revoked.', undefined, 'TOKEN_REUSE_DETECTED');
+    }
+
+    return {
+      accessToken: rotationResult.accessToken,
+      rawRefreshToken: rotationResult.successorRaw,
+    };
   }
 
   /**
@@ -203,7 +215,8 @@ export class AuthService {
   }
 
   /**
-   * Generates a single-use password reset token.
+   * Generates a single-use password reset token and dispatches email.
+   * Returns generic success to prevent user enumeration.
    */
   async requestPasswordReset(email: string): Promise<{ success: boolean; resetToken?: string }> {
     const user = await this.prisma.user.findUnique({
@@ -211,7 +224,7 @@ export class AuthService {
     });
 
     if (!user) {
-      // Prevent user enumeration: return generic success
+      // Anti-enumeration: return uniform success response
       return { success: true };
     }
 
@@ -227,7 +240,13 @@ export class AuthService {
       },
     });
 
-    return { success: true, resetToken: rawResetToken };
+    // Dispatch email notification
+    await this.mailer.sendPasswordResetEmail(user.email, rawResetToken);
+
+    return {
+      success: true,
+      resetToken: env.NODE_ENV !== 'production' ? rawResetToken : undefined,
+    };
   }
 
   /**
@@ -258,12 +277,177 @@ export class AuthService {
         data: { passwordHash },
       });
 
-      // Revoke all active refresh tokens for user
+      // Invalidate all active refresh token families for this user
       await tx.refreshToken.updateMany({
         where: { userId: resetRecord.userId, revokedAt: null },
         data: { revokedAt: new Date() },
       });
     });
+  }
+
+  /**
+   * Generates authorization redirect URL for GitHub OAuth with PKCE.
+   */
+  async initiateGitHubOAuth(): Promise<{ authorizeUrl: string; rawState: string }> {
+    if (!env.GITHUB_CLIENT_ID) {
+      throw new BadRequestError('GitHub OAuth is not configured on this server');
+    }
+
+    // Generate PKCE verifier and challenge
+    const codeVerifier = generateSecureToken(32);
+    const codeChallenge = crypto
+      .createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64url');
+
+    const { rawState } = await this.createOAuthState(codeVerifier);
+
+    const redirectUri = env.GITHUB_CALLBACK_URL || `${env.CLIENT_URL}/api/auth/github/callback`;
+    const params = new URLSearchParams({
+      client_id: env.GITHUB_CLIENT_ID,
+      redirect_uri: redirectUri,
+      scope: 'read:user user:email',
+      state: rawState,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+    });
+
+    const authorizeUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
+    return { authorizeUrl, rawState };
+  }
+
+  /**
+   * Handles GitHub OAuth callback, verifies state + PKCE, validates verified email, and processes login/linking.
+   */
+  async handleGitHubCallback(
+    code: string,
+    state: string,
+    rawCookieState?: string
+  ): Promise<
+    | { action: 'EXCHANGE'; code: string }
+    | { action: 'LINK_REQUIRED'; ticket: string }
+  > {
+    // 1. Validate browser-bound state and decrypt PKCE verifier
+    const codeVerifier = await this.validateOAuthState(state, rawCookieState);
+
+    if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+      throw new BadRequestError('GitHub OAuth credentials not configured');
+    }
+
+    // 2. Exchange authorization code with GitHub for access token
+    const redirectUri = env.GITHUB_CALLBACK_URL || `${env.CLIENT_URL}/api/auth/github/callback`;
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: env.GITHUB_CLIENT_ID,
+        client_secret: env.GITHUB_CLIENT_SECRET,
+        code,
+        code_verifier: codeVerifier || undefined,
+        redirect_uri: redirectUri,
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      throw new BadRequestError('Failed to exchange code with GitHub');
+    }
+
+    const tokenData = (await tokenResponse.json()) as { access_token?: string; error?: string };
+    if (!tokenData.access_token) {
+      throw new BadRequestError(tokenData.error || 'GitHub did not return an access token');
+    }
+
+    const githubAccessToken = tokenData.access_token;
+
+    // 3. Fetch GitHub profile
+    const profileResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${githubAccessToken}`,
+        'User-Agent': 'DevFlow-Backend',
+      },
+    });
+
+    if (!profileResponse.ok) {
+      throw new BadRequestError('Failed to retrieve GitHub user profile');
+    }
+
+    const profile = (await profileResponse.json()) as {
+      id: number;
+      login: string;
+      name: string | null;
+      avatar_url: string | null;
+    };
+
+    const githubId = String(profile.id);
+
+    // 4. Fetch GitHub verified email addresses
+    const emailResponse = await fetch('https://api.github.com/user/emails', {
+      headers: {
+        Authorization: `Bearer ${githubAccessToken}`,
+        'User-Agent': 'DevFlow-Backend',
+      },
+    });
+
+    if (!emailResponse.ok) {
+      throw new BadRequestError('Failed to retrieve GitHub email addresses');
+    }
+
+    const emails = (await emailResponse.json()) as Array<{
+      email: string;
+      primary: boolean;
+      verified: boolean;
+    }>;
+
+    const primaryVerified = emails.find((e) => e.primary && e.verified);
+    if (!primaryVerified) {
+      throw new BadRequestError(
+        'A verified primary email address is required on your GitHub account',
+        undefined,
+        'UNVERIFIED_GITHUB_EMAIL'
+      );
+    }
+
+    const verifiedEmail = primaryVerified.email.toLowerCase();
+
+    // 5. User resolution logic:
+    // Case A: User already linked by githubId
+    const existingByGithub = await this.prisma.user.findUnique({
+      where: { githubId },
+    });
+
+    if (existingByGithub) {
+      const exchangeCode = await this.createOAuthExchangeCode(existingByGithub.id);
+      return { action: 'EXCHANGE', code: exchangeCode };
+    }
+
+    // Case B: User with matching verified email exists but is NOT linked to this githubId
+    // CRITICAL SECURITY RULE: NEVER AUTO-LINK. Require explicit account confirmation.
+    const existingByEmail = await this.prisma.user.findUnique({
+      where: { email: verifiedEmail },
+    });
+
+    if (existingByEmail) {
+      // Create account linking challenge without storing raw GitHub access tokens
+      const ticket = await this.createAccountLinkingChallenge(existingByEmail.id, githubId);
+      return { action: 'LINK_REQUIRED', ticket };
+    }
+
+    // Case C: Brand new user: provision account
+    const newUser = await this.prisma.user.create({
+      data: {
+        email: verifiedEmail,
+        name: profile.name || profile.login,
+        avatarUrl: profile.avatar_url,
+        githubId,
+        role: Role.FREELANCER,
+      },
+    });
+
+    const exchangeCode = await this.createOAuthExchangeCode(newUser.id);
+    return { action: 'EXCHANGE', code: exchangeCode };
   }
 
   /**
@@ -290,7 +474,7 @@ export class AuthService {
    * Validates and atomically consumes OAuth state.
    */
   async validateOAuthState(state: string, rawCookieState?: string): Promise<string | null> {
-    if (!state || state !== rawCookieState) {
+    if (!state || (rawCookieState && state !== rawCookieState)) {
       throw new UnauthorizedError('OAuth state mismatch or missing cookie state');
     }
 
@@ -363,11 +547,11 @@ export class AuthService {
 
   /**
    * Creates an account linking challenge when an OAuth email collides with an existing account.
+   * Encrypted token is set to null since token retention is not required for authentication.
    */
-  async createAccountLinkingChallenge(userId: string, githubId: string, githubAccessToken: string): Promise<string> {
+  async createAccountLinkingChallenge(userId: string, githubId: string): Promise<string> {
     const rawTicket = generateSecureToken(32);
     const challengeHash = hashToken(rawTicket);
-    const encryptedGithubToken = encryptSecret(githubAccessToken);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     await this.prisma.accountLinkingChallenge.create({
@@ -375,7 +559,7 @@ export class AuthService {
         challengeHash,
         userId,
         githubId,
-        encryptedGithubToken,
+        encryptedGithubToken: null,
         expiresAt,
       },
     });
@@ -434,12 +618,11 @@ export class AuthService {
         data: { usedAt: new Date() },
       });
 
-      // Link GitHub account
+      // Link GitHub account without storing raw access tokens
       const updatedUser = await tx.user.update({
         where: { id: challenge.userId },
         data: {
           githubId: challenge.githubId,
-          githubAccessToken: challenge.encryptedGithubToken,
         },
       });
 
@@ -461,6 +644,7 @@ export class AuthService {
     const challengeHash = hashToken(challengeTicket);
     const challenge = await this.prisma.accountLinkingChallenge.findUnique({
       where: { challengeHash },
+      include: { user: true },
     });
 
     if (!challenge || challenge.usedAt !== null || challenge.expiresAt < new Date()) {
@@ -485,6 +669,8 @@ export class AuthService {
         otpAttempts: 0,
       },
     });
+
+    await this.mailer.sendAccountLinkingOtp(challenge.user.email, otp);
 
     return {
       success: true,
@@ -528,12 +714,11 @@ export class AuthService {
         data: { usedAt: new Date() },
       });
 
-      // Link GitHub account
+      // Link GitHub account without storing raw access tokens
       const updatedUser = await tx.user.update({
         where: { id: challenge.userId },
         data: {
           githubId: challenge.githubId,
-          githubAccessToken: challenge.encryptedGithubToken,
         },
       });
 
@@ -582,4 +767,3 @@ export class AuthService {
 }
 
 export const authService = new AuthService();
-

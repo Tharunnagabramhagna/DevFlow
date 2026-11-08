@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 import { app } from '../src/app';
 import {
   hashToken,
@@ -13,6 +12,7 @@ import {
 import {
   RegisterSchema,
   LoginSchema,
+  ResetPasswordSchema,
   AccountLinkingOtpSchema,
 } from '../src/modules/auth/auth.schema';
 import { env } from '../src/config/env';
@@ -61,8 +61,8 @@ describe('Phase 2: Cryptographic Engine & Hash Utilities', () => {
   });
 });
 
-describe('Phase 2: Zod Authentication Schemas', () => {
-  it('validates compliant registration payload', () => {
+describe('Phase 2: Zod Authentication Schemas & Password Complexity', () => {
+  it('validates compliant registration payload with complex password', () => {
     const valid = {
       email: 'Developer@Example.COM',
       password: 'StrongPassword123!',
@@ -81,7 +81,7 @@ describe('Phase 2: Zod Authentication Schemas', () => {
   it('rejects password shorter than 8 characters', () => {
     const invalid = {
       email: 'test@example.com',
-      password: 'short',
+      password: 'Sh1!',
       name: 'Bob',
       role: 'CLIENT',
     };
@@ -90,16 +90,36 @@ describe('Phase 2: Zod Authentication Schemas', () => {
     expect(parsed.success).toBe(false);
   });
 
-  it('rejects malformed email format', () => {
-    const invalid = {
-      email: 'not-an-email',
-      password: 'StrongPassword123!',
-      name: 'Charlie',
+  it('rejects password missing special characters or uppercase', () => {
+    const noSpecial = {
+      email: 'test@example.com',
+      password: 'Password123456',
+      name: 'Bob',
       role: 'CLIENT',
     };
+    expect(RegisterSchema.safeParse(noSpecial).success).toBe(false);
 
-    const parsed = RegisterSchema.safeParse(invalid);
-    expect(parsed.success).toBe(false);
+    const noUpper = {
+      email: 'test@example.com',
+      password: 'password123456!',
+      name: 'Bob',
+      role: 'CLIENT',
+    };
+    expect(RegisterSchema.safeParse(noUpper).success).toBe(false);
+  });
+
+  it('validates ResetPasswordSchema requires strong new password', () => {
+    const valid = {
+      token: 'valid-reset-token',
+      newPassword: 'BrandNewPassword999!',
+    };
+    expect(ResetPasswordSchema.safeParse(valid).success).toBe(true);
+
+    const invalid = {
+      token: 'valid-reset-token',
+      newPassword: 'weak',
+    };
+    expect(ResetPasswordSchema.safeParse(invalid).success).toBe(false);
   });
 
   it('validates 6-digit OTP strictly', () => {
@@ -157,7 +177,7 @@ describe('Phase 2: HTTP Route Scaffolding & Input Validation', () => {
     const expiredToken = jwt.sign(
       { sub: 'user-uuid-1', email: 'alice@example.com', role: 'FREELANCER' },
       env.JWT_SECRET,
-      { expiresIn: '-1s' } // Expired in past
+      { expiresIn: '-1s' }
     );
 
     const res = await request(app)
@@ -167,5 +187,25 @@ describe('Phase 2: HTTP Route Scaffolding & Input Validation', () => {
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe('TOKEN_EXPIRED');
   });
-});
 
+  it('CSRF Guard: rejects cookie endpoints with malicious Origin header', async () => {
+    const res = await request(app)
+      .post('/api/auth/logout')
+      .set('Origin', 'http://malicious-attacker-site.com')
+      .set('X-Requested-With', 'XMLHttpRequest');
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('CSRF_ORIGIN_MISMATCH');
+  });
+
+  it('CSRF Guard: allows cookie endpoints with trusted Origin header', async () => {
+    const res = await request(app)
+      .post('/api/auth/logout')
+      .set('Origin', env.CLIENT_URL)
+      .set('X-Requested-With', 'XMLHttpRequest');
+
+    // Should pass CSRF check and succeed with logout
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+});

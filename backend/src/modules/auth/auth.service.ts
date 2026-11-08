@@ -753,6 +753,13 @@ export class AuthService {
   }
 
   /**
+   * Centralized Meta / Facebook Graph API version (configurable via env.FACEBOOK_GRAPH_API_VERSION).
+   */
+  get facebookGraphApiVersion(): string {
+    return env.FACEBOOK_GRAPH_API_VERSION || 'v27.0';
+  }
+
+  /**
    * Initiates Google or Facebook OAuth flow with cryptographic role preservation.
    */
   async initiateSocialOAuth(params: {
@@ -820,7 +827,7 @@ export class AuthService {
         scope: 'email,public_profile',
         response_type: 'code',
       });
-      authUrl = `https://www.facebook.com/v19.0/dialog/oauth?${query.toString()}`;
+      authUrl = `https://www.facebook.com/${this.facebookGraphApiVersion}/dialog/oauth?${query.toString()}`;
     }
 
     return { authUrl, rawState };
@@ -995,7 +1002,7 @@ export class AuthService {
     });
 
     const tokenRes = await fetch(
-      `https://graph.facebook.com/v19.0/oauth/access_token?${tokenQuery.toString()}`
+      `https://graph.facebook.com/${this.facebookGraphApiVersion}/oauth/access_token?${tokenQuery.toString()}`
     );
     if (!tokenRes.ok) {
       const errBody = await tokenRes.text().catch(() => '');
@@ -1005,9 +1012,9 @@ export class AuthService {
     const tokenData = (await tokenRes.json()) as { access_token: string };
     const accessToken = tokenData.access_token;
 
-    // Fetch user profile from Facebook Graph API
+    // Fetch user profile from Facebook Graph API (preserving id, name, email, picture fields)
     const profileRes = await fetch(
-      `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`
+      `https://graph.facebook.com/${this.facebookGraphApiVersion}/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`
     );
 
     if (!profileRes.ok) {

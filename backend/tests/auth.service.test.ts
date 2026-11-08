@@ -639,5 +639,138 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
       expect(session.accessToken).toBeDefined();
       expect(session.rawRefreshToken).toBeDefined();
     });
+
+    it('initiates Facebook OAuth with email,public_profile scope and encrypted state', async () => {
+      expect(authService.facebookGraphApiVersion).toBe('v27.0');
+      mockPrisma.oAuthState.create.mockResolvedValue({ id: 'state-fb' });
+
+      const { authUrl, rawState } = await authService.initiateSocialOAuth({
+        provider: 'facebook',
+        role: 'FREELANCER',
+        intent: 'login',
+      });
+
+      expect(rawState).toBeDefined();
+      expect(rawState).toHaveLength(64);
+      expect(authUrl).toContain(`facebook.com/${authService.facebookGraphApiVersion}/dialog/oauth`);
+      expect(authUrl).toContain('facebook.com/v27.0/dialog/oauth');
+      expect(authUrl).toContain('scope=email%2Cpublic_profile');
+      expect(authUrl).toContain('response_type=code');
+      expect(mockPrisma.oAuthState.create).toHaveBeenCalled();
+    });
+
+    it('rejects Facebook callback when user profile has no verified email', async () => {
+      const rawState = 'a'.repeat(64);
+      const stateHash = hashToken(rawState);
+      const metadata = JSON.stringify({ provider: 'facebook', role: 'FREELANCER', intent: 'login' });
+      const encryptedMetadata = encryptSecret(metadata);
+
+      mockPrisma.oAuthState.findUnique.mockResolvedValue({
+        id: 'state-1',
+        stateHash,
+        pkceVerifier: encryptedMetadata,
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60000),
+      });
+      mockPrisma.oAuthState.update.mockResolvedValue({});
+
+      const originalFetch = global.fetch;
+      const fetchMock = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ access_token: 'fake-fb-token' }),
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ id: 'fb-123', name: 'FB User without email' }),
+        } as any);
+      global.fetch = fetchMock;
+
+      try {
+        await expect(
+          authService.handleFacebookOAuthCallback({
+            code: 'fake-code',
+            state: rawState,
+            rawCookieState: rawState,
+          })
+        ).rejects.toThrow('Facebook did not return a verified email address');
+
+        expect(fetchMock).toHaveBeenNthCalledWith(
+          1,
+          expect.stringContaining(`graph.facebook.com/${authService.facebookGraphApiVersion}/oauth/access_token`)
+        );
+        expect(fetchMock).toHaveBeenNthCalledWith(
+          2,
+          expect.stringContaining(`graph.facebook.com/${authService.facebookGraphApiVersion}/me?fields=id,name,email,picture.type(large)`)
+        );
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it('queries Facebook profile with supported Graph API version preserving id, name, email and picture', async () => {
+      const rawState = 'b'.repeat(64);
+      const stateHash = hashToken(rawState);
+      const metadata = JSON.stringify({ provider: 'facebook', role: 'FREELANCER', intent: 'login' });
+      const encryptedMetadata = encryptSecret(metadata);
+
+      mockPrisma.oAuthState.findUnique.mockResolvedValue({
+        id: 'state-fb-success',
+        stateHash,
+        pkceVerifier: encryptedMetadata,
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60000),
+      });
+      mockPrisma.oAuthState.update.mockResolvedValue({});
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'usr-fb-success',
+        email: 'alice@facebook.test',
+        name: 'Alice Meta',
+        role: 'FREELANCER',
+        avatarUrl: 'https://fb.test/pic.jpg',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockPrisma.oAuthExchangeCode.create.mockResolvedValue({ id: 'code-fb-1' });
+
+      const originalFetch = global.fetch;
+      const fetchMock = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ access_token: 'valid-fb-token' }),
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            id: 'fb-uid-99',
+            name: 'Alice Meta',
+            email: 'alice@facebook.test',
+            picture: { data: { url: 'https://fb.test/pic.jpg' } },
+          }),
+        } as any);
+      global.fetch = fetchMock;
+
+      try {
+        const result = await authService.handleFacebookOAuthCallback({
+          code: 'valid-auth-code',
+          state: rawState,
+          rawCookieState: rawState,
+        });
+
+        expect(result.exchangeCode).toBeDefined();
+        expect(result.user.email).toBe('alice@facebook.test');
+        expect(fetchMock).toHaveBeenNthCalledWith(
+          2,
+          `https://graph.facebook.com/${authService.facebookGraphApiVersion}/me?fields=id,name,email,picture.type(large)&access_token=valid-fb-token`
+        );
+        expect(fetchMock).toHaveBeenNthCalledWith(
+          2,
+          'https://graph.facebook.com/v27.0/me?fields=id,name,email,picture.type(large)&access_token=valid-fb-token'
+        );
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
   });
 });

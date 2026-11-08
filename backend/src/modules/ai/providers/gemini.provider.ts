@@ -12,10 +12,10 @@ export class GeminiProvider implements IAIProvider {
   private modelName: string;
 
   constructor(apiKey?: string, modelName?: string) {
-    const key = apiKey || env.GEMINI_API_KEY;
-    this.modelName = modelName || env.AI_MODEL || 'gemini-2.0-flash';
+    const key = apiKey !== undefined ? apiKey : env.GEMINI_API_KEY;
+    this.modelName = modelName || env.AI_MODEL || 'gemini-3.5-flash';
 
-    if (key) {
+    if (key && key.trim().length > 0) {
       this.client = new GoogleGenAI({ apiKey: key });
     }
   }

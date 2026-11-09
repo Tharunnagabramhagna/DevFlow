@@ -46,6 +46,15 @@ export class AuthController {
     }
   }
 
+  async guestLogin(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { user, accessToken } = await authService.createGuestSession();
+      res.status(200).json({ user, accessToken });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const cookieName = getRefreshTokenCookieName();

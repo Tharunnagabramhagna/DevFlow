@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { devFlowApi } from '@/services/api';
 import { Project, Milestone } from '@/types';
+import { GuestGuardModal } from '@/components/common';
 import {
   FolderGit2,
   Bell,
@@ -117,9 +119,12 @@ const REFERENCE_PROJECTS: DisplayProject[] = [
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { openMobileSidebar } = useSidebar();
+  const { isGuest } = useAuth();
   const [projects, setProjects] = useState<DisplayProject[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
 
   // Layout View Mode (Grid vs List)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -144,7 +149,6 @@ export const ProjectsPage: React.FC = () => {
   const [projectDesc, setProjectDesc] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { openMobileSidebar } = useSidebar();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
@@ -321,7 +325,13 @@ export const ProjectsPage: React.FC = () => {
             {/* Header Right Actions */}
             <div className="flex items-center gap-2.5 self-start sm:self-auto">
               <button
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => {
+                  if (isGuest) {
+                    setIsGuestGuardOpen(true);
+                    return;
+                  }
+                  setIsCreateModalOpen(true);
+                }}
                 className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-all"
               >
                 <Plus className="w-4 h-4" />
@@ -771,7 +781,13 @@ export const ProjectsPage: React.FC = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={() => {
+                    if (isGuest) {
+                      setIsGuestGuardOpen(true);
+                      return;
+                    }
+                    setIsCreateModalOpen(true);
+                  }}
                   className="w-full bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs py-2.5 rounded-lg shadow-md shadow-blue-600/30 transition-all flex items-center justify-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
@@ -988,6 +1004,14 @@ export const ProjectsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Guest Mode Restriction Guard Modal */}
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle="Create Project"
+        message="Guest Mode: Please sign in or create an account to use this feature."
+      />
     </div>
   );
 };

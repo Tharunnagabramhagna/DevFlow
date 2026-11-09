@@ -9,8 +9,10 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isClient: boolean;
   isDeveloper: boolean;
+  isGuest: boolean;
   login: (credentials: { email: string; password: string; selectedRole: UserRole }) => Promise<void>;
   register: (data: { name: string; email: string; password: string; role: UserRole; organization?: string }) => Promise<void>;
+  continueAsGuest: () => Promise<void>;
   handleOAuthExchange: (code: string) => Promise<void>;
   handleMockSocialAuth: (params: { provider: 'google' | 'facebook'; email: string; name: string; role: UserRole; avatarUrl?: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -38,13 +40,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (session?.user) {
       try {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+        const roleLabel =
+          session.user.role === 'GUEST'
+            ? 'Guest Explorer (Demo Mode)'
+            : session.user.role === 'CLIENT'
+            ? 'Client / Project Administrator'
+            : 'Lead Developer';
+        const orgLabel =
+          session.user.role === 'GUEST'
+            ? 'DevFlow Sandbox Demo'
+            : session.user.organization || 'Northstar Digital Studio';
+
         localStorage.setItem(
           PROFILE_STORAGE_KEY,
           JSON.stringify({
             name: session.user.name,
             email: session.user.email,
-            role: session.user.role === 'CLIENT' ? 'Client / Project Administrator' : 'Lead Developer',
-            organization: session.user.organization || 'Northstar Digital Studio',
+            role: roleLabel,
+            organization: orgLabel,
           })
         );
       } catch {}
@@ -76,6 +89,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const newSession = await authService.register(data);
       setSession(newSession);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const continueAsGuest = async () => {
+    setLoading(true);
+    try {
+      const guestSession = await authService.continueAsGuest();
+      setSession(guestSession);
     } finally {
       setLoading(false);
     }
@@ -125,8 +148,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!session?.user,
       isClient: session?.user?.role === 'CLIENT',
       isDeveloper: session?.user?.role === 'DEVELOPER',
+      isGuest: session?.user?.role === 'GUEST' || Boolean(session?.user?.isGuest),
       login,
       register,
+      continueAsGuest,
       handleOAuthExchange,
       handleMockSocialAuth,
       logout,

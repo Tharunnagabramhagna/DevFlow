@@ -442,5 +442,54 @@ export const authService = {
       accessToken: `simulated_token_${newVaultUser.id}`,
     };
   },
+
+  /**
+   * Generates or retrieves an ephemeral Guest / Demo session.
+   * Calls `/api/auth/guest` if backend is available, or creates a client-side guest session.
+   */
+  async continueAsGuest(): Promise<AuthSession> {
+    try {
+      const res = await fetch(`${BASE_URL}/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(3000),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        return {
+          user: {
+            id: json.user.id,
+            email: json.user.email,
+            name: json.user.name,
+            role: 'GUEST',
+            isGuest: true,
+            avatarUrl: json.user.avatarUrl,
+            bio: json.user.bio,
+            createdAt: json.user.createdAt,
+          },
+          accessToken: json.accessToken,
+        };
+      }
+    } catch {
+      // Fallback to client-side session below
+    }
+
+    // Client-side offline fallback
+    const guestUser: AuthUser = {
+      id: `guest_${Date.now()}`,
+      email: 'guest@devflow.demo',
+      name: 'Guest Explorer',
+      role: 'GUEST',
+      isGuest: true,
+      bio: 'Exploring DevFlow features in demonstration mode.',
+      createdAt: new Date().toISOString(),
+    };
+
+    return {
+      user: guestUser,
+      accessToken: `guest_demo_token_${Date.now()}`,
+    };
+  },
 };
 

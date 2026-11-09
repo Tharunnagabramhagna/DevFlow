@@ -1,7 +1,8 @@
-import { DevFlowLogo } from '@/components/common';
+import { DevFlowLogo, GuestGuardModal } from '@/components/common';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
       CheckCircle2,
   FileText,
@@ -74,6 +75,9 @@ export const PaymentsPage: React.FC = () => {
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
+  const { isGuest } = useAuth();
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+  const [guardActionTitle, setGuardActionTitle] = useState('Create Invoice');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -341,6 +345,11 @@ export const PaymentsPage: React.FC = () => {
 
   // Handle Generate Invoice for Unbilled Milestone
   const handleGenerateInvoiceForUnbilled = () => {
+    if (isGuest) {
+      setGuardActionTitle('Generate PayPal Invoice');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     const newInv: UnifiedInvoiceItem = {
       id: `inv-${Date.now()}`,
       invoiceNumber: `INV-2026-00${invoices.length + 1}`,
@@ -490,7 +499,14 @@ export const PaymentsPage: React.FC = () => {
 
             {/* Create Invoice Button */}
             <button
-              onClick={() => setIsCreateInvoiceModalOpen(true)}
+              onClick={() => {
+                if (isGuest) {
+                  setGuardActionTitle('Create Invoice');
+                  setIsGuestGuardOpen(true);
+                  return;
+                }
+                setIsCreateInvoiceModalOpen(true);
+              }}
               className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -790,6 +806,11 @@ export const PaymentsPage: React.FC = () => {
                                 {row.status !== 'Paid' && (
                                   <button
                                     onClick={() => {
+                                      if (isGuest) {
+                                        setGuardActionTitle('Release Payment');
+                                        setIsGuestGuardOpen(true);
+                                        return;
+                                      }
                                       setSelectedInvoiceId(row.invoiceNumber);
                                       setCheckoutStep('review');
                                       setIsCheckoutModalOpen(true);
@@ -978,6 +999,11 @@ export const PaymentsPage: React.FC = () => {
                 {selectedInvoice.status !== 'Paid' && (
                   <button
                     onClick={() => {
+                      if (isGuest) {
+                        setGuardActionTitle('Release Payment');
+                        setIsGuestGuardOpen(true);
+                        return;
+                      }
                       setCheckoutStep('review');
                       setIsCheckoutModalOpen(true);
                     }}
@@ -1036,7 +1062,14 @@ export const PaymentsPage: React.FC = () => {
                     <span className="font-semibold text-white">Stellar Innovations</span> &bull; Alpha Portal (Milestone 2)
                   </div>
                   <button
-                    onClick={() => setIsCreateInvoiceModalOpen(true)}
+                    onClick={() => {
+                      if (isGuest) {
+                        setGuardActionTitle('Create Invoice');
+                        setIsGuestGuardOpen(true);
+                        return;
+                      }
+                      setIsCreateInvoiceModalOpen(true);
+                    }}
                     className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-colors"
                   >
                     Create Invoice
@@ -1460,6 +1493,14 @@ export const PaymentsPage: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Guest Mode Restriction Guard Modal */}
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle={guardActionTitle}
+        message="Guest Mode: Please sign in or create an account to use this feature."
+      />
     </div>
   );
 };

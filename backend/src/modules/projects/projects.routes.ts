@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ProjectMemberRole } from '@prisma/client';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, requireNonGuest } from '../../middleware/auth';
 import { requireProjectRole } from '../../middleware/projectAuth';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { projectsController } from './projects.controller';
@@ -18,6 +18,7 @@ const router = Router();
 router.post(
   '/',
   authenticate,
+  requireNonGuest,
   validateBody(CreateProjectSchema),
   projectsController.createProject
 );

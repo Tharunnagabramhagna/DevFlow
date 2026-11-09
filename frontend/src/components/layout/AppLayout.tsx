@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { CommandPalette } from '@/components/common';
 
 const AppLayoutInner: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
+  const { isGuest, logout } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
 
   // Global Ctrl+K / Cmd+K shortcut listener
@@ -28,7 +31,7 @@ const AppLayoutInner: React.FC = () => {
   }, [location.pathname, closeMobileSidebar]);
 
   return (
-    <div className="fixed inset-0 z-30 flex bg-[#080D18] text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
+    <div className="fixed inset-0 z-30 flex bg-[#F8FAFC] dark:bg-[#080D18] text-[#0F172A] dark:text-[#F8FAFC] font-sans antialiased overflow-hidden select-none">
       {/* 1. SINGLE SHARED COLLAPSIBLE DARK NAVY SIDEBAR */}
       <Sidebar />
 
@@ -40,8 +43,45 @@ const AppLayoutInner: React.FC = () => {
         />
       )}
 
-      {/* 3. MAIN CONTENT VIEWPORT (RENDERED BY OUTLET) */}
-      <Outlet />
+      {/* 3. MAIN CONTENT VIEWPORT */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Top Guest Mode Notice Banner */}
+        {isGuest && (
+          <div className="bg-teal-50 dark:bg-gradient-to-r dark:from-teal-950/95 dark:via-[#0A1D2D]/95 dark:to-blue-950/95 border-b border-teal-200 dark:border-teal-500/30 px-3 sm:px-5 py-2 flex items-center justify-between text-xs shrink-0 z-20 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-2 truncate pr-2">
+              <span className="w-2 h-2 rounded-full bg-teal-500 dark:bg-teal-400 animate-pulse shrink-0" />
+              <span className="font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-500/20 border border-teal-300 dark:border-teal-500/40 shrink-0 font-mono">
+                GUEST MODE
+              </span>
+              <span className="text-teal-900 dark:text-slate-300 truncate text-[11px] sm:text-xs">
+                You are exploring DevFlow in Guest Mode. Sign in to unlock full functionality.
+              </span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate('/signup')}
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors shadow-xs"
+              >
+                Create Account
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await logout();
+                  navigate('/login');
+                }}
+                className="px-2 py-1 text-xs font-medium text-teal-800 dark:text-slate-300 hover:text-teal-950 dark:hover:text-white transition-colors"
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex-1 min-w-0 h-full overflow-hidden relative flex flex-col">
+          <Outlet />
+        </div>
+      </div>
 
       {/* Global Command Palette */}
       <CommandPalette

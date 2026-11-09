@@ -6,7 +6,8 @@ import { env } from '../config/env';
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: Role;
+  role: Role | 'GUEST';
+  isGuest?: boolean;
   iat?: number;
   exp?: number;
 }
@@ -14,7 +15,8 @@ export interface JwtPayload {
 export interface AuthenticatedUser {
   id: string;
   email: string;
-  role: Role;
+  role: Role | 'GUEST';
+  isGuest?: boolean;
 }
 
 declare global {
@@ -51,6 +53,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
       id: decoded.sub,
       email: decoded.email,
       role: decoded.role,
+      isGuest: Boolean(decoded.isGuest || decoded.role === 'GUEST'),
     };
 
     next();
@@ -85,11 +88,29 @@ export const optionalAuthenticate = (req: Request, _res: Response, next: NextFun
       id: decoded.sub,
       email: decoded.email,
       role: decoded.role,
+      isGuest: Boolean(decoded.isGuest || decoded.role === 'GUEST'),
     };
   } catch {
     // Ignore invalid tokens on optional auth
   }
 
+  next();
+};
+
+/**
+ * Guard ensuring guest users cannot perform write or financial operations.
+ */
+export const requireNonGuest = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.user?.role === ('GUEST' as Role) || req.user?.isGuest) {
+    res.status(403).json({
+      error: {
+        code: 'GUEST_RESTRICTED',
+        message: 'Guest Mode: Please sign in or create an account to use this feature.',
+        timestamp: new Date().toISOString(),
+      },
+    });
+    return;
+  }
   next();
 };
 

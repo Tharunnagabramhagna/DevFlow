@@ -20,6 +20,7 @@ export const authRouter = Router();
 // Standard Password & Session Lifecycle
 authRouter.post('/register', validateBody(RegisterSchema), (req, res, next) => authController.register(req, res, next));
 authRouter.post('/login', loginRateLimiter, validateBody(LoginSchema), (req, res, next) => authController.login(req, res, next));
+authRouter.post('/guest', (req, res, next) => authController.guestLogin(req, res, next));
 authRouter.post('/refresh', validateTrustedOrigin, (req, res, next) => authController.refresh(req, res, next));
 authRouter.post('/logout', validateTrustedOrigin, (req, res, next) => authController.logout(req, res, next));
 authRouter.get('/me', authenticate, (req, res) => authController.getMe(req, res));

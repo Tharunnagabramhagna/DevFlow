@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { GuestGuardModal } from '@/components/common';
 import {
               Bell,
   Settings,
@@ -148,6 +150,9 @@ export const SettingsPage: React.FC = () => {
   }, [currentTheme]);
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { isGuest } = useAuth();
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+  const [guardActionTitle, setGuardActionTitle] = useState('Change Settings');
 
   // Modals
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -272,6 +277,11 @@ export const SettingsPage: React.FC = () => {
 
   // Save changes handler (Preserves backward compatibility, persists only non-sensitive preferences)
   const handleSaveChanges = () => {
+    if (isGuest) {
+      setGuardActionTitle('Save Account Settings');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     try {
       // 1. Save profile with both fullName and legacy name keys
       const profileToSave = {
@@ -585,7 +595,14 @@ export const SettingsPage: React.FC = () => {
                   {/* Change Password Button */}
                   <div className="pt-1">
                     <button
-                      onClick={() => setPasswordModalOpen(true)}
+                      onClick={() => {
+                      if (isGuest) {
+                        setGuardActionTitle('Change Password');
+                        setIsGuestGuardOpen(true);
+                        return;
+                      }
+                      setPasswordModalOpen(true);
+                    }}
                       className="w-full py-2 px-3 rounded-lg bg-[#101A2D] hover:bg-[#1E2E48] border border-[#293B55] hover:border-[#3B4F6E] text-xs text-white font-medium transition-colors"
                     >
                       Change Password
@@ -753,7 +770,14 @@ export const SettingsPage: React.FC = () => {
 
                   {/* Password Management */}
                   <button
-                    onClick={() => setPasswordModalOpen(true)}
+                    onClick={() => {
+                      if (isGuest) {
+                        setGuardActionTitle('Change Password');
+                        setIsGuestGuardOpen(true);
+                        return;
+                      }
+                      setPasswordModalOpen(true);
+                    }}
                     className="w-full flex items-center justify-between py-2 text-xs text-white hover:text-[#2879E8] transition-colors group"
                   >
                     <span className="font-medium">Password management</span>
@@ -1390,6 +1414,14 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Guest Mode Restriction Guard Modal */}
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle={guardActionTitle}
+        message="Guest Mode: Please sign in or create an account to use this feature."
+      />
     </div>
   );
 };

@@ -23,16 +23,19 @@ import {
   LogOut,
   BriefcaseBusiness,
   Code2,
+  Eye,
 } from 'lucide-react';
+import { GuestGuardModal } from '@/components/common';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { openMobileSidebar } = useSidebar();
-  const { user, role, logout } = useAuth();
+  const { user, role, isGuest, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [telemetry, setTelemetry] = useState<DeveloperTelemetry | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
 
   // User Profile Dropdown state
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -65,18 +68,25 @@ export const DashboardPage: React.FC = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // User details from auth context or profile storage
-  const displayName = user?.name || 'Alex Morgan';
-  const firstName = displayName.split(' ')[0];
-  const initials = displayName
-    .split(' ')
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'AM';
+  const displayName = isGuest ? 'Guest Explorer' : user?.name || 'Alex Morgan';
+  const firstName = isGuest ? 'Guest' : displayName.split(' ')[0];
+  const initials = isGuest
+    ? 'GE'
+    : displayName
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'AM';
 
-  const isClientRole = role === 'CLIENT';
-  const roleBadgeLabel = isClientRole ? 'Client' : 'Developer';
+  const isClientRole = !isGuest && role === 'CLIENT';
+  const roleBadgeLabel = isGuest ? 'Guest Mode' : isClientRole ? 'Client' : 'Developer';
+  const avatarGradient = isGuest
+    ? 'bg-gradient-to-tr from-teal-500 to-cyan-500'
+    : isClientRole
+    ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+    : 'bg-gradient-to-tr from-purple-600 to-indigo-400';
 
   useEffect(() => {
     async function loadDashboard() {
@@ -210,11 +220,7 @@ export const DashboardPage: React.FC = () => {
                 className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
               >
                 <div
-                  className={`w-8 h-8 rounded-lg ${
-                    isClientRole
-                      ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-                      : 'bg-gradient-to-tr from-purple-600 to-indigo-400'
-                  } text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-xs`}
+                  className={`w-8 h-8 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-xs`}
                 >
                   {initials}
                 </div>
@@ -223,7 +229,9 @@ export const DashboardPage: React.FC = () => {
                   <div className="flex items-center gap-1">
                     <span
                       className={`text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded-full border ${
-                        isClientRole
+                        isGuest
+                          ? 'bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono'
+                          : isClientRole
                           ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
                           : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
                       }`}
@@ -239,33 +247,60 @@ export const DashboardPage: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-56 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                   <div className="px-3.5 py-2 border-b border-[#26344B]/70">
                     <p className="font-bold text-white truncate">{displayName}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{user?.email || 'user@devflow.io'}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{user?.email || (isGuest ? 'guest@devflow.demo' : 'user@devflow.io')}</p>
                     <span
                       className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1.5 border ${
-                        isClientRole
+                        isGuest
+                          ? 'bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono'
+                          : isClientRole
                           ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
                           : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
                       }`}
                     >
-                      {isClientRole ? (
+                      {isGuest ? (
+                        <Eye className="w-2.5 h-2.5" />
+                      ) : isClientRole ? (
                         <BriefcaseBusiness className="w-2.5 h-2.5" />
                       ) : (
                         <Code2 className="w-2.5 h-2.5" />
                       )}
-                      <span>{roleBadgeLabel} Account</span>
+                      <span>{isGuest ? 'Guest Mode' : `${roleBadgeLabel} Account`}</span>
                     </span>
                   </div>
-                  <div className="py-1">
-                    <button
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        navigate('/settings');
-                      }}
-                      className="w-full text-left px-3.5 py-2 text-slate-300 hover:text-white hover:bg-[#1B2A47] transition-colors"
-                    >
-                      Account Settings
-                    </button>
-                  </div>
+                  {isGuest ? (
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          navigate('/signup');
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-teal-300 hover:text-white hover:bg-[#1B2A47] transition-colors font-medium"
+                      >
+                        Create Full Account
+                      </button>
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          navigate('/login');
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-slate-300 hover:text-white hover:bg-[#1B2A47] transition-colors"
+                      >
+                        Sign In Existing Account
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          navigate('/settings');
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-slate-300 hover:text-white hover:bg-[#1B2A47] transition-colors"
+                      >
+                        Account Settings
+                      </button>
+                    </div>
+                  )}
                   <div className="border-t border-[#26344B]/70 pt-1">
                     <button
                       onClick={async () => {
@@ -276,7 +311,7 @@ export const DashboardPage: React.FC = () => {
                       className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-400 hover:bg-rose-500/10 transition-colors text-left"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      <span>Sign Out</span>
+                      <span>{isGuest ? 'Exit Guest Mode' : 'Sign Out'}</span>
                     </button>
                   </div>
                 </div>
@@ -296,22 +331,32 @@ export const DashboardPage: React.FC = () => {
                 </h2>
                 <span
                   className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                    isClientRole
+                    isGuest
+                      ? 'bg-teal-950/80 text-teal-300 border-teal-800/60'
+                      : isClientRole
                       ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
                       : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
                   }`}
                 >
-                  {roleBadgeLabel.toUpperCase()}
+                  {isGuest ? 'DEMO MODE' : roleBadgeLabel.toUpperCase()}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                {isClientRole
+                {isGuest
+                  ? 'Fictional demo data \u2022 Real-time telemetry, mock commit proofs and simulated milestone intelligence.'
+                  : isClientRole
                   ? `${user?.organization || 'Meridian Labs'} \u2022 Milestone approvals, AST proof audits and PayPal invoice release.`
                   : `${user?.organization || 'Northstar Digital Studio'} \u2022 Real-time telemetry, commit proofs and milestone intelligence.`}
               </p>
             </div>
             <button
-              onClick={() => setIsNewProjectModalOpen(true)}
+              onClick={() => {
+                if (isGuest) {
+                  setIsGuestGuardOpen(true);
+                  return;
+                }
+                setIsNewProjectModalOpen(true);
+              }}
               className="self-start sm:self-auto bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" />
@@ -349,10 +394,10 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Card 3: Pending Approvals */}
-            <div className="p-4 rounded-xl bg-[#171E30] border border-amber-900/60 flex flex-col justify-between hover:border-amber-700 transition-colors">
-              <span className="text-xs text-slate-400 font-medium">Pending Client Review</span>
+            <div className="p-4 rounded-xl bg-white dark:bg-[#171E30] border border-amber-200 dark:border-amber-900/60 flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-700 transition-colors">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pending Client Review</span>
               <div className="mt-3 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-bold font-mono text-amber-400">
+                <span className="text-2xl sm:text-3xl font-bold font-mono text-amber-600 dark:text-amber-400">
                   02
                 </span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] animate-pulse" />
@@ -754,6 +799,14 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Guest Mode Restriction Guard Modal */}
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle="Create Project"
+        message="Guest Mode: Please sign in or create an account to use this feature."
+      />
     </div>
   );
 };

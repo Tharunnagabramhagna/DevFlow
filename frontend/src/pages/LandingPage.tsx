@@ -60,9 +60,9 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080D1B] text-[#F1F5F9] font-sans selection:bg-[#0070BA] selection:text-white overflow-x-hidden antialiased">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#080D1B] text-[#0F172A] dark:text-[#F1F5F9] font-sans selection:bg-[#0070BA] selection:text-white overflow-x-hidden antialiased">
       {/* 1. Header Navigation */}
-      <header className="sticky top-0 z-50 bg-[#080D1B]/85 backdrop-blur-md border-b border-[#1E293B]">
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#080D1B]/85 backdrop-blur-md border-b border-slate-200 dark:border-[#1E293B]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
           <div
@@ -73,28 +73,28 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-slate-400">
+          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-slate-600 dark:text-slate-400">
             <button
               onClick={() => scrollToSection('preview')}
-              className="hover:text-white transition-colors cursor-pointer"
+              className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             >
               Product
             </button>
             <button
               onClick={() => scrollToSection('features')}
-              className="hover:text-white transition-colors cursor-pointer"
+              className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             >
               Features
             </button>
             <button
               onClick={() => scrollToSection('how-it-works')}
-              className="hover:text-white transition-colors cursor-pointer"
+              className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             >
               How It Works
             </button>
             <button
               onClick={() => scrollToSection('trust')}
-              className="hover:text-white transition-colors cursor-pointer"
+              className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             >
               About
             </button>
@@ -105,13 +105,13 @@ export const LandingPage: React.FC = () => {
             <ThemeToggle />
             <button
               onClick={() => navigate('/login')}
-              className="text-xs font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5"
+              className="text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors px-3 py-1.5"
             >
               Login
             </button>
             <button
               onClick={() => navigate('/signup')}
-              className="text-xs font-semibold text-slate-200 hover:text-white bg-[#1A2538] hover:bg-[#22324C] border border-[#2B3E5C] px-3.5 py-1.5 rounded-full transition-all"
+              className="text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-[#1A2538] dark:hover:bg-[#22324C] border border-slate-300 dark:border-[#2B3E5C] px-3.5 py-1.5 rounded-full transition-all"
             >
               Sign Up
             </button>
@@ -128,7 +128,7 @@ export const LandingPage: React.FC = () => {
             <ThemeToggle />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E293B] transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-[#1E293B] transition-colors"
               aria-label="Toggle navigation"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -138,44 +138,44 @@ export const LandingPage: React.FC = () => {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-b border-[#1E293B] bg-[#0A0F1D] px-5 py-4 space-y-3">
+          <div className="md:hidden border-b border-slate-200 dark:border-[#1E293B] bg-white dark:bg-[#0A0F1D] px-5 py-4 space-y-3">
             <button
               onClick={() => scrollToSection('preview')}
-              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
+              className="block w-full text-left py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             >
               Product
             </button>
             <button
               onClick={() => scrollToSection('features')}
-              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
+              className="block w-full text-left py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             >
               Features
             </button>
             <button
               onClick={() => scrollToSection('how-it-works')}
-              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
+              className="block w-full text-left py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             >
               How It Works
             </button>
             <button
               onClick={() => scrollToSection('trust')}
-              className="block w-full text-left py-2 text-xs font-medium text-slate-300 hover:text-white"
+              className="block w-full text-left py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             >
               About
             </button>
-            <div className="pt-2 flex flex-col gap-2 border-t border-[#1E293B]">
+            <div className="pt-2 flex flex-col gap-2 border-t border-slate-200 dark:border-[#1E293B]">
               <div className="pb-1">
                 <ThemeToggle variant="labeled" />
               </div>
               <button
                 onClick={() => navigate('/login')}
-                className="w-full text-center py-2 text-xs font-semibold text-slate-300 bg-[#1E293B] rounded-lg"
+                className="w-full text-center py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#1E293B] rounded-lg"
               >
                 Login
               </button>
               <button
                 onClick={() => navigate('/signup')}
-                className="w-full text-center py-2 text-xs font-semibold text-slate-200 border border-[#334155] bg-[#141E33] rounded-lg"
+                className="w-full text-center py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-[#334155] bg-slate-100 dark:bg-[#141E33] rounded-lg"
               >
                 Sign Up
               </button>
@@ -208,12 +208,12 @@ export const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             {/* Left Column: Headline & CTA */}
             <div className="lg:col-span-5 space-y-6 text-left">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08]">
                 From Code <br />
                 to Cash.
               </h1>
 
-              <p className="text-sm sm:text-base text-slate-400 max-w-md leading-relaxed font-normal">
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md leading-relaxed font-normal">
                 Turn development progress into verified milestones and seamless payments with
                 AI-powered project intelligence.
               </p>
@@ -227,7 +227,7 @@ export const LandingPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => scrollToSection('how-it-works')}
-                  className="bg-[#0F172A] hover:bg-[#1E293B] border border-[#1E293B] hover:border-slate-600 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all"
+                  className="bg-white hover:bg-slate-100 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-300 dark:border-[#1E293B] hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-xs"
                 >
                   Explore How It Works
                 </button>
@@ -237,17 +237,17 @@ export const LandingPage: React.FC = () => {
             {/* Right Column: Hero Dashboard Mockup + Overlapping Payment Status */}
             <div className="lg:col-span-7 relative">
               {/* Outer Dashboard Mockup Shell */}
-              <div className="bg-[#0B1222] border border-[#1E293B] rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+              <div className="bg-slate-100/90 dark:bg-[#0B1222] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
                 {/* Window Chrome Header */}
-                <div className="flex items-center justify-between pb-3.5 border-b border-[#1E293B] text-[11px] text-slate-400">
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-[#1E293B] text-[11px] text-slate-500 dark:text-slate-400">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                    <span className="font-mono text-slate-500 ml-2">DevFlow Intelligence Command</span>
+                    <span className="font-mono text-slate-600 dark:text-slate-400 ml-2">DevFlow Intelligence Command</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-mono text-[10px]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                     LIVE TELEMETRY &bull; SANDBOX DEMO
                   </div>
                 </div>
@@ -255,29 +255,29 @@ export const LandingPage: React.FC = () => {
                 {/* Inner Mockup Layout: Mini Sidebar + Main Viewport */}
                 <div className="grid grid-cols-12 gap-3 pt-3.5">
                   {/* Mini Sidebar */}
-                  <div className="col-span-3 border-r border-[#1E293B] pr-3 space-y-1 text-[11px]">
-                    <div className="flex items-center gap-1.5 font-bold text-white mb-3">
+                  <div className="col-span-3 border-r border-slate-200 dark:border-[#1E293B] pr-3 space-y-1 text-[11px]">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-white mb-3">
                       <DevFlowLogo variant="icon" size="xs" />
                       <span>DevFlow</span>
                     </div>
                     <div className="space-y-1">
-                      <div className="p-1.5 rounded bg-blue-950/60 text-blue-400 font-semibold flex items-center gap-1.5">
+                      <div className="p-1.5 rounded bg-blue-100/70 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-semibold flex items-center gap-1.5">
                         <LayoutDashboard className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Dashboard</span>
                       </div>
-                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                      <div className="p-1.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5">
                         <FolderGit2 className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Projects</span>
                       </div>
-                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                      <div className="p-1.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Milestones</span>
                       </div>
-                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                      <div className="p-1.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5">
                         <GitBranch className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Evidence</span>
                       </div>
-                      <div className="p-1.5 rounded text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                      <div className="p-1.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">AI Verify</span>
                       </div>
@@ -288,53 +288,53 @@ export const LandingPage: React.FC = () => {
                   <div className="col-span-9 space-y-3 pl-1">
                     {/* Top Row: Milestone Tracking + Mini Stat */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div className="sm:col-span-2 p-2.5 rounded-xl bg-[#0F172A] border border-[#1E293B] space-y-2">
+                      <div className="sm:col-span-2 p-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] space-y-2">
                         <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-semibold text-white">Milestone Tracking</span>
-                          <span className="text-emerald-400 font-mono text-[10px] bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-800/40">
+                          <span className="font-semibold text-slate-900 dark:text-white">Milestone Tracking</span>
+                          <span className="text-emerald-700 dark:text-emerald-400 font-mono text-[10px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/40">
                             94.2% AI Pass
                           </span>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                          <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-400 font-mono">
                             <span>Order Routing &amp; Webhooks</span>
                             <span>100%</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-[#1E293B] overflow-hidden">
-                            <div className="h-full bg-emerald-400 w-full rounded-full" />
+                          <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-[#1E293B] overflow-hidden">
+                            <div className="h-full bg-emerald-500 dark:bg-emerald-400 w-full rounded-full" />
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                          <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-400 font-mono">
                             <span>AST Syntax Verification</span>
                             <span>94.2%</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-[#1E293B] overflow-hidden">
-                            <div className="h-full bg-blue-500 w-[94%] rounded-full" />
+                          <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-[#1E293B] overflow-hidden">
+                            <div className="h-full bg-blue-600 dark:bg-blue-500 w-[94%] rounded-full" />
                           </div>
                         </div>
                       </div>
 
-                      <div className="p-2.5 rounded-xl bg-[#0F172A] border border-[#1E293B] flex flex-col justify-between">
-                        <span className="text-[10px] text-slate-400 font-medium">Expected Volume</span>
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] flex flex-col justify-between">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Expected Volume</span>
                         <div>
-                          <div className="text-lg font-bold font-mono text-white">$18,500.00</div>
-                          <span className="text-[10px] text-emerald-400 font-mono">4 Milestones</span>
+                          <div className="text-lg font-bold font-mono text-slate-900 dark:text-white">$18,500.00</div>
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">4 Milestones</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Commit Stream Snippet */}
-                    <div className="p-2.5 rounded-xl bg-[#0F172A] border border-[#1E293B] text-[11px] space-y-1.5 font-mono">
-                      <div className="flex items-center justify-between text-slate-400">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] text-[11px] space-y-1.5 font-mono">
+                      <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                         <span className="flex items-center gap-1.5">
-                          <GitHubIcon className="w-3.5 h-3.5 text-slate-300" />
+                          <GitHubIcon className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
                           <span>northstar-studio/payment-gateway</span>
                         </span>
-                        <span className="text-blue-400">main</span>
+                        <span className="text-blue-600 dark:text-blue-400">main</span>
                       </div>
-                      <div className="text-[10px] text-slate-300 truncate bg-[#080D1B] p-1.5 rounded border border-[#1E293B]">
-                        commit <span className="text-amber-400">a1e9482</span> &bull; feat(payments): implement PayPal webhook verification and signature check
+                      <div className="text-[10px] text-slate-700 dark:text-slate-300 truncate bg-slate-50 dark:bg-[#080D1B] p-1.5 rounded border border-slate-200 dark:border-[#1E293B]">
+                        commit <span className="text-amber-600 dark:text-amber-400">a1e9482</span> &bull; feat(payments): implement PayPal webhook verification and signature check
                       </div>
                     </div>
                   </div>
@@ -342,13 +342,13 @@ export const LandingPage: React.FC = () => {
               </div>
 
               {/* Overlapping Floating "Payment Status" Panel (Matches Reference) */}
-              <div className="sm:absolute sm:-bottom-6 sm:-right-4 mt-4 sm:mt-0 bg-[#0F172A] border border-[#1E293B] rounded-2xl p-4 shadow-2xl space-y-3 w-full sm:w-72 backdrop-blur-md">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-[#1E293B] pb-2">
+              <div className="sm:absolute sm:-bottom-6 sm:-right-4 mt-4 sm:mt-0 bg-white/95 dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-4 shadow-2xl space-y-3 w-full sm:w-72 backdrop-blur-md">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-[#1E293B] pb-2">
                   <div className="flex items-center gap-1.5">
                     <span>Payment Status</span>
-                    <span className="text-[9px] font-mono font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-1.5 py-0.5 rounded">DEMO</span>
+                    <span className="text-[9px] font-mono font-bold bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 px-1.5 py-0.5 rounded">DEMO</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+                  <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                     <Check className="w-3.5 h-3.5" />
                     <span>Settled (Sandbox)</span>
                   </div>
@@ -356,26 +356,26 @@ export const LandingPage: React.FC = () => {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-950/70 border border-blue-800/50 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center">
                       <PayPalIcon className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-white">PayPal Invoicing</div>
-                      <div className="text-[10px] text-slate-400 font-mono">Instant Payout &bull; Milestone 2</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">PayPal Invoicing</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Instant Payout &bull; Milestone 2</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold font-mono text-emerald-400">$4,500.00</div>
+                    <div className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400">$4,500.00</div>
                     <div className="text-[9px] text-slate-500">USD Net</div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-[#1E293B]/70 font-mono">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-[#1E293B]/70 font-mono">
                   <span className="flex items-center gap-1">
-                    <GitHubIcon className="w-3 h-3 text-slate-400" />
+                    <GitHubIcon className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                     <span>SHA a1e9482</span>
                   </span>
-                  <span className="text-blue-400 font-sans">Human Sign-off</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-sans">Human Sign-off</span>
                 </div>
               </div>
             </div>
@@ -771,29 +771,29 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           {/* Section Heading */}
           <div className="text-center space-y-3">
-            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/50 px-3 py-1 rounded-full">
               PRODUCT PREVIEW
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Turn development progress into verified milestones and seamless payments.
             </h2>
-            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
               Real-time developer telemetry, explainable code diff audits, and automated PayPal invoicing unified.
             </p>
           </div>
 
-          {/* Large Realistic Enterprise Dark Dashboard Composition */}
-          <div className="bg-[#0B1222] border border-[#1E293B] rounded-2xl p-4 sm:p-6 shadow-2xl relative space-y-5">
+          {/* Large Realistic Enterprise Dashboard Composition */}
+          <div className="bg-slate-100/90 dark:bg-[#0B1222] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-4 sm:p-6 shadow-2xl relative space-y-5">
             {/* Window Bar */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#1E293B]">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[#1E293B]">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-rose-500/80" />
                 <div className="w-3 h-3 rounded-full bg-amber-500/80" />
                 <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                <span className="font-mono text-xs text-slate-400 ml-3">devflow.team/workspace/overview</span>
+                <span className="font-mono text-xs text-slate-600 dark:text-slate-400 ml-3">devflow.team/workspace/overview</span>
               </div>
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                 <span>Connected &bull; GitHub Webhook Active</span>
               </div>
             </div>
@@ -801,33 +801,33 @@ export const LandingPage: React.FC = () => {
             {/* Dashboard Inner Screen */}
             <div className="grid grid-cols-12 gap-5">
               {/* Left Mini Nav */}
-              <div className="col-span-12 lg:col-span-3 border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-4 lg:pb-0 lg:pr-5 space-y-4">
+              <div className="col-span-12 lg:col-span-3 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-[#1E293B] pb-4 lg:pb-0 lg:pr-5 space-y-4">
                 <div className="flex items-center gap-2.5">
                   <DevFlowLogo variant="icon" size="sm" />
                   <div>
-                    <h4 className="text-xs font-bold text-white">DevFlow Platform</h4>
-                    <p className="text-[10px] text-slate-400">Milestone Intelligence</p>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">DevFlow Platform</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Milestone Intelligence</p>
                   </div>
                 </div>
 
                 <div className="space-y-1 text-xs font-medium">
-                  <div className="p-2 rounded-xl bg-blue-950/70 border border-blue-800/40 text-blue-400 flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-100/70 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-400 flex items-center gap-2">
                     <LayoutDashboard className="w-4 h-4" />
                     <span>Command Center</span>
                   </div>
-                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                  <div className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2">
                     <FolderGit2 className="w-4 h-4" />
                     <span>Projects (2)</span>
                   </div>
-                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                  <div className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Milestones (4)</span>
                   </div>
-                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                  <div className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2">
                     <GitBranch className="w-4 h-4" />
                     <span>GitHub Evidence</span>
                   </div>
-                  <div className="p-2 rounded-xl text-slate-400 hover:text-white flex items-center gap-2">
+                  <div className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     <span>PayPal Invoices</span>
                   </div>
@@ -838,24 +838,24 @@ export const LandingPage: React.FC = () => {
               <div className="col-span-12 lg:col-span-9 space-y-4">
                 {/* Metric Cards Banner */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
-                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Settled Paid</div>
-                    <div className="text-lg font-bold font-mono text-emerald-400 mt-1">$7,600.00</div>
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">Settled Paid</div>
+                    <div className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">$7,600.00</div>
                     <div className="text-[10px] text-slate-500">2 settled invoices</div>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
-                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Pending Review</div>
-                    <div className="text-lg font-bold font-mono text-amber-400 mt-1">$3,200.00</div>
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">Pending Review</div>
+                    <div className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">$3,200.00</div>
                     <div className="text-[10px] text-slate-500">Awaiting client sign-off</div>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
-                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">AI Pass Rate</div>
-                    <div className="text-lg font-bold font-mono text-blue-400 mt-1">94.2%</div>
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">AI Pass Rate</div>
+                    <div className="text-lg font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">94.2%</div>
                     <div className="text-[10px] text-slate-500">AST syntax evaluation</div>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#1E293B]">
-                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Scope</div>
-                    <div className="text-lg font-bold font-mono text-white mt-1">4 Deliverables</div>
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">Active Scope</div>
+                    <div className="text-lg font-bold font-mono text-slate-900 dark:text-white mt-1">4 Deliverables</div>
                     <div className="text-[10px] text-slate-500">northstar-studio/payment-gateway</div>
                   </div>
                 </div>
@@ -863,43 +863,43 @@ export const LandingPage: React.FC = () => {
                 {/* Split Evidence + Invoice Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {/* GitHub Evidence Analysis Box */}
-                  <div className="p-4 rounded-xl bg-[#0F172A] border border-[#1E293B] space-y-3">
+                  <div className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] space-y-3">
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 font-bold text-white">
-                        <GitBranch className="w-4 h-4 text-purple-400" />
+                      <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
+                        <GitBranch className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                         <span>Git Proof-of-Work</span>
                       </div>
-                      <span className="font-mono text-[10px] bg-purple-950/60 text-purple-400 border border-purple-800/50 px-2 py-0.5 rounded">
+                      <span className="font-mono text-[10px] bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-2 py-0.5 rounded">
                         SHA a1e9482
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300 font-mono">
+                    <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">
                       feat(payments): implement PayPal webhook verification and signature check
                     </p>
-                    <div className="p-2.5 rounded-lg bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono space-y-1">
-                      <div className="text-emerald-400">+182 lines &bull; webhook.service.ts</div>
-                      <div className="text-blue-400">+ AST validation satisfied req_02_paypal</div>
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#080D1B] border border-slate-200 dark:border-[#1E293B] text-[10px] font-mono space-y-1">
+                      <div className="text-emerald-600 dark:text-emerald-400">+182 lines &bull; webhook.service.ts</div>
+                      <div className="text-blue-600 dark:text-blue-400">+ AST validation satisfied req_02_paypal</div>
                     </div>
                   </div>
 
                   {/* PayPal Webhook Invoice Settlement Box */}
-                  <div className="p-4 rounded-xl bg-[#0F172A] border border-[#1E293B] space-y-3">
+                  <div className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] space-y-3">
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 font-bold text-white">
+                      <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                         <PayPalIcon className="w-4 h-4" />
                         <span>PayPal Settlement</span>
                       </div>
-                      <span className="font-mono text-[10px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded">
+                      <span className="font-mono text-[10px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 rounded">
                         PAID &bull; Settled
                       </span>
                     </div>
                     <div className="flex justify-between items-baseline">
-                      <span className="text-xs text-slate-400 font-mono">INV-DEVFLOW-003</span>
-                      <span className="text-base font-bold font-mono text-emerald-400">$3,200.00 USD</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">INV-DEVFLOW-003</span>
+                      <span className="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400">$3,200.00 USD</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#080D1B] border border-slate-200 dark:border-[#1E293B] text-[10px] font-mono text-slate-600 dark:text-slate-400 flex items-center justify-between">
                       <span>Webhook WH-78M9 verified</span>
-                      <span className="text-slate-300">Instant Settlement</span>
+                      <span className="text-slate-700 dark:text-slate-300">Instant Settlement</span>
                     </div>
                   </div>
                 </div>
@@ -987,12 +987,12 @@ export const LandingPage: React.FC = () => {
       {/* 8. FINAL CTA */}
       <section className="py-20 relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative p-10 sm:p-16 rounded-3xl bg-gradient-to-b from-[#0F172A] to-[#0A0F1D] border border-[#1E293B] text-center space-y-6 overflow-hidden shadow-2xl">
+          <div className="relative p-10 sm:p-16 rounded-3xl bg-gradient-to-b from-white to-slate-100 dark:from-[#0F172A] dark:to-[#0A0F1D] border border-slate-200 dark:border-[#1E293B] text-center space-y-6 overflow-hidden shadow-2xl">
             {/* Ambient Cyan/Blue Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-blue-600/15 blur-3xl rounded-full pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-blue-600/10 dark:bg-blue-600/15 blur-3xl rounded-full pointer-events-none" />
 
             {/* Decorative Sparkle Accent (Bottom Right) */}
-            <div className="absolute -bottom-6 -right-6 w-28 h-28 opacity-20 pointer-events-none text-blue-400">
+            <div className="absolute -bottom-6 -right-6 w-28 h-28 opacity-20 pointer-events-none text-blue-500 dark:text-blue-400">
               <svg viewBox="0 0 100 100" fill="currentColor">
                 <path d="M50 0 L55 35 L90 40 L60 60 L70 95 L50 70 L30 95 L40 60 L10 40 L45 35 Z" />
               </svg>
@@ -1004,11 +1004,11 @@ export const LandingPage: React.FC = () => {
             </div>
 
             <div className="relative z-10 space-y-3">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
                 Your work deserves a <br className="hidden sm:inline" />
                 smarter way to get paid.
               </h2>
-              <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto">
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
                 Start automating your milestones and invoicing today.
               </p>
             </div>
@@ -1027,7 +1027,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 9. FOOTER */}
-      <footer className="border-t border-[#1E293B] bg-[#050811] text-slate-400 text-xs py-12">
+      <footer className="border-t border-slate-200 dark:border-[#1E293B] bg-white dark:bg-[#050811] text-slate-600 dark:text-slate-400 text-xs py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             {/* Brand Column */}
@@ -1035,7 +1035,7 @@ export const LandingPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <DevFlowLogo variant="horizontal" theme="auto" size="sm" />
               </div>
-              <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm leading-relaxed">
                 From Code to Cash. Autonomous milestone intelligence and PayPal payment platform for modern engineering teams.
               </p>
               <div className="flex items-center gap-3 pt-1">
@@ -1043,7 +1043,7 @@ export const LandingPage: React.FC = () => {
                   href="https://github.com/northstar-studio/payment-gateway"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-8 h-8 rounded-lg bg-[#0F172A] border border-[#1E293B] flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
+                  className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-600 transition-colors"
                   title="GitHub Repository"
                 >
                   <GitHubIcon className="w-4 h-4" />
@@ -1052,7 +1052,7 @@ export const LandingPage: React.FC = () => {
                   href="https://developer.paypal.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-8 h-8 rounded-lg bg-[#0F172A] border border-[#1E293B] flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
+                  className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-600 transition-colors"
                   title="PayPal Developer"
                 >
                   <PayPalIcon className="w-4 h-4" />
@@ -1062,25 +1062,25 @@ export const LandingPage: React.FC = () => {
 
             {/* Column: Product */}
             <div className="space-y-2.5">
-              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Product</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Product</h4>
               <ul className="space-y-1.5">
                 <li>
-                  <button onClick={() => navigate('/dashboard')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/dashboard')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     Command Center
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('/projects')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/projects')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     Projects Directory
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('/milestones')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/milestones')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     Milestones
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('/payments')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/payments')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     PayPal Invoices
                   </button>
                 </li>
@@ -1089,25 +1089,25 @@ export const LandingPage: React.FC = () => {
 
             {/* Column: Features */}
             <div className="space-y-2.5">
-              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Features</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Features</h4>
               <ul className="space-y-1.5">
                 <li>
-                  <button onClick={() => navigate('/verification')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/verification')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     AI Verification
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('/evidence')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/evidence')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     GitHub Evidence
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition-colors">
+                  <button onClick={() => scrollToSection('how-it-works')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     How It Works
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('/settings')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/settings')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     Settings &amp; Webhooks
                   </button>
                 </li>
@@ -1116,14 +1116,14 @@ export const LandingPage: React.FC = () => {
 
             {/* Column: Resources & Legal */}
             <div className="space-y-2.5">
-              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Resources</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Resources</h4>
               <ul className="space-y-1.5">
                 <li>
                   <a
                     href="https://github.com/northstar-studio/payment-gateway"
                     target="_blank"
                     rel="noreferrer"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     GitHub Repository
                   </a>
@@ -1133,24 +1133,24 @@ export const LandingPage: React.FC = () => {
                     href="https://developer.paypal.com/docs/api/invoicing/v2/"
                     target="_blank"
                     rel="noreferrer"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     PayPal Invoicing API
                   </a>
                 </li>
                 <li>
-                  <button onClick={() => navigate('/settings')} className="hover:text-white transition-colors">
+                  <button onClick={() => navigate('/settings')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                     Security Policy
                   </button>
                 </li>
                 <li>
-                  <span className="text-slate-600">Privacy &amp; Terms</span>
+                  <span className="text-slate-400 dark:text-slate-600">Privacy &amp; Terms</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+          <div className="pt-8 border-t border-slate-200 dark:border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
             <div>
               &copy; {new Date().getFullYear()} DevFlow. All rights reserved. Built for PayPal Hackathon.
             </div>

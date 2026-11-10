@@ -161,7 +161,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-slate-200 dark:border-[#26344B]" />
         </div>
-        <span className="relative px-3 bg-[#111C30] dark:bg-[#111C30] text-[10px] font-bold tracking-wider uppercase text-slate-400 select-none">
+        <span className="relative px-3 bg-white dark:bg-[#111C30] text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 select-none">
           OR CONTINUE WITH EMAIL
         </span>
       </div>
@@ -169,7 +169,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
       {/* SETUP ASSISTANCE MODAL FOR LOCAL ENV */}
       {setupModalProvider && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-[#111C30] border border-[#26344B] rounded-2xl max-w-md w-full p-6 shadow-2xl text-left space-y-4">
+          <div className="bg-white dark:bg-[#111C30] border border-slate-200 dark:border-[#26344B] rounded-2xl max-w-md w-full p-6 shadow-2xl text-left space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
                 {setupModalProvider === 'google' ? (
@@ -178,24 +178,24 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
                   <FacebookIcon className="w-6 h-6" />
                 )}
                 <div>
-                  <h3 className="text-sm font-bold text-white capitalize">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white capitalize">
                     {setupModalProvider} OAuth Setup Notice
                   </h3>
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     Backend Environment Notice
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setSetupModalProvider(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-3 rounded-lg bg-blue-950/60 border border-blue-800/60 text-xs text-blue-200 space-y-2">
-              <p className="font-semibold flex items-center gap-1.5 text-blue-300">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 text-xs text-blue-900 dark:text-blue-200 space-y-2">
+              <p className="font-semibold flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
                 <Info className="w-4 h-4 shrink-0" />
                 <span>
                   {setupModalProvider === 'google'
@@ -203,19 +203,19 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
                     : 'FACEBOOK_APP_ID & FACEBOOK_APP_SECRET'}
                 </span>
               </p>
-              <p className="text-[11px] leading-relaxed text-slate-300">
-                To enable live external {setupModalProvider === 'google' ? 'Google' : 'Facebook'} authorization, add your provider credentials to <code className="text-blue-400 font-mono">DevFlow/backend/.env</code>.
+              <p className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-300">
+                To enable live external {setupModalProvider === 'google' ? 'Google' : 'Facebook'} authorization, add your provider credentials to <code className="text-blue-600 dark:text-blue-400 font-mono">DevFlow/backend/.env</code>.
               </p>
             </div>
 
-            <div className="text-xs text-slate-300 space-y-1.5">
-              <p className="font-semibold text-white">How would you like to proceed?</p>
-              <ul className="list-disc list-inside text-[11px] text-slate-400 space-y-1">
+            <div className="text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+              <p className="font-semibold text-slate-900 dark:text-white">How would you like to proceed?</p>
+              <ul className="list-disc list-inside text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
                 <li>
-                  <strong className="text-white">Sandbox Mode:</strong> Verifies the complete OAuth role validation, role mismatch detection, and dashboard hydration using a verified {setupModalProvider} sandbox identity with role <strong className="text-blue-400">{role}</strong>.
+                  <strong className="text-slate-900 dark:text-white">Sandbox Mode:</strong> Verifies the complete OAuth role validation, role mismatch detection, and dashboard hydration using a verified {setupModalProvider} sandbox identity with role <strong className="text-blue-600 dark:text-blue-400">{role}</strong>.
                 </li>
                 <li>
-                  <strong className="text-white">Email & Password:</strong> Use the standard credentials form below.
+                  <strong className="text-slate-900 dark:text-white">Email & Password:</strong> Use the standard credentials form below.
                 </li>
               </ul>
             </div>
@@ -232,7 +232,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
               <button
                 type="button"
                 onClick={() => setSetupModalProvider(null)}
-                className="py-2 px-3 rounded-lg border border-[#26344B] text-slate-300 hover:text-white hover:bg-[#1A253A] text-xs font-medium transition-colors"
+                className="py-2 px-3 rounded-lg border border-slate-200 dark:border-[#26344B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A253A] text-xs font-medium transition-colors"
               >
                 Use Email Form
               </button>

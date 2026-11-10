@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { ProjectMemberRole, PaymentStatus, MilestoneStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { env } from '../../config/env';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, requireNonGuest } from '../../middleware/auth';
 import { requireProjectRole, requirePaymentRole } from '../../middleware/projectAuth';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { ForbiddenError } from '../../utils/errors';
@@ -20,6 +20,7 @@ export const paymentsRouter = Router();
 paymentsRouter.post(
   '/invoices',
   authenticate,
+  requireNonGuest,
   validateBody(CreateInvoiceSchema),
   paymentsController.createInvoice
 );
@@ -28,6 +29,7 @@ paymentsRouter.post(
 paymentsRouter.post(
   '/invoices/generate',
   authenticate,
+  requireNonGuest,
   validateBody(CreateInvoiceSchema),
   paymentsController.createInvoice
 );

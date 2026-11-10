@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { AuthService } from '../src/modules/auth/auth.service';
+import { env } from '../src/config/env';
 import { hashToken, encryptSecret } from '../src/utils/crypto';
 import { UnauthorizedError, ConflictError, BadRequestError } from '../src/utils/errors';
 
@@ -641,6 +643,8 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
     });
 
     it('initiates Facebook OAuth with email,public_profile scope and encrypted state', async () => {
+      (env as any).FACEBOOK_APP_ID = 'test-fb-app-id';
+      (env as any).FACEBOOK_APP_SECRET = 'test-fb-app-secret';
       expect(authService.facebookGraphApiVersion).toBe('v27.0');
       mockPrisma.oAuthState.create.mockResolvedValue({ id: 'state-fb' });
 
@@ -771,6 +775,27 @@ describe('Phase 2: AuthService Unit & Domain Mechanics', () => {
       } finally {
         global.fetch = originalFetch;
       }
+    });
+  });
+
+  describe('Guest Account & Demo Session Mechanics', () => {
+    it('creates a safe ephemeral guest session with GUEST role and isGuest flag', async () => {
+      const guestSession = await authService.createGuestSession();
+
+      expect(guestSession).toBeDefined();
+      expect(guestSession.user).toBeDefined();
+      expect(guestSession.user.id).toMatch(/^guest[-_]/);
+      expect(guestSession.user.role).toBe('GUEST');
+      expect(guestSession.user.isGuest).toBe(true);
+      expect(guestSession.user.email).toBe('guest@devflow.demo');
+      expect(guestSession.user.name).toBe('Guest Explorer');
+      expect(guestSession.accessToken).toBeDefined();
+
+      // Verify token decoding
+      const decoded = jwt.verify(guestSession.accessToken, env.JWT_SECRET) as any;
+      expect(decoded.role).toBe('GUEST');
+      expect(decoded.isGuest).toBe(true);
+      expect(decoded.sub).toBe(guestSession.user.id);
     });
   });
 });

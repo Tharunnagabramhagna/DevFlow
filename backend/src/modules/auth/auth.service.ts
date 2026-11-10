@@ -24,9 +24,10 @@ export interface SanitizedUser {
   id: string;
   email: string;
   name: string;
-  role: Role;
+  role: Role | 'GUEST';
   avatarUrl: string | null;
   bio: string | null;
+  isGuest?: boolean;
   createdAt: Date;
 }
 
@@ -103,6 +104,39 @@ export class AuthService {
       user: sanitizeUser(user),
       accessToken,
       rawRefreshToken,
+    };
+  }
+
+  /**
+   * Generates a guest demonstration session with limited permissions and a signed JWT.
+   */
+  async createGuestSession(): Promise<{ user: SanitizedUser; accessToken: string }> {
+    const guestId = `guest_${generateSecureToken(12)}`;
+    const guestUser: SanitizedUser = {
+      id: guestId,
+      email: 'guest@devflow.demo',
+      name: 'Guest Explorer',
+      role: 'GUEST',
+      avatarUrl: null,
+      bio: 'Exploring DevFlow features in demonstration mode.',
+      isGuest: true,
+      createdAt: new Date(),
+    };
+
+    const accessToken = jwt.sign(
+      {
+        sub: guestUser.id,
+        email: guestUser.email,
+        role: 'GUEST',
+        isGuest: true,
+      },
+      env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    return {
+      user: guestUser,
+      accessToken,
     };
   }
 

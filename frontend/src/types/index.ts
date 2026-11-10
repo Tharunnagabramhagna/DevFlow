@@ -199,7 +199,7 @@ export interface DeveloperTelemetry {
 }
 
 // User & Role-Based Authentication Types
-export type UserRole = 'CLIENT' | 'DEVELOPER' | 'ADMIN';
+export type UserRole = 'CLIENT' | 'DEVELOPER' | 'ADMIN' | 'GUEST';
 
 export interface AuthUser {
   id: string;
@@ -210,6 +210,7 @@ export interface AuthUser {
   bio?: string | null;
   organization?: string;
   createdAt?: string;
+  isGuest?: boolean;
 }
 
 export interface AuthSession {

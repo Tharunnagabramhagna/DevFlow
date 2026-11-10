@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { devFlowApi } from '@/services/api';
 import { Milestone, Requirement, Project } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { GuestGuardModal } from '@/components/common';
 import {
   CheckCircle2,
   Sparkles,
@@ -51,6 +53,9 @@ interface DisplayMilestone extends Milestone {
 
 export const MilestonesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isGuest } = useAuth();
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+  const [guardActionTitle, setGuardActionTitle] = useState('Create Milestone');
   const [milestones, setMilestones] = useState<DisplayMilestone[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,6 +213,11 @@ export const MilestonesPage: React.FC = () => {
   };
 
   const handleClientApprove = async (milestoneId: string) => {
+    if (isGuest) {
+      setGuardActionTitle('Approve Deliverable');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     try {
       await devFlowApi.submitClientApproval(
         milestoneId,
@@ -332,7 +342,14 @@ export const MilestonesPage: React.FC = () => {
             {/* Header Right Actions */}
             <div className="flex items-center gap-3 self-start sm:self-auto">
               <button
-                onClick={() => setIsNewModalOpen(true)}
+                onClick={() => {
+                  if (isGuest) {
+                    setGuardActionTitle('Create Milestone');
+                    setIsGuestGuardOpen(true);
+                    return;
+                  }
+                  setIsNewModalOpen(true);
+                }}
                 className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-all"
               >
                 <Plus className="w-4 h-4" />
@@ -908,6 +925,14 @@ export const MilestonesPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Guest Mode Restriction Guard Modal */}
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle={guardActionTitle}
+        message="Guest Mode: Please sign in or create an account to use this feature."
+      />
     </div>
   );
 };

@@ -22,6 +22,7 @@ import {
   LogOut,
   BriefcaseBusiness,
   Code2,
+  Eye,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -31,7 +32,7 @@ export const Sidebar: React.FC = () => {
     isMobileOpen,
     closeMobileSidebar,
   } = useSidebar();
-  const { user, role, logout } = useAuth();
+  const { user, role, isGuest, logout } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -47,14 +48,22 @@ export const Sidebar: React.FC = () => {
     navigate('/login');
   };
 
-  const userName = user?.name || 'Alex Morgan';
-  const initials = userName
-    .split(' ')
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'AM';
+  const userName = isGuest ? 'Guest Explorer' : user?.name || 'Alex Morgan';
+  const initials = isGuest
+    ? 'GE'
+    : userName
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'AM';
+
+  const avatarGradient = isGuest
+    ? 'bg-gradient-to-tr from-teal-500 to-cyan-500'
+    : role === 'CLIENT'
+    ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+    : 'bg-gradient-to-tr from-purple-600 to-indigo-400';
 
   const isActive = (path: string): boolean => {
     const current = location.pathname;
@@ -108,7 +117,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed lg:static inset-y-0 left-0 z-50 bg-[#101A2D] border-r border-[#26344B] flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
+      className={`fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#101A2D] border-r border-slate-200 dark:border-[#26344B] flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
         isMobileOpen
           ? 'translate-x-0 w-60'
           : '-translate-x-full lg:translate-x-0'
@@ -219,24 +228,20 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* User Session Profile & Logout */}
-      <div className="border-t border-[#26344B] p-2.5 shrink-0 bg-[#0C1424]/60">
+      <div className="border-t border-slate-200 dark:border-[#26344B] p-2.5 shrink-0 bg-slate-50 dark:bg-[#0C1424]/60">
         {isSidebarCollapsed ? (
           <div className="hidden lg:flex flex-col items-center gap-2">
             <div
-              className={`w-9 h-9 rounded-lg ${
-                role === 'CLIENT'
-                  ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-                  : 'bg-gradient-to-tr from-purple-600 to-indigo-400'
-              } text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-xs`}
-              title={`${userName} (${role === 'CLIENT' ? 'Client' : 'Developer'})`}
+              className={`w-9 h-9 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
+              title={`${userName} (${isGuest ? 'Guest Mode' : role === 'CLIENT' ? 'Client' : 'Developer'})`}
             >
               {initials}
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-[#1B2A47] rounded-lg transition-colors focus:outline-none"
-              title="Sign Out"
-              aria-label="Sign Out"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors focus:outline-none"
+              title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
+              aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -246,41 +251,44 @@ export const Sidebar: React.FC = () => {
         <div className={isSidebarCollapsed ? 'lg:hidden flex items-center justify-between gap-2' : 'flex items-center justify-between gap-2'}>
           <div className="flex items-center gap-2.5 min-w-0">
             <div
-              className={`w-8 h-8 rounded-lg ${
-                role === 'CLIENT'
-                  ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-                  : 'bg-gradient-to-tr from-purple-600 to-indigo-400'
-              } text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-[#26344B] shadow-xs`}
+              className={`w-8 h-8 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
             >
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-white truncate leading-tight">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate leading-tight">
                 {userName}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span
-                  className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
-                    role === 'CLIENT'
-                      ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
-                      : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
-                  }`}
-                >
-                  {role === 'CLIENT' ? (
-                    <BriefcaseBusiness className="w-2.5 h-2.5" />
-                  ) : (
-                    <Code2 className="w-2.5 h-2.5" />
-                  )}
-                  <span>{role === 'CLIENT' ? 'Client' : 'Developer'}</span>
-                </span>
+                {isGuest ? (
+                  <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/60 font-mono">
+                    <Eye className="w-2.5 h-2.5" />
+                    <span>GUEST MODE</span>
+                  </span>
+                ) : (
+                  <span
+                    className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
+                      role === 'CLIENT'
+                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
+                        : 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
+                    }`}
+                  >
+                    {role === 'CLIENT' ? (
+                      <BriefcaseBusiness className="w-2.5 h-2.5" />
+                    ) : (
+                      <Code2 className="w-2.5 h-2.5" />
+                    )}
+                    <span>{role === 'CLIENT' ? 'Client' : 'Developer'}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-[#1B2A47] rounded-lg transition-colors shrink-0 focus:outline-none"
-            title="Sign Out"
-            aria-label="Sign Out"
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors shrink-0 focus:outline-none"
+            title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
+            aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -289,21 +297,21 @@ export const Sidebar: React.FC = () => {
 
       {/* Sidebar Footer Info */}
       <div
-        className={`p-3 border-t border-[#26344B] text-[10px] text-slate-500 items-center justify-between shrink-0 ${
+        className={`p-3 border-t border-slate-200 dark:border-[#26344B] text-[10px] text-slate-500 items-center justify-between shrink-0 ${
           isSidebarCollapsed ? 'flex lg:hidden' : 'flex'
         }`}
       >
         <span>DevFlow Sandbox v2.4 (Demo)</span>
-        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+        <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
       </div>
 
       <div
-        className={`p-3 border-t border-[#26344B] text-[10px] text-slate-500 items-center justify-center shrink-0 ${
+        className={`p-3 border-t border-slate-200 dark:border-[#26344B] text-[10px] text-slate-500 items-center justify-center shrink-0 ${
           isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'
         }`}
         title="DevFlow Sandbox v2.4 (Demo)"
       >
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
       </div>
     </aside>
   );

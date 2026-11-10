@@ -16,19 +16,19 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', children, ...props }, ref) => {
     const variants = {
-      default: 'bg-white rounded-2xl border border-[#E9EAF2] shadow-card-subtle',
-      elevated: 'bg-white rounded-2xl border border-[#E9EAF2] shadow-card-hover',
-      bordered: 'bg-white rounded-2xl border-2 border-[#E9EAF2]',
+      default: 'bg-white dark:bg-[#111C30] rounded-2xl border border-slate-200 dark:border-[#26344B] shadow-card-subtle text-[#0F172A] dark:text-[#F8FAFC]',
+      elevated: 'bg-white dark:bg-[#111C30] rounded-2xl border border-slate-200 dark:border-[#26344B] shadow-card-hover text-[#0F172A] dark:text-[#F8FAFC]',
+      bordered: 'bg-white dark:bg-[#111C30] rounded-2xl border-2 border-slate-200 dark:border-[#26344B] text-[#0F172A] dark:text-[#F8FAFC]',
       interactive:
-        'bg-white rounded-2xl border border-[#E9EAF2] shadow-card-subtle hover:shadow-card-hover hover:border-[#93C5FD] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer',
+        'bg-white dark:bg-[#111C30] rounded-2xl border border-slate-200 dark:border-[#26344B] shadow-card-subtle hover:shadow-card-hover hover:border-[#93C5FD] dark:hover:border-blue-500 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-[#0F172A] dark:text-[#F8FAFC]',
       pastelLavender:
-        'bg-gradient-to-br from-white via-white to-[#F5F3FF] rounded-2xl border border-[#DDD6FE] shadow-card-subtle',
+        'bg-gradient-to-br from-white via-white to-[#F5F3FF] dark:from-[#111C30] dark:via-[#111C30] dark:to-purple-950/40 rounded-2xl border border-[#DDD6FE] dark:border-purple-800/50 shadow-card-subtle text-[#0F172A] dark:text-[#F8FAFC]',
       pastelBlue:
-        'bg-gradient-to-br from-white via-white to-[#EFF6FF] rounded-2xl border border-[#BFDBFE] shadow-card-subtle',
+        'bg-gradient-to-br from-white via-white to-[#EFF6FF] dark:from-[#111C30] dark:via-[#111C30] dark:to-blue-950/40 rounded-2xl border border-[#BFDBFE] dark:border-blue-800/50 shadow-card-subtle text-[#0F172A] dark:text-[#F8FAFC]',
       pastelMint:
-        'bg-gradient-to-br from-white via-white to-[#F0FDF4] rounded-2xl border border-[#BBF7D0] shadow-card-subtle',
+        'bg-gradient-to-br from-white via-white to-[#F0FDF4] dark:from-[#111C30] dark:via-[#111C30] dark:to-emerald-950/40 rounded-2xl border border-[#BBF7D0] dark:border-emerald-800/50 shadow-card-subtle text-[#0F172A] dark:text-[#F8FAFC]',
       pastelPeach:
-        'bg-gradient-to-br from-white via-white to-[#FFF7ED] rounded-2xl border border-[#FED7AA] shadow-card-subtle',
+        'bg-gradient-to-br from-white via-white to-[#FFF7ED] dark:from-[#111C30] dark:via-[#111C30] dark:to-orange-950/40 rounded-2xl border border-[#FED7AA] dark:border-orange-800/50 shadow-card-subtle text-[#0F172A] dark:text-[#F8FAFC]',
     };
 
     return (
@@ -57,7 +57,7 @@ export const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn('text-base font-semibold leading-tight text-[#25263A] tracking-tight', className)}
+    className={cn('text-base font-semibold leading-tight text-slate-900 dark:text-white tracking-tight', className)}
     {...props}
   />
 ));
@@ -67,7 +67,7 @@ export const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn('text-xs text-[#777B91] leading-relaxed', className)} {...props} />
+  <p ref={ref} className={cn('text-xs text-slate-500 dark:text-slate-400 leading-relaxed', className)} {...props} />
 ));
 CardDescription.displayName = 'CardDescription';
 

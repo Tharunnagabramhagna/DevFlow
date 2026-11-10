@@ -12,6 +12,7 @@ import {
   Lock,
   Mail,
   User,
+  UserRound,
   Building,
   Github,
   AlertCircle,
@@ -22,7 +23,7 @@ import {
 export const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { register, loading } = useAuth();
+  const { register, continueAsGuest, loading } = useAuth();
 
   // Step 1: Role selection | Step 2: Registration form
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -39,6 +40,7 @@ export const SignUpPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   // Check URL query parameters for OAuth error and pre-selected role
   useEffect(() => {
@@ -64,6 +66,19 @@ export const SignUpPage: React.FC = () => {
   const handleBackToRoleSelection = () => {
     setSelectedRole(null);
     setError(null);
+  };
+
+  const handleContinueAsGuest = async () => {
+    setGuestLoading(true);
+    setError(null);
+    try {
+      await continueAsGuest();
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to initialize guest session. Please try again.');
+    } finally {
+      setGuestLoading(false);
+    }
   };
 
   // Password validation helpers
@@ -124,7 +139,7 @@ export const SignUpPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080D18] text-[#F8FAFC] flex flex-col justify-between selection:bg-[#0070BA] selection:text-white relative overflow-x-hidden antialiased py-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#080D18] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col justify-between selection:bg-[#0070BA] selection:text-white relative overflow-x-hidden antialiased py-8 px-4 sm:px-6">
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-r from-blue-600/10 via-cyan-500/5 to-purple-600/10 blur-3xl pointer-events-none rounded-full" />
 
@@ -137,7 +152,7 @@ export const SignUpPage: React.FC = () => {
           <ThemeToggle />
           <Link
             to="/"
-            className="text-xs font-medium text-slate-400 hover:text-white transition-colors"
+            className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             Back to Home
           </Link>
@@ -146,21 +161,21 @@ export const SignUpPage: React.FC = () => {
 
       {/* Main Authentication Card */}
       <main className="max-w-md mx-auto w-full relative z-10 my-auto">
-        <div className="bg-[#111C30] border border-[#26344B] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+        <div className="bg-white dark:bg-[#111C30] border border-slate-200 dark:border-[#26344B] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
           {/* STEP 1: ROLE SELECTION SCREEN */}
           {!selectedRole ? (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                   Join DevFlow
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-400">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                   Select how you plan to use DevFlow to create your account.
                 </p>
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2.5">
+                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -172,21 +187,21 @@ export const SignUpPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('CLIENT')}
-                  className="w-full text-left p-4 rounded-xl border border-[#26344B] bg-[#0A101D] hover:bg-[#152238] hover:border-[#2563EB] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-[#26344B] bg-slate-50 dark:bg-[#0A101D] hover:bg-slate-100 dark:hover:bg-[#152238] hover:border-[#2563EB] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 >
-                  <div className="p-2.5 rounded-lg bg-[#2563EB]/15 text-[#38BDF8] border border-[#2563EB]/30 group-hover:scale-105 transition-transform shrink-0">
-                    <BriefcaseBusiness className="w-6 h-6 text-[#2563EB] group-hover:text-[#60A5FA]" />
+                  <div className="p-2.5 rounded-lg bg-[#2563EB]/15 text-[#2563EB] dark:text-[#38BDF8] border border-[#2563EB]/30 group-hover:scale-105 transition-transform shrink-0">
+                    <BriefcaseBusiness className="w-6 h-6 text-[#2563EB] group-hover:text-[#1D4ED8] dark:group-hover:text-[#60A5FA]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-white group-hover:text-[#60A5FA] transition-colors">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#2563EB] dark:group-hover:text-[#60A5FA] transition-colors">
                         Client
                       </span>
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-950/80 text-blue-400 border border-blue-800/60 font-mono">
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 font-mono">
                         Hiring / Management
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
                       Hire developers, define project milestones, review cryptographic verification proofs and release payments via PayPal.
                     </p>
                   </div>
@@ -196,33 +211,62 @@ export const SignUpPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('DEVELOPER')}
-                  className="w-full text-left p-4 rounded-xl border border-[#26344B] bg-[#0A101D] hover:bg-[#152238] hover:border-[#2563EB] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-[#26344B] bg-slate-50 dark:bg-[#0A101D] hover:bg-slate-100 dark:hover:bg-[#152238] hover:border-[#2563EB] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 >
-                  <div className="p-2.5 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
-                    <Code2 className="w-6 h-6 text-purple-400 group-hover:text-purple-300" />
+                  <div className="p-2.5 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
+                    <Code2 className="w-6 h-6 text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
                         Developer / Project Creator
                       </span>
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-800/60 font-mono">
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-mono">
                         Building / Code
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
                       Build projects, link GitHub repositories, submit deliverable evidence for automated AI verification and receive payments.
+                    </p>
+                  </div>
+                </button>
+
+                {/* OPTION C: CONTINUE AS GUEST */}
+                <button
+                  type="button"
+                  disabled={guestLoading || loading}
+                  onClick={handleContinueAsGuest}
+                  className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-[#26344B] bg-slate-50 dark:bg-[#0A101D] hover:bg-slate-100 dark:hover:bg-[#152238] hover:border-[#0EA5E9] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
+                >
+                  <div className="p-2.5 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 group-hover:scale-105 transition-transform shrink-0">
+                    {guestLoading ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-teal-600 dark:text-teal-400" />
+                    ) : (
+                      <UserRound className="w-6 h-6 text-teal-600 dark:text-teal-400 group-hover:text-teal-700 dark:group-hover:text-teal-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                        Continue as Guest
+                      </span>
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 font-mono">
+                        Demo Mode
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                      Explore DevFlow features using demonstration data without creating an account.
                     </p>
                   </div>
                 </button>
               </div>
 
               {/* Bottom Login Link */}
-              <div className="text-center pt-2 border-t border-[#26344B]/60 text-xs text-slate-400">
+              <div className="text-center pt-2 border-t border-slate-200 dark:border-[#26344B]/60 text-xs text-slate-600 dark:text-slate-400">
                 <span>Already have an account? </span>
                 <Link
                   to="/login"
-                  className="text-[#2563EB] hover:text-blue-400 font-semibold underline underline-offset-4"
+                  className="text-[#2563EB] hover:text-blue-600 dark:hover:text-blue-400 font-semibold underline underline-offset-4"
                 >
                   Log In
                 </Link>
@@ -236,19 +280,19 @@ export const SignUpPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleBackToRoleSelection}
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-3"
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-3"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Change Role</span>
                 </button>
 
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-white tracking-tight">Create Account</h1>
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Create Account</h1>
                   <span
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
                       selectedRole === 'CLIENT'
-                        ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
-                        : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
+                        : 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
                     }`}
                   >
                     {selectedRole === 'CLIENT' ? (
@@ -259,14 +303,14 @@ export const SignUpPage: React.FC = () => {
                     <span>{selectedRole === 'CLIENT' ? 'Client' : 'Developer'}</span>
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   Fill in your details to set up your {selectedRole.toLowerCase()} workspace.
                 </p>
               </div>
 
               {/* Error Alert */}
               {error && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2.5 animate-fadeIn">
+                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 animate-fadeIn">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -284,7 +328,7 @@ export const SignUpPage: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1.5">
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                     Full Name *
                   </label>
                   <div className="relative">
@@ -295,7 +339,7 @@ export const SignUpPage: React.FC = () => {
                       placeholder="e.g. Alex Morgan"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-[#080D18] border border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
                       autoComplete="name"
                     />
                   </div>
@@ -303,7 +347,7 @@ export const SignUpPage: React.FC = () => {
 
                 {/* Email Address */}
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1.5">
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                     Email Address *
                   </label>
                   <div className="relative">
@@ -314,7 +358,7 @@ export const SignUpPage: React.FC = () => {
                       placeholder="name@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-[#080D18] border border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
                       autoComplete="email"
                     />
                   </div>
@@ -323,10 +367,10 @@ export const SignUpPage: React.FC = () => {
                 {/* Password */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-slate-300 font-semibold">Password *</label>
+                    <label className="text-slate-700 dark:text-slate-300 font-semibold">Password *</label>
                     <span
                       className={`text-[10px] font-mono ${
-                        isPasswordLongEnough ? 'text-emerald-400' : 'text-slate-500'
+                        isPasswordLongEnough ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
                       }`}
                     >
                       {password.length}/8+ chars
@@ -341,13 +385,13 @@ export const SignUpPage: React.FC = () => {
                       placeholder="Minimum 8 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-[#080D18] border border-[#26344B] rounded-lg pl-9 pr-10 py-2.5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
                       autoComplete="new-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -358,11 +402,11 @@ export const SignUpPage: React.FC = () => {
                 {/* Confirm Password */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-slate-300 font-semibold">Confirm Password *</label>
+                    <label className="text-slate-700 dark:text-slate-300 font-semibold">Confirm Password *</label>
                     {confirmPassword && (
                       <span
                         className={`text-[10px] flex items-center gap-1 ${
-                          doPasswordsMatch ? 'text-emerald-400' : 'text-rose-400'
+                          doPasswordsMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                         }`}
                       >
                         {doPasswordsMatch ? (
@@ -383,17 +427,17 @@ export const SignUpPage: React.FC = () => {
                       placeholder="Re-enter your password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`w-full bg-[#080D18] border rounded-lg pl-9 pr-10 py-2.5 text-white placeholder-slate-500 text-xs focus:outline-none transition-colors ${
+                      className={`w-full bg-slate-50 dark:bg-[#080D18] border rounded-lg pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none transition-colors ${
                         confirmPassword && !doPasswordsMatch
                           ? 'border-rose-500/60 focus:border-rose-500'
-                          : 'border-[#26344B] focus:border-[#2563EB]'
+                          : 'border-slate-200 dark:border-[#26344B] focus:border-[#2563EB]'
                       }`}
                       autoComplete="new-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                       aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -404,8 +448,8 @@ export const SignUpPage: React.FC = () => {
                 {/* Role Specific Optional Field */}
                 {selectedRole === 'CLIENT' ? (
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1.5">
-                      Company / Organization Name <span className="text-slate-500 font-normal">(Optional)</span>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
+                      Company / Organization Name <span className="text-slate-400 dark:text-slate-500 font-normal">(Optional)</span>
                     </label>
                     <div className="relative">
                       <Building className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -414,14 +458,14 @@ export const SignUpPage: React.FC = () => {
                         placeholder="e.g. Acme Corp, Meridian Labs"
                         value={organizationOrHandle}
                         onChange={(e) => setOrganizationOrHandle(e.target.value)}
-                        className="w-full bg-[#080D18] border border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+                        className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
                       />
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1.5">
-                      Developer Team or GitHub Handle <span className="text-slate-500 font-normal">(Optional)</span>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
+                      Developer Team or GitHub Handle <span className="text-slate-400 dark:text-slate-500 font-normal">(Optional)</span>
                     </label>
                     <div className="relative">
                       <Github className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -430,7 +474,7 @@ export const SignUpPage: React.FC = () => {
                         placeholder="e.g. @octocat, Northstar Studio"
                         value={organizationOrHandle}
                         onChange={(e) => setOrganizationOrHandle(e.target.value)}
-                        className="w-full bg-[#080D18] border border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+                        className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
                       />
                     </div>
                   </div>
@@ -444,13 +488,13 @@ export const SignUpPage: React.FC = () => {
                       required
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="w-4 h-4 mt-0.5 rounded-sm border-[#26344B] bg-[#080D18] text-[#2563EB] focus:ring-[#2563EB] cursor-pointer"
+                      className="w-4 h-4 mt-0.5 rounded-sm border-slate-300 dark:border-[#26344B] bg-slate-50 dark:bg-[#080D18] text-[#2563EB] focus:ring-[#2563EB] cursor-pointer"
                     />
-                    <span className="text-slate-400 text-[11px] leading-relaxed">
+                    <span className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
                       I agree to the{' '}
-                      <span className="text-white hover:underline cursor-pointer">Terms of Service</span>{' '}
+                      <span className="text-slate-900 dark:text-white hover:underline cursor-pointer">Terms of Service</span>{' '}
                       and{' '}
-                      <span className="text-white hover:underline cursor-pointer">Privacy Policy</span>.
+                      <span className="text-slate-900 dark:text-white hover:underline cursor-pointer">Privacy Policy</span>.
                     </span>
                   </label>
                 </div>
@@ -477,11 +521,11 @@ export const SignUpPage: React.FC = () => {
               </form>
 
               {/* Bottom Login Link */}
-              <div className="text-center pt-2 border-t border-[#26344B]/60 text-xs text-slate-400">
+              <div className="text-center pt-2 border-t border-slate-200 dark:border-[#26344B]/60 text-xs text-slate-600 dark:text-slate-400">
                 <span>Already have an account? </span>
                 <Link
                   to="/login"
-                  className="text-[#2563EB] hover:text-blue-400 font-semibold underline underline-offset-4"
+                  className="text-[#2563EB] hover:text-blue-600 dark:hover:text-blue-400 font-semibold underline underline-offset-4"
                 >
                   Log In
                 </Link>

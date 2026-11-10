@@ -6,13 +6,14 @@ export interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   role: UserRole | null;
+  guestPersona?: 'CLIENT' | 'DEVELOPER' | null;
   isAuthenticated: boolean;
   isClient: boolean;
   isDeveloper: boolean;
   isGuest: boolean;
   login: (credentials: { email: string; password: string; selectedRole: UserRole }) => Promise<void>;
   register: (data: { name: string; email: string; password: string; role: UserRole; organization?: string }) => Promise<void>;
-  continueAsGuest: () => Promise<void>;
+  continueAsGuest: (guestPersona?: 'CLIENT' | 'DEVELOPER') => Promise<void>;
   handleOAuthExchange: (code: string) => Promise<void>;
   handleMockSocialAuth: (params: { provider: 'google' | 'facebook'; email: string; name: string; role: UserRole; avatarUrl?: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -94,10 +95,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const continueAsGuest = async () => {
+  const continueAsGuest = async (guestPersona?: 'CLIENT' | 'DEVELOPER') => {
     setLoading(true);
     try {
-      const guestSession = await authService.continueAsGuest();
+      const guestSession = await authService.continueAsGuest(guestPersona);
       setSession(guestSession);
     } finally {
       setLoading(false);
@@ -145,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user: session?.user || null,
       token: session?.accessToken || null,
       role: session?.user?.role || null,
+      guestPersona: session?.user?.guestPersona || (session?.user?.role === 'GUEST' ? 'DEVELOPER' : null),
       isAuthenticated: !!session?.user,
       isClient: session?.user?.role === 'CLIENT',
       isDeveloper: session?.user?.role === 'DEVELOPER',

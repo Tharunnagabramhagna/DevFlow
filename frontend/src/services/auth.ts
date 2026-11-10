@@ -446,45 +446,49 @@ export const authService = {
   /**
    * Generates or retrieves an ephemeral Guest / Demo session.
    * Calls `/api/auth/guest` if backend is available, or creates a client-side guest session.
+   * Supports specific guest personas ('CLIENT' | 'DEVELOPER') with realistic identities.
    */
-  async continueAsGuest(): Promise<AuthSession> {
+  async continueAsGuest(guestPersona?: 'CLIENT' | 'DEVELOPER'): Promise<AuthSession> {
+    const isClient = guestPersona === 'CLIENT';
+    const guestUser: AuthUser = {
+      id: isClient ? `guest_client_${Date.now()}` : `guest_dev_${Date.now()}`,
+      email: isClient ? 'client.guest@devflow.demo' : 'developer.guest@devflow.demo',
+      name: isClient ? 'Marcus Vance' : 'Alex Morgan',
+      role: 'GUEST',
+      isGuest: true,
+      guestPersona: guestPersona || (isClient ? 'CLIENT' : 'DEVELOPER'),
+      organization: isClient ? 'Meridian Labs (Demo Client)' : 'Northstar Studio (Demo Developer)',
+      bio: isClient
+        ? 'Exploring DevFlow features from a Client perspective in demonstration mode.'
+        : 'Exploring DevFlow features from a Developer perspective in demonstration mode.',
+      createdAt: new Date().toISOString(),
+    };
+
     try {
       const res = await fetch(`${BASE_URL}/guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(3000),
+        body: JSON.stringify({ persona: guestPersona }),
+        signal: AbortSignal.timeout(2000),
       });
 
       if (res.ok) {
         const json = await res.json();
         return {
           user: {
-            id: json.user.id,
-            email: json.user.email,
-            name: json.user.name,
-            role: 'GUEST',
-            isGuest: true,
+            ...guestUser,
+            id: json.user.id || guestUser.id,
+            email: json.user.email || guestUser.email,
+            name: json.user.name || guestUser.name,
             avatarUrl: json.user.avatarUrl,
-            bio: json.user.bio,
-            createdAt: json.user.createdAt,
+            createdAt: json.user.createdAt || guestUser.createdAt,
           },
-          accessToken: json.accessToken,
+          accessToken: json.accessToken || `guest_demo_token_${Date.now()}`,
         };
       }
     } catch {
       // Fallback to client-side session below
     }
-
-    // Client-side offline fallback
-    const guestUser: AuthUser = {
-      id: `guest_${Date.now()}`,
-      email: 'guest@devflow.demo',
-      name: 'Guest Explorer',
-      role: 'GUEST',
-      isGuest: true,
-      bio: 'Exploring DevFlow features in demonstration mode.',
-      createdAt: new Date().toISOString(),
-    };
 
     return {
       user: guestUser,

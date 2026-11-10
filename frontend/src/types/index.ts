@@ -211,6 +211,7 @@ export interface AuthUser {
   organization?: string;
   createdAt?: string;
   isGuest?: boolean;
+  guestPersona?: 'CLIENT' | 'DEVELOPER' | null;
 }
 
 export interface AuthSession {

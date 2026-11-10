@@ -9,10 +9,11 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  ArrowRight,
+  Terminal,
   Lock,
   Mail,
   User,
-  UserRound,
   Building,
   Github,
   AlertCircle,
@@ -20,13 +21,17 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-export const SignUpPage: React.FC = () => {
+export interface SignUpPageProps {
+  initialRole?: UserRole;
+}
+
+export const SignUpPage: React.FC<SignUpPageProps> = ({ initialRole }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { register, continueAsGuest, loading } = useAuth();
+  const { register, loading } = useAuth();
 
   // Step 1: Role selection | Step 2: Registration form
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(initialRole || null);
 
   // Form fields
   const [name, setName] = useState('');
@@ -40,7 +45,6 @@ export const SignUpPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [guestLoading, setGuestLoading] = useState(false);
 
   // Check URL query parameters for OAuth error and pre-selected role
   useEffect(() => {
@@ -66,19 +70,6 @@ export const SignUpPage: React.FC = () => {
   const handleBackToRoleSelection = () => {
     setSelectedRole(null);
     setError(null);
-  };
-
-  const handleContinueAsGuest = async () => {
-    setGuestLoading(true);
-    setError(null);
-    try {
-      await continueAsGuest();
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to initialize guest session. Please try again.');
-    } finally {
-      setGuestLoading(false);
-    }
   };
 
   // Password validation helpers
@@ -160,17 +151,17 @@ export const SignUpPage: React.FC = () => {
       </header>
 
       {/* Main Authentication Card */}
-      <main className="max-w-[32rem] mx-auto w-full relative z-10 my-auto">
-        <div className="bg-white/80 dark:bg-[#0F172A]/80 border border-white/80 dark:border-white/15 rounded-2xl p-7 sm:p-9 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl">
-          {/* STEP 1: ROLE SELECTION SCREEN */}
+      <main className={`w-full relative z-10 my-auto transition-all duration-300 ${selectedRole ? 'max-w-[32rem] mx-auto' : 'max-w-4xl mx-auto'}`}>
+        <div className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/15 rounded-2xl p-6 sm:p-9 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl">
+          {/* STEP 1: FOUR USER ENTRY OPTIONS SCREEN */}
           {!selectedRole ? (
             <div className="space-y-6 sm:space-y-7">
               <div className="text-center space-y-2">
                 <h1 className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Join DevFlow
+                  Choose Your DevFlow Experience
                 </h1>
-                <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                  Select how you plan to use DevFlow to create your account.
+                <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+                  Select your account type to register or sign in, or explore DevFlow instantly in guest demo mode.
                 </p>
               </div>
 
@@ -181,82 +172,133 @@ export const SignUpPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Role Option Cards */}
-              <div className="space-y-4 pt-1">
-                {/* OPTION A: JOIN AS A CLIENT */}
+              {/* Exactly Four Options in a Balanced 2x2 Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 pt-1">
+                {/* 1. CLIENT LOGIN */}
                 <button
                   type="button"
                   onClick={() => handleSelectRole('CLIENT')}
-                  className="w-full text-left p-4 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs cursor-pointer"
                 >
-                  <div className="p-3 rounded-xl bg-[#2563EB]/15 text-[#2563EB] dark:text-[#38BDF8] border border-[#2563EB]/30 group-hover:scale-105 transition-transform shrink-0">
-                    <BriefcaseBusiness className="w-6 h-6 sm:w-7 sm:h-7 text-[#2563EB] group-hover:text-[#1D4ED8] dark:group-hover:text-[#60A5FA]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="space-y-3.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-heading text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-[#2563EB] dark:group-hover:text-[#60A5FA] transition-colors">
-                        Client
-                      </span>
-                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 font-mono">
-                        Hiring / Management
+                      <div className="p-3 rounded-xl bg-[#2563EB]/15 text-[#2563EB] dark:text-[#38BDF8] border border-[#2563EB]/30 group-hover:scale-105 transition-transform shrink-0">
+                        <BriefcaseBusiness className="w-6 h-6 text-[#2563EB] group-hover:text-[#1D4ED8] dark:group-hover:text-[#60A5FA]" />
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 font-mono">
+                        Client Account
                       </span>
                     </div>
-                    <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                      Hire developers, define project milestones, review cryptographic verification proofs and release payments via PayPal.
-                    </p>
+
+                    <div>
+                      <h3 className="font-heading text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-[#2563EB] dark:group-hover:text-[#60A5FA] transition-colors">
+                        Client Login
+                      </h3>
+                      <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        Hire developers, define project milestones, review cryptographic verification proofs, and manage payments.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs font-semibold text-[#2563EB] dark:text-[#38BDF8]">
+                    <span>Continue as Client</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
-                {/* OPTION B: JOIN AS A DEVELOPER */}
+                {/* 2. DEVELOPER / PROJECT CREATOR LOGIN */}
                 <button
                   type="button"
                   onClick={() => handleSelectRole('DEVELOPER')}
-                  className="w-full text-left p-4 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-purple-500/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-xs cursor-pointer"
                 >
-                  <div className="p-3 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
-                    <Code2 className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
-                  </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="space-y-3.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-heading text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
-                        Developer / Project Creator
-                      </span>
-                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-mono">
-                        Building / Code
+                      <div className="p-3 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
+                        <Code2 className="w-6 h-6 text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-mono">
+                        Developer Account
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                      Build projects, link GitHub repositories, submit deliverable evidence for automated AI verification and receive payments.
-                    </p>
+
+                    <div>
+                      <h3 className="font-heading text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                        Developer / Project Creator Login
+                      </h3>
+                      <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        Build projects, link GitHub repositories, submit deliverable evidence, and manage development milestones.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs font-semibold text-purple-600 dark:text-purple-400">
+                    <span>Continue as Developer</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
-                {/* OPTION C: CONTINUE AS GUEST */}
+                {/* 3. CLIENT GUEST MODE */}
                 <button
                   type="button"
-                  disabled={guestLoading || loading}
-                  onClick={handleContinueAsGuest}
-                  className="w-full text-left p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#0EA5E9]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] shadow-xs"
+                  onClick={() => navigate('/guest/client')}
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-teal-500/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-xs cursor-pointer"
                 >
-                  <div className="p-2.5 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 group-hover:scale-105 transition-transform shrink-0">
-                    {guestLoading ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-teal-600 dark:text-teal-400" />
-                    ) : (
-                      <UserRound className="w-6 h-6 text-teal-600 dark:text-teal-400 group-hover:text-teal-700 dark:group-hover:text-teal-300" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="space-y-3.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
-                        Continue as Guest
-                      </span>
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 font-mono">
+                      <div className="p-3 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 group-hover:scale-105 transition-transform shrink-0">
+                        <Eye className="w-6 h-6 text-teal-600 dark:text-teal-400 group-hover:text-teal-700 dark:group-hover:text-teal-300" />
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 font-mono">
                         Demo Mode
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                      Explore DevFlow features using demonstration data without creating an account.
-                    </p>
+
+                    <div>
+                      <h3 className="font-heading text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                        Client Guest Mode
+                      </h3>
+                      <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        Explore DevFlow from a client's perspective without creating an account.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs font-semibold text-teal-600 dark:text-teal-400">
+                    <span>Explore as Client Guest</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+                {/* 4. DEVELOPER GUEST MODE */}
+                <button
+                  type="button"
+                  onClick={() => navigate('/guest/developer')}
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-sky-500/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs cursor-pointer"
+                >
+                  <div className="space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="p-3 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30 group-hover:scale-105 transition-transform shrink-0">
+                        <Terminal className="w-6 h-6 text-sky-600 dark:text-sky-400 group-hover:text-sky-700 dark:group-hover:text-sky-300" />
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 font-mono">
+                        Demo Mode
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-heading text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors">
+                        Developer Guest Mode
+                      </h3>
+                      <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        Explore DevFlow from a developer's perspective without creating an account.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs font-semibold text-sky-600 dark:text-sky-400">
+                    <span>Explore as Developer Guest</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
               </div>

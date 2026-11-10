@@ -1,839 +1,565 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { DevFlowLogo, ThemeToggle, AmbientBackground, GuestGuardModal, Button } from '@/components/common';
+import { devFlowApi } from '@/services/api';
+import { Project, Milestone } from '@/types';
+import { DEMO_CONFIG } from '@/services/mockData';
 import {
-  DevFlowLogo,
-  ThemeToggle,
-  AmbientBackground,
-  GuestGuardModal,
-  Button,
-  Badge,
-} from '@/components/common';
-import {
-  BriefcaseBusiness,
-  Code2,
-  FolderGit2,
-  CheckCircle2,
-  ShieldCheck,
-  CreditCard,
-  ArrowRight,
-  Star,
+  ArrowLeft,
+  Search,
+  RefreshCw,
   Clock,
-  FileCode,
-  X,
-  Copy,
-  Check,
+  DollarSign,
+  CheckCircle2,
+  Circle,
+  Layers,
+  Users,
+  LogIn,
+  UserPlus,
+  Eye,
+  Filter,
+  ArrowUpDown,
+  GitBranch,
+  Calendar,
+  BriefcaseBusiness,
+  Mail,
+  MapPin,
+  Star,
+  AlertCircle,
+  ServerOff,
+  Loader2,
 } from 'lucide-react';
+
+type CategoryFilter = 'all' | 'payment' | 'analytics' | 'api' | 'portal';
+type SortOption = 'recent' | 'budget' | 'progress';
 
 export const ClientGuestPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Guest Restriction Modal State
-  const [guardModalOpen, setGuardModalOpen] = useState(false);
-  const [guardTitle, setGuardTitle] = useState('');
-  const [guardMessage, setGuardMessage] = useState('');
+  // Async data state
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isBackendOffline, setIsBackendOffline] = useState(false);
+  const [lastSuccessfulFetchTime, setLastSuccessfulFetchTime] = useState<string | null>(null);
 
-  // Proof Modal State
-  const [proofModalOpen, setProofModalOpen] = useState(false);
-  const [copiedProof, setCopiedProof] = useState(false);
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [sortOption, setSortOption] = useState<SortOption>('recent');
 
-  const triggerGuard = (actionTitle: string, message: string) => {
-    setGuardTitle(actionTitle);
-    setGuardMessage(message);
-    setGuardModalOpen(true);
+  // Guest guard modal state
+  const [showGuardModal, setShowGuardModal] = useState(false);
+  const [guardAction, setGuardAction] = useState('');
+
+  const handleRestrictedAction = (actionTitle: string) => {
+    setGuardAction(actionTitle);
+    setShowGuardModal(true);
   };
 
-  const handleCopyProof = () => {
-    navigator.clipboard?.writeText(
-      '0x4f8a7e2b1c9d3f5a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a'
-    );
-    setCopiedProof(true);
-    setTimeout(() => setCopiedProof(false), 2000);
+  // Asynchronous data-fetch operation
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [projRes, mileRes] = await Promise.all([
+        devFlowApi.getProjects(),
+        devFlowApi.getMilestones(),
+      ]);
+
+      setProjects(projRes.data);
+      setMilestones(mileRes.data);
+      const isMockData = projRes.isMock || mileRes.isMock;
+      setIsBackendOffline(isMockData);
+
+      // Last Updated changes only after successful real backend data retrieval
+      if (!isMockData) {
+        setLastSuccessfulFetchTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to fetch project listings. Backend services may be unavailable.');
+      setIsBackendOffline(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Map projects to categories
+  const getProjectCategory = (name: string): CategoryFilter => {
+    const lower = name.toLowerCase();
+    if (lower.includes('payment') || lower.includes('gateway')) return 'payment';
+    if (lower.includes('analytics') || lower.includes('dashboard')) return 'analytics';
+    if (lower.includes('api') || lower.includes('modernization')) return 'api';
+    if (lower.includes('portal') || lower.includes('customer')) return 'portal';
+    return 'all';
   };
+
+  // Filter and sort projects
+  const filteredProjects = useMemo(() => {
+    let list = [...projects];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.clientName.toLowerCase().includes(q)
+      );
+    }
+
+    if (categoryFilter !== 'all') {
+      list = list.filter((p) => getProjectCategory(p.name) === categoryFilter);
+    }
+
+    switch (sortOption) {
+      case 'budget':
+        list.sort((a, b) => b.totalBudget - a.totalBudget);
+        break;
+      case 'progress':
+        list.sort(
+          (a, b) =>
+            b.completedMilestonesCount / (b.milestonesCount || 1) -
+            a.completedMilestonesCount / (a.milestonesCount || 1)
+        );
+        break;
+      case 'recent':
+      default:
+        list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        break;
+    }
+
+    return list;
+  }, [projects, searchQuery, categoryFilter, sortOption]);
+
+  const getProjectMilestones = (projectId: string) => {
+    return milestones.filter((m) => m.projectId === projectId);
+  };
+
+  const categories: { key: CategoryFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'payment', label: 'Payments' },
+    { key: 'analytics', label: 'Analytics' },
+    { key: 'api', label: 'API' },
+    { key: 'portal', label: 'Portal' },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50/70 dark:bg-[#060B16] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col selection:bg-[#0070BA] selection:text-white relative overflow-x-hidden antialiased font-sans">
-      {/* Dynamic ambient glass lighting */}
+    <div className="min-h-screen bg-slate-50/70 dark:bg-[#060B16] text-[#0F172A] dark:text-[#F8FAFC] relative overflow-x-hidden antialiased">
       <AmbientBackground />
 
-      {/* TOP DEMO MODE PERSPECTIVE BANNER */}
-      <div className="sticky top-0 z-40 bg-teal-600/90 dark:bg-[#082226]/95 border-b border-teal-500/30 px-4 sm:px-6 py-2.5 backdrop-blur-md shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
-          <div className="flex items-center gap-2.5 text-white">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-300 dark:bg-teal-400 animate-pulse shrink-0" />
-            <span className="font-heading font-bold text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 dark:bg-teal-500/20 border border-white/30 dark:border-teal-400/40 font-mono">
-              DEMO MODE: CLIENT PERSPECTIVE
+      {/* Demo Mode & Backend Connectivity Banner */}
+      <div className="sticky top-0 z-50 bg-amber-50/95 dark:bg-amber-950/85 border-b border-amber-200/60 dark:border-amber-700/30 backdrop-blur-md px-4 py-2">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Eye className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+              CLIENT GUEST MODE — DEMO DATA
             </span>
-            <span className="hidden md:inline text-teal-100 dark:text-teal-200">
-              Exploring DevFlow from a Client's viewpoint with demonstration data. Financial actions and hiring are simulated.
-            </span>
+            {isBackendOffline && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-amber-200/50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                <ServerOff className="w-3 h-3" />
+                Backend Offline (Fallback Active)
+              </span>
+            )}
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-amber-700 dark:text-amber-400 font-mono">
+              {lastSuccessfulFetchTime ? `Last Updated: ${lastSuccessfulFetchTime}` : 'Demo Data Active • Backend Offline'}
+            </span>
             <button
-              type="button"
-              onClick={() => navigate('/guest/developer')}
-              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors border border-white/20"
+              onClick={fetchData}
+              disabled={loading}
+              className="p-1 rounded-md hover:bg-amber-200/50 dark:hover:bg-amber-800/30 transition-colors disabled:opacity-50"
+              title="Refresh data from API"
+              aria-label="Refresh data"
             >
-              <Code2 className="w-3.5 h-3.5" />
-              <span>Switch to Developer View</span>
+              <RefreshCw className={`w-3.5 h-3.5 text-amber-700 dark:text-amber-400 ${loading ? 'animate-spin' : ''}`} />
             </button>
-            <Link
-              to="/signup"
-              className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-white text-teal-900 hover:bg-teal-50 transition-colors shadow-xs"
-            >
-              <span>Create Account</span>
-            </Link>
-            <Link
-              to="/signup"
-              className="text-xs text-teal-100 hover:text-white underline underline-offset-2 px-1"
-            >
-              Exit
-            </Link>
           </div>
         </div>
       </div>
 
-      {/* HEADER NAVIGATION */}
-      <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-5 pb-4 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="cursor-pointer group select-none flex items-center gap-2">
-            <DevFlowLogo variant="horizontal" theme="auto" size="md" />
-          </Link>
-          <span className="hidden sm:inline-block text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-mono">
-            Client Portal (Demo)
-          </span>
-        </div>
-
+      {/* Top Navigation */}
+      <header className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-5 flex items-center justify-between relative z-10">
+        <Link to="/" className="cursor-pointer group select-none flex items-center gap-2">
+          <DevFlowLogo variant="horizontal" theme="auto" size="md" />
+        </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => navigate('/signup')}
-            className="text-xs font-semibold hidden sm:inline-flex"
+          <button
+            onClick={() => navigate('/guest/client')}
+            className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1"
           >
-            Back to Signup
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => navigate('/login')}
-            className="text-xs font-semibold shadow-xs"
-          >
-            Sign In
-          </Button>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Guest Options
+          </button>
         </div>
       </header>
 
-      {/* MAIN CLIENT DASHBOARD CONTENT */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 flex-1 space-y-6 relative z-10">
-        {/* CLIENT WELCOME HERO CARD */}
-        <div className="p-6 sm:p-7 rounded-2xl bg-white/70 dark:bg-[#0D1527]/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-2xl shadow-glass dark:shadow-dark-glass flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1.5">
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-12 relative z-10 space-y-8">
+        {/* Page Header */}
+        <div className="space-y-1">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Client Dashboard
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Explore project listings, developer profiles, and milestone tracking from a client's perspective.
+          </p>
+        </div>
+
+        {/* Error Alert State */}
+        {error && (
+          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 font-mono uppercase">
-                Client Workspace
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Meridian Labs Inc.</span>
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
-            <h1 className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Client Project Management & Escrow Overview
-            </h1>
-            <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Define milestone specifications, review cryptographic AI verification proofs, and authorize automated milestone payments with full escrow protection.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <Button
-              variant="primary"
-              onClick={() =>
-                triggerGuard(
-                  'Create Project Restricted',
-                  'In demo mode, creating live client projects is disabled. Sign in or register a verified Client account to launch production projects.'
-                )
-              }
-              className="gap-2 text-xs font-semibold shadow-md bg-[#2563EB] hover:bg-[#1D4ED8]"
-            >
-              <BriefcaseBusiness className="w-4 h-4" />
-              <span>+ New Project</span>
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() =>
-                triggerGuard(
-                  'Deposit Escrow Restricted',
-                  'In demo mode, escrow deposits via PayPal Sandbox are simulated. Create an account to fund live milestones.'
-                )
-              }
-              className="gap-2 text-xs font-semibold"
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>Fund Escrow</span>
+            <Button size="sm" variant="secondary" onClick={fetchData} className="text-xs py-1 px-3">
+              Retry
             </Button>
           </div>
-        </div>
+        )}
 
-        {/* CLIENT METRICS / KPIS (TABULAR NUMERALS) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-xl bg-white/60 dark:bg-[#0B132B]/60 border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <span>Escrow Funds Committed</span>
-              <CreditCard className="w-4 h-4 text-blue-500" />
-            </div>
-            <div className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-tabular mt-2">
-              $32,700.00
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>100% Secured in PayPal Escrow</span>
-            </div>
-          </div>
-
-          <div className="p-5 rounded-xl bg-white/60 dark:bg-[#0B132B]/60 border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <span>Active Client Projects</span>
-              <FolderGit2 className="w-4 h-4 text-purple-500" />
-            </div>
-            <div className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-tabular mt-2">
-              3 Projects
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-              <span>Across 4 hired developers</span>
-            </div>
-          </div>
-
-          <div className="p-5 rounded-xl bg-white/60 dark:bg-[#0B132B]/60 border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <span>Milestones Verified</span>
-              <CheckCircle2 className="w-4 h-4 text-teal-500" />
-            </div>
-            <div className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-tabular mt-2">
-              9 / 11
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 text-[11px] text-teal-600 dark:text-teal-400 font-medium">
-              <span>81.8% Overall delivery rate</span>
-            </div>
-          </div>
-
-          <div className="p-5 rounded-xl bg-white/60 dark:bg-[#0B132B]/60 border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <span>Pending Client Review</span>
-              <Clock className="w-4 h-4 text-amber-500" />
-            </div>
-            <div className="font-heading text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400 font-tabular mt-2">
-              1 Milestone
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-              <span>Ready for your approval</span>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 1: MILESTONE TRACKING & CRYPTOGRAPHIC VERIFICATION REVIEW (CLIENT PERSPECTIVE) */}
-        <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0D1527]/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-2xl shadow-glass dark:shadow-dark-glass space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 dark:border-white/10 pb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                <h2 className="font-heading text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                  Milestone Verification Review
-                </h2>
-              </div>
-              <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-                Review submitted evidence and cryptographic verification proofs before approving payment release.
-              </p>
+        {/* Search and Filters Bar */}
+        <div className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search projects, clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+              />
             </div>
 
-            <Badge variant="warning" className="self-start sm:self-auto font-mono text-xs">
-              Awaiting Client Approval
-            </Badge>
-          </div>
-
-          {/* Interactive Milestone Card */}
-          <div className="p-5 rounded-xl bg-slate-50/80 dark:bg-[#080D1A]/70 border border-slate-200/80 dark:border-white/10 space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-mono">
-                  Payment Gateway Integration • Milestone #3
-                </span>
-                <h3 className="font-heading text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                  OAuth 2.0 PKCE & HMAC Webhook Security Adapter
-                </h3>
-                <p className="font-sans text-xs text-slate-600 dark:text-slate-400 mt-1">
-                  Assigned Developer: <span className="font-semibold text-slate-900 dark:text-slate-200">Alex Morgan (@northstar-lead)</span> • Linked Repo:{' '}
-                  <span className="font-mono text-slate-700 dark:text-slate-300">northstar-studio/payment-gateway</span>
-                </p>
-              </div>
-
-              <div className="text-right shrink-0">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block">Milestone Value</span>
-                <span className="font-heading text-xl sm:text-2xl font-bold text-slate-900 dark:text-white font-tabular">
-                  $4,500.00 USD
-                </span>
-              </div>
+            {/* Category filter */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              {categories.map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => setCategoryFilter(cat.key)}
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                    categoryFilter === cat.key
+                      ? 'bg-[#2563EB] text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/[0.08]'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
 
-            {/* AI Verification Score Box */}
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                      AI Verification Agent: PASSED (96.4% Confidence)
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono font-semibold">
-                      SHA-256 Proof Valid
-                    </span>
-                  </div>
-                  <p className="font-sans text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                    All 4 deliverable criteria mathematically confirmed against GitHub commit history.
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setProofModalOpen(true)}
-                className="text-xs font-semibold shrink-0 gap-1.5"
+            {/* Sort */}
+            <div className="flex items-center gap-1.5">
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as SortOption)}
+                className="bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#2563EB]"
               >
-                <FileCode className="w-3.5 h-3.5" />
-                <span>View Cryptographic Proof</span>
-              </Button>
-            </div>
-
-            {/* Requirements Checklist */}
-            <div className="space-y-2 pt-1">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Cryptographic Deliverable Checklist
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                <div className="p-3 rounded-lg bg-white/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/5 flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">HMAC-SHA256 Signature Verification</span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
-                      Verified in commit c3a8e91
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-white/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/5 flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">OAuth 2.0 PKCE Flow for Merchants</span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
-                      Verified in commit 8b2f140
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-white/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/5 flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">Test Suite Coverage &gt; 90%</span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
-                      94.2% test branch coverage verified
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-white/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/5 flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">Zero Hardcoded Secrets Audit</span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
-                      Entropy analysis zero high-entropy keys
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200/80 dark:border-white/10">
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Approving releases funds immediately from PayPal escrow to developer account.
-              </span>
-
-              <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() =>
-                    triggerGuard(
-                      'Request Revision Restricted',
-                      'In demo mode, revision requests cannot be dispatched to developers. Create a Client account to collaborate.'
-                    )
-                  }
-                  className="w-full sm:w-auto text-xs font-semibold"
-                >
-                  Request Revision
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    triggerGuard(
-                      'Payment Release Restricted',
-                      'Demo Mode: Real payment execution is restricted. Sign in or register a verified Client account to release live PayPal escrow funds.'
-                    )
-                  }
-                  className="w-full sm:w-auto text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm"
-                >
-                  Approve &amp; Release Payment ($4,500.00)
-                </Button>
-              </div>
+                <option value="recent">Most Recent</option>
+                <option value="budget">Highest Budget</option>
+                <option value="progress">Most Progress</option>
+              </select>
             </div>
           </div>
         </div>
 
-        {/* SECTION 2: SAMPLE CLIENT PROJECTS */}
-        <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0D1527]/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-2xl shadow-glass dark:shadow-dark-glass space-y-4">
+        {/* Project Discovery Section */}
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-2">
+              <Layers className="w-5 h-5 text-[#2563EB] dark:text-[#60A5FA]" />
               <h2 className="font-heading text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                Active Client Projects
+                Project Discovery
               </h2>
-              <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                Track progress, linked GitHub repositories, and budget allocation.
-              </p>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
+              </span>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                triggerGuard(
-                  'Project Creation Restricted',
-                  'Register a Client account to create and manage client projects.'
-                )
-              }
-              className="text-xs font-semibold"
-            >
-              + Add Project
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-            {/* Project 1 */}
-            <div className="p-4.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1A]/70 border border-slate-200/80 dark:border-white/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 font-mono">
-                  In Progress
-                </span>
-                <span className="font-heading font-bold text-xs text-slate-900 dark:text-white font-tabular">
-                  $18,500.00
-                </span>
-              </div>
-              <div>
-                <h4 className="font-heading text-sm font-bold text-slate-900 dark:text-white">
-                  Payment Gateway Integration
-                </h4>
-                <p className="font-sans text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
-                  Autonomous requirement validation against GitHub commits with PayPal instant invoice settlement.
-                </p>
-              </div>
-              <div className="space-y-1.5 pt-2 border-t border-slate-200/80 dark:border-white/10">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Milestones: 2 of 4</span>
-                  <span className="font-semibold text-blue-600 dark:text-blue-400">75% Complete</span>
-                </div>
-                <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full w-3/4" />
-                </div>
-              </div>
-            </div>
-
-            {/* Project 2 */}
-            <div className="p-4.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1A]/70 border border-slate-200/80 dark:border-white/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-mono">
-                  Completed
-                </span>
-                <span className="font-heading font-bold text-xs text-slate-900 dark:text-white font-tabular">
-                  $14,200.00
-                </span>
-              </div>
-              <div>
-                <h4 className="font-heading text-sm font-bold text-slate-900 dark:text-white">
-                  Real-time Analytics Dashboard
-                </h4>
-                <p className="font-sans text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
-                  Developer telemetry, milestone metric analysis, and live audit telemetry feeds.
-                </p>
-              </div>
-              <div className="space-y-1.5 pt-2 border-t border-slate-200/80 dark:border-white/10">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Milestones: 3 of 3</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">100% Complete</span>
-                </div>
-                <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full w-full" />
-                </div>
-              </div>
-            </div>
-
-            {/* Project 3 */}
-            <div className="p-4.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1A]/70 border border-slate-200/80 dark:border-white/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 font-mono">
-                  Active
-                </span>
-                <span className="font-heading font-bold text-xs text-slate-900 dark:text-white font-tabular">
-                  $12,000.00
-                </span>
-              </div>
-              <div>
-                <h4 className="font-heading text-sm font-bold text-slate-900 dark:text-white">
-                  Enterprise Auth0 &amp; RBAC Portal
-                </h4>
-                <p className="font-sans text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
-                  Multi-tenant authorization, role governance, and cryptographic session proofs.
-                </p>
-              </div>
-              <div className="space-y-1.5 pt-2 border-t border-slate-200/80 dark:border-white/10">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Milestones: 1 of 3</span>
-                  <span className="font-semibold text-purple-600 dark:text-purple-400">33% Complete</span>
-                </div>
-                <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-500 rounded-full w-1/3" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 3: DEVELOPER TALENT DIRECTORY (CLIENT PERSPECTIVE) */}
-        <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0D1527]/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-2xl shadow-glass dark:shadow-dark-glass space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-heading text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                DevFlow Verified Developer Directory
-              </h2>
-              <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                Browse pre-vetted engineers with cryptographic verification track records.
-              </p>
-            </div>
-            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-mono">
-              3 Developers Featured
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-700/30 text-[10px] font-semibold text-amber-700 dark:text-amber-400 font-mono">
+              <Eye className="w-3 h-3" />
+              DEMO DATA
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-            {/* Developer 1 */}
-            <div className="p-5 rounded-xl bg-slate-50/80 dark:bg-[#080D1A]/70 border border-slate-200/80 dark:border-white/10 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-bold text-white text-sm shadow-xs">
-                    AM
-                  </div>
-                  <div>
-                    <h4 className="font-heading text-sm font-bold text-slate-900 dark:text-white">
-                      Alex Morgan
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Lead Full-Stack &amp; Cryptography
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
-                  <span className="flex items-center gap-1 text-amber-500 font-semibold">
-                    <Star className="w-3.5 h-3.5 fill-current" /> 5.0 (42)
-                  </span>
-                  <span>•</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                    98.4% AI Pass Rate
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {['React', 'Node.js', 'PayPal SDK', 'Rust'].map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-200/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 font-mono"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between">
-                <div>
-                  <span className="font-heading font-bold text-sm text-slate-900 dark:text-white font-tabular">
-                    $95
-                  </span>
-                  <span className="text-xs text-slate-500">/hr</span>
-                </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    triggerGuard(
-                      'Hiring Restricted in Demo',
-                      'To hire Alex Morgan or assign milestones, create an official Client account.'
-                    )
-                  }
-                  className="text-xs font-semibold"
-                >
-                  Hire Developer
-                </Button>
-              </div>
+          {/* Loading State */}
+          {loading ? (
+            <div className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/10 rounded-2xl p-12 text-center backdrop-blur-2xl">
+              <Loader2 className="w-8 h-8 text-[#2563EB] dark:text-[#60A5FA] animate-spin mx-auto mb-3" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Loading project listings...</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Connecting to DevFlow API service</p>
             </div>
-
-            {/* Developer 2 */}
-            <div className="p-5 rounded-xl bg-slate-50/80 dark:bg-[#080D1A]/70 border border-slate-200/80 dark:border-white/10 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center font-bold text-white text-sm shadow-xs">
-                    ER
-                  </div>
-                  <div>
-                    <h4 className="font-heading text-sm font-bold text-slate-900 dark:text-white">
-                      Elena Rostova
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Distributed Systems &amp; Security
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
-                  <span className="flex items-center gap-1 text-amber-500 font-semibold">
-                    <Star className="w-3.5 h-3.5 fill-current" /> 4.9 (38)
-                  </span>
-                  <span>•</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                    96.8% AI Pass Rate
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {['Go', 'TypeScript', 'PostgreSQL', 'ZK-Proofs'].map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-200/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 font-mono"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between">
-                <div>
-                  <span className="font-heading font-bold text-sm text-slate-900 dark:text-white font-tabular">
-                    $110
-                  </span>
-                  <span className="text-xs text-slate-500">/hr</span>
-                </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    triggerGuard(
-                      'Hiring Restricted in Demo',
-                      'To hire Elena Rostova or assign milestones, create an official Client account.'
-                    )
-                  }
-                  className="text-xs font-semibold"
-                >
-                  Hire Developer
-                </Button>
-              </div>
+          ) : filteredProjects.length === 0 ? (
+            /* Empty State */
+            <div className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/10 rounded-2xl p-8 text-center backdrop-blur-2xl">
+              <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No projects match your filter</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Try adjusting your search query or reset the category filter.
+              </p>
             </div>
+          ) : (
+            /* Project Grid */
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredProjects.map((project) => {
+                const projectMilestones = getProjectMilestones(project.id);
+                const progressPct =
+                  project.milestonesCount > 0
+                    ? Math.round((project.completedMilestonesCount / project.milestonesCount) * 100)
+                    : 0;
 
-            {/* Developer 3 */}
-            <div className="p-5 rounded-xl bg-slate-50/80 dark:bg-[#080D1A]/70 border border-slate-200/80 dark:border-white/10 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-teal-500 to-emerald-500 flex items-center justify-center font-bold text-white text-sm shadow-xs">
-                    MS
-                  </div>
-                  <div>
-                    <h4 className="font-heading text-sm font-bold text-slate-900 dark:text-white">
-                      Marcus Sterling
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Smart Contracts &amp; Payments
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
-                  <span className="flex items-center gap-1 text-amber-500 font-semibold">
-                    <Star className="w-3.5 h-3.5 fill-current" /> 4.8 (29)
-                  </span>
-                  <span>•</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                    95.2% AI Pass Rate
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {['Solidity', 'Python', 'API Gateway', 'Docker'].map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-200/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 font-mono"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between">
-                <div>
-                  <span className="font-heading font-bold text-sm text-slate-900 dark:text-white font-tabular">
-                    $85
-                  </span>
-                  <span className="text-xs text-slate-500">/hr</span>
-                </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    triggerGuard(
-                      'Hiring Restricted in Demo',
-                      'To hire Marcus Sterling or assign milestones, create an official Client account.'
-                    )
-                  }
-                  className="text-xs font-semibold"
-                >
-                  Hire Developer
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* BOTTOM CALL TO ACTION SWITCHER */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-teal-500/10 via-blue-500/10 to-purple-500/10 border border-teal-500/20 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="font-heading text-base font-bold text-slate-900 dark:text-white">
-              Ready to experience DevFlow with your real team?
-            </h3>
-            <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-              Create a free Client account or switch to the Developer perspective to test commit verification.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/guest/developer')}
-              className="text-xs font-semibold gap-1.5"
-            >
-              <Code2 className="w-3.5 h-3.5" />
-              <span>Developer Guest View</span>
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => navigate('/signup')}
-              className="text-xs font-semibold gap-1.5 shadow-sm"
-            >
-              <span>Create Free Account</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-      </main>
-
-      {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 text-center text-xs text-slate-500 dark:text-slate-400 relative z-10 border-t border-slate-200/80 dark:border-white/10 mt-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>DevFlow &bull; Enterprise Milestone Verification &amp; Payment Escrow</span>
-          <div className="flex items-center gap-4">
-            <Link to="/signup" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-              Signup Options
-            </Link>
-            <Link to="/login" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-              Login
-            </Link>
-            <Link to="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-              Home
-            </Link>
-          </div>
-        </div>
-      </footer>
-
-      {/* CRYPTOGRAPHIC PROOF DETAIL MODAL */}
-      {proofModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setProofModalOpen(false)}
-          />
-          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#0D1527] border border-slate-200 dark:border-white/10 p-6 shadow-2xl z-10 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                <h3 className="font-heading text-base font-bold text-slate-900 dark:text-white">
-                  Cryptographic Verification Receipt
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setProofModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs font-sans">
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1">Merkle Root Hash (SHA-256):</span>
-                <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 font-mono text-[11px] text-slate-800 dark:text-slate-200 flex items-center justify-between">
-                  <span className="truncate pr-2">0x4f8a7e2b1c9d3f5a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a</span>
-                  <button
-                    type="button"
-                    onClick={handleCopyProof}
-                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                return (
+                  <div
+                    key={project.id}
+                    className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/10 rounded-2xl p-5 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl hover:border-[#2563EB]/30 transition-all group"
                   >
-                    {copiedProof ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    <div className="space-y-4">
+                      {/* Project header */}
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <h3 className="font-heading text-base font-bold text-slate-900 dark:text-white group-hover:text-[#2563EB] dark:group-hover:text-[#60A5FA] transition-colors truncate">
+                            {project.name}
+                          </h3>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+                            {project.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Project meta */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <BriefcaseBusiness className="w-3 h-3" />
+                          {project.clientName}
+                        </span>
+                        <span className="flex items-center gap-1 font-tabular">
+                          <DollarSign className="w-3 h-3" />
+                          ${project.totalBudget.toLocaleString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <GitBranch className="w-3 h-3" />
+                          {project.githubRepo.split('/').pop()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(project.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {/* Milestone progress */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-600 dark:text-slate-400">Milestone Progress</span>
+                          <span className="font-semibold font-tabular text-slate-900 dark:text-white">
+                            {project.completedMilestonesCount}/{project.milestonesCount}
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#2563EB] to-teal-500 rounded-full transition-all duration-500"
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+
+                        {/* Milestone list */}
+                        {projectMilestones.length > 0 && (
+                          <div className="space-y-1 pt-1">
+                            {projectMilestones.slice(0, 3).map((ms) => (
+                              <div
+                                key={ms.id}
+                                className="flex items-center gap-2 text-[11px]"
+                              >
+                                {ms.status === 'paid' ? (
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                                ) : (
+                                  <Circle className="w-3 h-3 text-slate-300 dark:text-slate-600 shrink-0" />
+                                )}
+                                <span className="text-slate-700 dark:text-slate-300 truncate flex-1">
+                                  {ms.title}
+                                </span>
+                                <span className="font-tabular text-slate-500 dark:text-slate-400 font-medium">
+                                  ${ms.amount.toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          onClick={() => handleRestrictedAction('View full project details')}
+                          className="flex-1 py-2 px-3 rounded-lg bg-[#2563EB]/10 text-[#2563EB] dark:text-[#60A5FA] text-[11px] font-semibold hover:bg-[#2563EB]/20 transition-colors"
+                        >
+                          View Details
+                        </button>
+                        <button
+                          onClick={() => handleRestrictedAction('Hire developer for this project')}
+                          className="flex-1 py-2 px-3 rounded-lg bg-slate-100 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors"
+                        >
+                          Hire Developer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Developer Directory Section */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <h2 className="font-heading text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+              Developer Directory
+            </h2>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-700/30 text-[10px] font-semibold text-amber-700 dark:text-amber-400 font-mono">
+              <Eye className="w-3 h-3" />
+              DEMO PROFILES
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                name: DEMO_CONFIG.user.name,
+                role: 'Full-Stack Developer',
+                skills: ['TypeScript', 'React', 'Node.js', 'PostgreSQL'],
+                projects: 4,
+                rating: 4.9,
+              },
+              {
+                name: 'Jordan Reed',
+                role: 'Backend Engineer',
+                skills: ['Python', 'Go', 'AWS', 'Docker'],
+                projects: 3,
+                rating: 4.8,
+              },
+              {
+                name: 'Taylor Kim',
+                role: 'DevOps & Cloud Architect',
+                skills: ['Kubernetes', 'Terraform', 'CI/CD', 'GCP'],
+                projects: 5,
+                rating: 4.7,
+              },
+            ].map((dev) => (
+              <div
+                key={dev.name}
+                className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/10 rounded-2xl p-5 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                      {dev.name.split(' ').map((n) => n[0]).join('')}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">{dev.name}</h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{dev.role}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {dev.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.04] text-[10px] font-medium text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-white/5"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Layers className="w-3 h-3" />
+                      {dev.projects} projects
+                    </span>
+                    <span className="flex items-center gap-1 font-tabular">
+                      <Star className="w-3 h-3 text-amber-500" />
+                      {dev.rating}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => handleRestrictedAction(`View ${dev.name}'s full profile`)}
+                    className="w-full py-2 px-3 rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-400 text-[11px] font-semibold hover:bg-teal-500/20 transition-colors"
+                  >
+                    View Profile
                   </button>
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5">
-                  <span className="text-slate-400 block text-[10px]">Verified Commit:</span>
-                  <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">c3a8e91</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5">
-                  <span className="text-slate-400 block text-[10px]">AI Model Auditor:</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">Gemini 1.5 Pro Verifier</span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 text-xs">
-                This verification proof is cryptographically sealed and cannot be altered by either client or developer.
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button variant="secondary" size="sm" onClick={() => setProofModalOpen(false)}>
-                Close
-              </Button>
+        {/* CTA Section */}
+        <section className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/10 rounded-2xl p-6 sm:p-8 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl">
+          <div className="text-center space-y-4 max-w-md mx-auto">
+            <h2 className="font-heading text-xl font-bold text-slate-900 dark:text-white">
+              Ready to start hiring?
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Create a client account to post projects, define milestones, and manage secure payments through DevFlow.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+              <button
+                onClick={() => navigate('/signup/client')}
+                className="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-gradient-to-r from-[#2563EB] to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-semibold text-sm transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Create Account
+              </button>
+              <button
+                onClick={() => navigate('/login/client')}
+                className="w-full sm:w-auto py-2.5 px-6 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] text-slate-900 dark:text-white font-semibold text-sm transition-all hover:bg-white/90 dark:hover:bg-white/[0.08] flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Log In
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        </section>
 
-      {/* REUSABLE GUEST GUARD RESTRICTION MODAL */}
+        {/* Footer info */}
+        <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-500 dark:text-slate-500 pt-4">
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {lastSuccessfulFetchTime ? `Last Updated: ${lastSuccessfulFetchTime}` : 'Live data unavailable • Demo mode'}
+          </span>
+          <span className="flex items-center gap-1">
+            <Mail className="w-3 h-3" />
+            {DEMO_CONFIG.organization.handle}
+          </span>
+          <span className="flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            DevFlow Demo Sandbox
+          </span>
+        </div>
+      </main>
+
+      {/* Guest Guard Modal */}
       <GuestGuardModal
-        isOpen={guardModalOpen}
-        onClose={() => setGuardModalOpen(false)}
-        actionTitle={guardTitle}
-        message={guardMessage}
+        isOpen={showGuardModal}
+        onClose={() => setShowGuardModal(false)}
+        actionTitle={guardAction}
       />
     </div>
   );
 };
+
+export default ClientGuestPage;

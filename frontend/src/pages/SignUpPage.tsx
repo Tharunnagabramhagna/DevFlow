@@ -152,7 +152,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({ initialRole }) => {
 
       {/* Main Authentication Card */}
       <main className={`w-full relative z-10 my-auto transition-all duration-300 ${selectedRole ? 'max-w-[32rem] mx-auto' : 'max-w-4xl mx-auto'}`}>
-        <div className="bg-white/80 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/15 rounded-2xl p-6 sm:p-9 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl">
+        <div className="bg-white/80 dark:bg-[#0F172A]/80 border border-white/80 dark:border-white/[0.12] rounded-2xl p-6 sm:p-9 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl ring-1 ring-white/20 dark:ring-white/[0.06]">
           {/* STEP 1: FOUR USER ENTRY OPTIONS SCREEN */}
           {!selectedRole ? (
             <div className="space-y-6 sm:space-y-7">
@@ -178,7 +178,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({ initialRole }) => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('CLIENT')}
-                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs cursor-pointer"
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.03] backdrop-blur-xl hover:bg-white/90 dark:hover:bg-white/[0.07] hover:border-[#2563EB]/70 hover:shadow-md hover:shadow-blue-500/10 dark:hover:shadow-blue-500/5 transition-all duration-200 group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs cursor-pointer ring-1 ring-transparent dark:ring-white/[0.04] hover:ring-[#2563EB]/20"
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between">
@@ -210,7 +210,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({ initialRole }) => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('DEVELOPER')}
-                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-purple-500/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-xs cursor-pointer"
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.03] backdrop-blur-xl hover:bg-white/90 dark:hover:bg-white/[0.07] hover:border-purple-500/70 hover:shadow-md hover:shadow-purple-500/10 dark:hover:shadow-purple-500/5 transition-all duration-200 group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-xs cursor-pointer ring-1 ring-transparent dark:ring-white/[0.04] hover:ring-purple-500/20"
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between">
@@ -242,7 +242,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({ initialRole }) => {
                 <button
                   type="button"
                   onClick={() => navigate('/guest/client')}
-                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-teal-500/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-xs cursor-pointer"
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.03] backdrop-blur-xl hover:bg-white/90 dark:hover:bg-white/[0.07] hover:border-teal-500/70 hover:shadow-md hover:shadow-teal-500/10 dark:hover:shadow-teal-500/5 transition-all duration-200 group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-xs cursor-pointer ring-1 ring-transparent dark:ring-white/[0.04] hover:ring-teal-500/20"
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between">
@@ -274,7 +274,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({ initialRole }) => {
                 <button
                   type="button"
                   onClick={() => navigate('/guest/developer')}
-                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-sky-500/70 transition-all group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs cursor-pointer"
+                  className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.03] backdrop-blur-xl hover:bg-white/90 dark:hover:bg-white/[0.07] hover:border-sky-500/70 hover:shadow-md hover:shadow-sky-500/10 dark:hover:shadow-sky-500/5 transition-all duration-200 group flex flex-col justify-between h-full focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs cursor-pointer ring-1 ring-transparent dark:ring-white/[0.04] hover:ring-sky-500/20"
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between">

@@ -7,6 +7,8 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignUpPage } from '@/pages/SignUpPage';
+import { ClientGuestWelcomePage } from '@/pages/ClientGuestWelcomePage';
+import { DeveloperGuestWelcomePage } from '@/pages/DeveloperGuestWelcomePage';
 import { ClientGuestPage } from '@/pages/ClientGuestPage';
 import { DeveloperGuestPage } from '@/pages/DeveloperGuestPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
@@ -40,9 +42,11 @@ export const App: React.FC = () => {
             <Route path="/register" element={<SignUpPage />} />
             <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
-            {/* Dedicated Unauthenticated Guest Perspective Dashboards */}
-            <Route path="/guest/client" element={<ClientGuestPage />} />
-            <Route path="/guest/developer" element={<DeveloperGuestPage />} />
+            {/* Dedicated Guest Welcome Pages & Dashboard Routes */}
+            <Route path="/guest/client" element={<ClientGuestWelcomePage />} />
+            <Route path="/guest/developer" element={<DeveloperGuestWelcomePage />} />
+            <Route path="/guest/client/dashboard" element={<ClientGuestPage />} />
+            <Route path="/guest/developer/dashboard" element={<DeveloperGuestPage />} />
             <Route path="/client-guest" element={<Navigate to="/guest/client" replace />} />
             <Route path="/developer-guest" element={<Navigate to="/guest/developer" replace />} />
 

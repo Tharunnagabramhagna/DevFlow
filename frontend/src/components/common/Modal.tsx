@@ -46,43 +46,43 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
+    sm: 'max-w-lg',
+    md: 'max-w-xl',
+    lg: 'max-w-3xl',
+    xl: 'max-w-5xl',
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Backdrop with soft blur */}
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-5">
+      {/* Backdrop with frosted ambient blur */}
       <div
-        className="fixed inset-0 bg-[#25263A]/40 backdrop-blur-xs transition-opacity duration-200"
+        className="fixed inset-0 bg-slate-950/40 dark:bg-black/65 backdrop-blur-md transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Modal Dialog */}
+      {/* Modal Dialog with Glassmorphism */}
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative w-full bg-white dark:bg-[#111C30] text-[#0F172A] dark:text-[#F8FAFC] shadow-modal-elevated border border-slate-200 dark:border-[#26344B] z-10 overflow-hidden transform transition-all',
+          'relative w-full backdrop-blur-2xl bg-white/95 dark:bg-[#0F172A]/90 text-slate-900 dark:text-white shadow-2xl border border-white/80 dark:border-white/15 z-10 overflow-hidden transform transition-all',
           'rounded-t-2xl sm:rounded-2xl',
-          'max-h-[92dvh] sm:max-h-[85vh] flex flex-col',
+          'max-h-[92dvh] sm:max-h-[88vh] flex flex-col',
           sizes[size],
           className
         )}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-[#26344B] flex items-start justify-between shrink-0">
-            <div className="space-y-0.5 pr-4">
-              {title && <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white tracking-tight">{title}</h2>}
-              {description && <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>}
+          <div className="px-6 sm:px-7 py-5 border-b border-slate-200/70 dark:border-white/10 flex items-start justify-between shrink-0">
+            <div className="space-y-1 pr-4">
+              {title && <h2 className="font-heading text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">{title}</h2>}
+              {description && <p className="font-sans text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>}
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1A253A] transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer"
               aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
@@ -91,11 +91,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content — scrollable */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="p-6 sm:p-7 overflow-y-auto flex-1">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-5 sm:px-6 py-3.5 bg-slate-50 dark:bg-[#0A101D] border-t border-slate-200 dark:border-[#26344B] flex items-center justify-end gap-2.5 shrink-0">
+          <div className="px-6 sm:px-7 py-4 bg-slate-50/80 dark:bg-white/5 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-end gap-3 shrink-0 backdrop-blur-md">
             {footer}
           </div>
         )}

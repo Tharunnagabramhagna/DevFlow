@@ -308,7 +308,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-[#25263A]/40 dark:bg-black/60 backdrop-blur-xs transition-opacity duration-200"
+        className="fixed inset-0 bg-slate-950/40 dark:bg-black/65 backdrop-blur-md transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -317,23 +317,23 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative w-full max-w-2xl bg-white dark:bg-[#111C30] rounded-2xl shadow-modal-elevated border border-[#E9EAF2] dark:border-[#26344B] z-10 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150"
+        className="relative w-full max-w-3xl backdrop-blur-2xl bg-white/95 dark:bg-[#0F172A]/90 rounded-2xl shadow-2xl border border-white/80 dark:border-white/15 z-10 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 py-3.5 border-b border-[#E9EAF2] dark:border-[#26344B] bg-white dark:bg-[#111C30]">
-          <Search className="w-5 h-5 text-[#777B91] dark:text-slate-400 shrink-0 mr-3" />
+        <div className="flex items-center px-5 py-4 border-b border-slate-200/70 dark:border-white/10 bg-transparent">
+          <Search className="w-5 h-5 text-slate-400 shrink-0 mr-3.5" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Search pages, projects, milestones, invoices, or actions... (Esc to close)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-transparent text-sm sm:text-base text-[#25263A] dark:text-white placeholder-[#9D9EAF] dark:placeholder-slate-400 focus:outline-none"
+            className="w-full bg-transparent font-sans text-base sm:text-lg text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="text-xs text-[#777B91] hover:text-[#25263A] dark:hover:text-white px-2 py-1 rounded bg-[#F1F3FA] dark:bg-[#1A253A]"
+              className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/10 transition-colors"
             >
               Clear
             </button>
@@ -344,8 +344,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <div className="max-h-[60vh] overflow-y-auto p-2 divide-y divide-transparent">
           {filteredItems.length === 0 ? (
             <div className="text-center py-10 px-4">
-              <p className="text-sm font-semibold text-[#25263A] dark:text-white">No matching results found</p>
-              <p className="text-xs text-[#777B91] dark:text-slate-400 mt-1">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">No matching results found</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Try searching for a different keyword like "payments", "milestone", or a commit SHA.
               </p>
             </div>
@@ -359,10 +359,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onClick={item.action}
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={cn(
-                    'flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-colors',
+                    'flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-150',
                     isSelected
-                      ? 'bg-[#EFF6FF] dark:bg-[#1E2E4E] text-[#1D4ED8] dark:text-[#60A5FA]'
-                      : 'hover:bg-[#F7F8FC] dark:hover:bg-[#152238] text-[#25263A] dark:text-slate-200'
+                      ? 'bg-blue-500/15 dark:bg-blue-600/25 text-blue-700 dark:text-blue-300 border border-blue-500/20 dark:border-blue-400/30 backdrop-blur-sm'
+                      : 'hover:bg-slate-100/70 dark:hover:bg-white/5 text-slate-800 dark:text-slate-200 border border-transparent'
                   )}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -370,28 +370,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       className={cn(
                         'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
                         isSelected
-                          ? 'bg-[#BFDBFE] dark:bg-blue-900/60 text-[#1D4ED8] dark:text-[#60A5FA]'
-                          : 'bg-[#F1F3FA] dark:bg-[#1B2A47] text-[#777B91] dark:text-slate-400'
+                          ? 'bg-blue-500/20 dark:bg-blue-500/30 text-blue-600 dark:text-blue-300'
+                          : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                       )}
                     >
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold truncate leading-tight">
+                        <span className="font-heading text-sm font-semibold truncate leading-tight">
                           {item.title}
                         </span>
                         {item.badge && (
                           <span
                             className={cn(
-                              'text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider',
-                              item.badgeColor === 'lavender' && 'bg-[#F5F3FF] dark:bg-purple-950/70 text-[#6D28D9] dark:text-purple-300 border border-[#DDD6FE] dark:border-purple-800/60',
-                              item.badgeColor === 'blue' && 'bg-[#EFF6FF] dark:bg-blue-950/70 text-[#1D4ED8] dark:text-blue-400 border border-[#BFDBFE] dark:border-blue-800/60',
-                              item.badgeColor === 'mint' && 'bg-[#F0FDF4] dark:bg-emerald-950/70 text-[#15803D] dark:text-emerald-400 border border-[#BBF7D0] dark:border-emerald-800/60',
-                              item.badgeColor === 'peach' && 'bg-[#FFF7ED] dark:bg-orange-950/70 text-[#C2410C] dark:text-orange-400 border border-[#FED7AA] dark:border-orange-800/60',
-                              item.badgeColor === 'yellow' && 'bg-[#FEFCE8] dark:bg-amber-950/70 text-[#A16207] dark:text-amber-400 border border-[#FEF08A] dark:border-amber-800/60',
+                              'text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-xs',
+                              item.badgeColor === 'lavender' && 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30',
+                              item.badgeColor === 'blue' && 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/30',
+                              item.badgeColor === 'mint' && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30',
+                              item.badgeColor === 'peach' && 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/30',
+                              item.badgeColor === 'yellow' && 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30',
                               (!item.badgeColor || item.badgeColor === 'neutral') &&
-                                'bg-[#F1F3FA] dark:bg-[#16233B] text-[#777B91] dark:text-slate-400 border border-[#E9EAF2] dark:border-[#26344B]'
+                                'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'
                             )}
                           >
                             {item.badge}
@@ -399,16 +399,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         )}
                       </div>
                       {item.subtitle && (
-                        <p className="text-xs text-[#777B91] dark:text-slate-400 truncate mt-0.5">{item.subtitle}</p>
+                        <p className="text-xs font-sans tabular-nums text-slate-500 dark:text-slate-400 truncate mt-0.5">{item.subtitle}</p>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 ml-3">
-                    <span className="text-[11px] font-medium text-[#777B91] dark:text-slate-400 hidden sm:inline">
+                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 hidden sm:inline">
                       {item.category}
                     </span>
-                    {isSelected && <CornerDownLeft className="w-3.5 h-3.5 text-[#1D4ED8] dark:text-[#60A5FA]" />}
+                    {isSelected && <CornerDownLeft className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
                   </div>
                 </div>
               );
@@ -417,31 +417,31 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer shortcuts helper */}
-        <div className="px-4 py-2.5 bg-[#F1F3FA] dark:bg-[#0A101D] border-t border-[#E9EAF2] dark:border-[#26344B] flex items-center justify-between text-[11px] text-[#777B91] dark:text-slate-400">
+        <div className="px-4 py-2.5 bg-slate-50/80 dark:bg-white/5 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-[#111C30] border border-[#E9EAF2] dark:border-[#26344B] text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
+              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
                 ↑
               </kbd>
-              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-[#111C30] border border-[#E9EAF2] dark:border-[#26344B] text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
+              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
                 ↓
               </kbd>
               Navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-[#111C30] border border-[#E9EAF2] dark:border-[#26344B] text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
+              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
                 ↵
               </kbd>
               Select
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-[#111C30] border border-[#E9EAF2] dark:border-[#26344B] text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
+              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[10px] font-mono shadow-xs text-slate-700 dark:text-slate-300">
                 esc
               </kbd>
               Close
             </span>
           </div>
-          <span className="font-medium text-[#25263A] dark:text-slate-300 hidden sm:inline">DevFlow Quick Navigator</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">DevFlow Quick Navigator</span>
         </div>
       </div>
     </div>

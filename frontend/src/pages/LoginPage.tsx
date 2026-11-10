@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { DevFlowLogo, ThemeToggle, SocialAuthButtons } from '@/components/common';
+import { DevFlowLogo, ThemeToggle, SocialAuthButtons, AmbientBackground } from '@/components/common';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types';
 import {
@@ -132,9 +132,9 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#080D18] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col justify-between selection:bg-[#0070BA] selection:text-white relative overflow-x-hidden antialiased py-8 px-4 sm:px-6">
-      {/* Background ambient lighting */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-r from-blue-600/10 via-cyan-500/5 to-purple-600/10 blur-3xl pointer-events-none rounded-full" />
+    <div className="min-h-screen bg-slate-50/70 dark:bg-[#060B16] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col justify-between selection:bg-[#0070BA] selection:text-white relative overflow-x-hidden antialiased py-8 px-4 sm:px-6">
+      {/* Dynamic ambient glass lighting */}
+      <AmbientBackground />
 
       {/* Top Bar with Logo and Theme Toggle */}
       <header className="max-w-5xl mx-auto w-full flex items-center justify-between pb-6 relative z-10">
@@ -153,48 +153,48 @@ export const LoginPage: React.FC = () => {
       </header>
 
       {/* Main Authentication Card */}
-      <main className="max-w-md mx-auto w-full relative z-10 my-auto">
-        <div className="bg-white dark:bg-[#111C30] border border-slate-200 dark:border-[#26344B] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+      <main className="max-w-[32rem] mx-auto w-full relative z-10 my-auto">
+        <div className="bg-white/80 dark:bg-[#0F172A]/80 border border-white/80 dark:border-white/15 rounded-2xl p-7 sm:p-9 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl">
           {/* STEP 1: ROLE SELECTION SCREEN */}
           {!selectedRole ? (
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-7">
               <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                <h1 className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                   Welcome back to DevFlow
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                   Select your account type to continue to your dashboard.
                 </p>
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5">
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs sm:text-sm flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
               )}
 
               {/* Role Option Cards */}
-              <div className="space-y-3.5 pt-1">
+              <div className="space-y-4 pt-1">
                 {/* OPTION A: CLIENT */}
                 <button
                   type="button"
                   onClick={() => handleSelectRole('CLIENT')}
-                  className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-[#26344B] bg-slate-50 dark:bg-[#0A101D] hover:bg-slate-100 dark:hover:bg-[#152238] hover:border-[#2563EB] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full text-left p-4.5 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
                 >
-                  <div className="p-2.5 rounded-lg bg-[#2563EB]/15 text-[#2563EB] dark:text-[#38BDF8] border border-[#2563EB]/30 group-hover:scale-105 transition-transform shrink-0">
-                    <BriefcaseBusiness className="w-6 h-6 text-[#2563EB] group-hover:text-[#1D4ED8] dark:group-hover:text-[#60A5FA]" />
+                  <div className="p-3 rounded-xl bg-[#2563EB]/15 text-[#2563EB] dark:text-[#38BDF8] border border-[#2563EB]/30 group-hover:scale-105 transition-transform shrink-0">
+                    <BriefcaseBusiness className="w-6 h-6 sm:w-7 sm:h-7 text-[#2563EB] group-hover:text-[#1D4ED8] dark:group-hover:text-[#60A5FA]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#2563EB] dark:group-hover:text-[#60A5FA] transition-colors">
+                      <span className="font-heading text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-[#2563EB] dark:group-hover:text-[#60A5FA] transition-colors">
                         Client
                       </span>
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 font-mono">
+                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 font-mono">
                         Manager
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                    <p className="font-sans text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
                       I manage projects, milestones, approvals and payments.
                     </p>
                   </div>
@@ -204,17 +204,17 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('DEVELOPER')}
-                  className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-[#26344B] bg-slate-50 dark:bg-[#0A101D] hover:bg-slate-100 dark:hover:bg-[#152238] hover:border-[#2563EB] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full text-left p-4.5 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
                 >
-                  <div className="p-2.5 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
-                    <Code2 className="w-6 h-6 text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
+                  <div className="p-3 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
+                    <Code2 className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                      <span className="font-heading text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
                         Developer / Project Creator
                       </span>
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-mono">
+                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-mono">
                         Builder
                       </span>
                     </div>
@@ -229,7 +229,7 @@ export const LoginPage: React.FC = () => {
                   type="button"
                   disabled={guestLoading || loading}
                   onClick={handleContinueAsGuest}
-                  className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-[#26344B] bg-slate-50 dark:bg-[#0A101D] hover:bg-slate-100 dark:hover:bg-[#152238] hover:border-[#0EA5E9] transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
+                  className="w-full text-left p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#0EA5E9]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] shadow-xs"
                 >
                   <div className="p-2.5 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 group-hover:scale-105 transition-transform shrink-0">
                     {guestLoading ? (

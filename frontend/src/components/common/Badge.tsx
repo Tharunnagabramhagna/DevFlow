@@ -29,20 +29,20 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center font-medium rounded-full transition-colors select-none';
+    'inline-flex items-center font-sans font-medium rounded-full transition-all select-none backdrop-blur-xs';
 
   const variants = {
-    neutral: 'bg-[#F1F3FA] text-[#777B91] border border-[#E9EAF2]',
-    success: 'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]',
-    ai: 'bg-[#F5F3FF] text-[#6D28D9] border border-[#DDD6FE]',
-    paypal: 'bg-[#EBF4FA] text-[#0070BA] border border-[#BFDBFE]',
-    warning: 'bg-[#FEFCE8] text-[#A16207] border border-[#FEF08A]',
-    danger: 'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]',
-    lavender: 'bg-[#F5F3FF] text-[#6D28D9] border border-[#DDD6FE]',
-    mint: 'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]',
-    peach: 'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]',
-    yellow: 'bg-[#FEFCE8] text-[#A16207] border border-[#FEF08A]',
-    powderBlue: 'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]',
+    neutral: 'bg-slate-100/80 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-white/10',
+    success: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30',
+    ai: 'bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30',
+    paypal: 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/30',
+    warning: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30',
+    danger: 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/30',
+    lavender: 'bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30',
+    mint: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30',
+    peach: 'bg-orange-500/10 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border border-orange-500/30',
+    yellow: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30',
+    powderBlue: 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/30',
   };
 
   const dotColors = {
@@ -60,8 +60,8 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const sizes = {
-    sm: 'text-xs px-2 py-0.5 gap-1.5',
-    md: 'text-xs px-2.5 py-1 gap-1.5 font-medium',
+    sm: 'text-xs sm:text-[13px] px-2.5 py-1 gap-1.5 font-medium',
+    md: 'text-xs sm:text-sm px-3.5 py-1.5 gap-2 font-semibold',
   };
 
   return (

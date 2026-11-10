@@ -11,4 +11,5 @@ export * from './CommandPalette';
 export * from './DevFlowLogo';
 export * from './ThemeToggle';
 export * from './SocialAuthButtons';
+export * from './AmbientBackground';
 export * from './GuestGuardModal';

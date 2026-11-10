@@ -261,28 +261,28 @@ export const NotificationsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* Scrollable Page Content */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
-          <div className="max-w-[1240px] mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-7">
+          <div className="max-w-[1780px] mx-auto space-y-7">
             {/* PAGE HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={openMobileSidebar}
-                    className="lg:hidden p-1.5 -ml-1 text-[#AAB6C8] hover:text-white rounded-lg hover:bg-[#172235]"
+                    className="lg:hidden p-2 -ml-1 text-[#AAB6C8] hover:text-white rounded-xl hover:bg-[#172235]"
                     aria-label="Toggle navigation menu"
                   >
                     <Menu className="w-5 h-5" />
                   </button>
-                  <h1 className="text-2xl font-bold tracking-tight text-[#F1F5F9]">Notifications</h1>
+                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#F1F5F9]">Notifications</h1>
                 </div>
-                <p className="text-xs sm:text-sm text-[#AAB6C8] mt-1">
-                  Stay informed about important project and payment activity.
+                <p className="text-sm sm:text-base text-[#AAB6C8] mt-1.5">
+                  Stay informed about important project, verification, and payment activity.
                 </p>
               </div>
 
               {/* Right Side Header Controls */}
-              <div className="flex items-center gap-2.5 self-end sm:self-auto relative">
+              <div className="flex items-center gap-3 self-end sm:self-auto relative">
                 {/* User Avatar */}
                 <div className="relative">
                   <button
@@ -290,7 +290,7 @@ export const NotificationsPage: React.FC = () => {
                       setUserMenuOpen(!userMenuOpen);
                       setNotificationsOpen(false);
                     }}
-                    className="w-9 h-9 rounded-full ring-2 ring-[#293B55] hover:ring-[#2879E8] transition-all overflow-hidden flex items-center justify-center bg-[#172235]"
+                    className="w-10 h-10 rounded-xl ring-2 ring-[#293B55] hover:ring-[#2879E8] transition-all overflow-hidden flex items-center justify-center bg-[#172235]"
                     title="User Profile"
                   >
                     <img
@@ -302,19 +302,19 @@ export const NotificationsPage: React.FC = () => {
 
                   {/* User Profile Popover */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#172235] border border-[#293B55] shadow-2xl p-2 z-50 text-xs animate-in fade-in duration-150">
-                      <div className="px-3 py-2 border-b border-[#293B55]/70 mb-1">
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs sm:text-sm animate-in fade-in duration-150">
+                      <div className="px-3.5 py-2.5 border-b border-[#293B55]/70 mb-1.5">
                         <div className="font-semibold text-white">Alex Morgan</div>
-                        <div className="text-[11px] text-[#AAB6C8] truncate">alex.morgan@northstar.studio</div>
+                        <div className="text-xs text-[#AAB6C8] truncate">alex.morgan@northstar.studio</div>
                       </div>
                       <button
                         onClick={() => {
                           setUserMenuOpen(false);
                           navigate('/settings');
                         }}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#20304B] text-[#AAB6C8] hover:text-white transition-colors flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#20304B] text-[#AAB6C8] hover:text-white transition-colors flex items-center gap-2"
                       >
-                        <Settings className="w-3.5 h-3.5" />
+                        <Settings className="w-4 h-4" />
                         Account Settings
                       </button>
                       <button
@@ -322,7 +322,7 @@ export const NotificationsPage: React.FC = () => {
                           setUserMenuOpen(false);
                           navigate('/');
                         }}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400 transition-colors"
+                        className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-rose-500/10 text-rose-400 transition-colors"
                       >
                         Sign Out
                       </button>
@@ -337,23 +337,23 @@ export const NotificationsPage: React.FC = () => {
                       setNotificationsOpen(!notificationsOpen);
                       setUserMenuOpen(false);
                     }}
-                    className="relative p-2 rounded-lg text-[#AAB6C8] hover:text-white bg-[#172235] hover:bg-[#20304B] border border-[#293B55] transition-colors"
+                    className="relative p-2.5 rounded-xl text-[#AAB6C8] hover:text-white bg-[#172235] hover:bg-[#20304B] border border-[#293B55] transition-colors"
                     title="Quick Alerts"
                   >
-                    <Bell className="w-4 h-4" />
+                    <Bell className="w-5 h-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#2879E8] animate-pulse" />
+                      <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#2879E8] animate-pulse" />
                     )}
                   </button>
 
                   {/* Quick Notifications Dropdown */}
                   {notificationsOpen && (
-                    <div className="absolute right-0 mt-2 w-72 rounded-xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs animate-in fade-in duration-150">
-                      <div className="flex items-center justify-between pb-2 border-b border-[#293B55]">
+                    <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-4 z-50 text-xs sm:text-sm animate-in fade-in duration-150">
+                      <div className="flex items-center justify-between pb-2.5 border-b border-[#293B55]">
                         <span className="font-semibold text-white">Latest Notifications</span>
-                        <span className="text-[10px] text-[#2879E8] font-bold">{unreadCount} Unread</span>
+                        <span className="text-xs text-[#2879E8] font-bold">{unreadCount} Unread</span>
                       </div>
-                      <div className="py-2 space-y-2 max-h-56 overflow-y-auto">
+                      <div className="py-2.5 space-y-2 max-h-64 overflow-y-auto">
                         {notifications.slice(0, 3).map((item) => (
                           <div
                             key={item.id}
@@ -361,16 +361,16 @@ export const NotificationsPage: React.FC = () => {
                               handleToggleRead(item.id);
                               setNotificationsOpen(false);
                             }}
-                            className="p-2 rounded-lg bg-[#101A2D] hover:bg-[#1A2840] cursor-pointer transition-colors"
+                            className="p-2.5 rounded-xl bg-[#101A2D] hover:bg-[#1A2840] cursor-pointer transition-colors"
                           >
-                            <div className="font-medium text-white truncate text-[11px]">{item.title}</div>
-                            <div className="text-[10px] text-[#AAB6C8] mt-0.5">{item.timestamp}</div>
+                            <div className="font-medium text-white truncate text-xs sm:text-sm">{item.title}</div>
+                            <div className="text-xs text-[#AAB6C8] mt-0.5">{item.timestamp}</div>
                           </div>
                         ))}
                       </div>
                       <button
                         onClick={() => setNotificationsOpen(false)}
-                        className="w-full text-center py-1.5 rounded-lg bg-[#2879E8]/10 hover:bg-[#2879E8]/20 text-[#2879E8] text-[11px] font-medium transition-colors"
+                        className="w-full text-center py-2 rounded-xl bg-[#2879E8]/10 hover:bg-[#2879E8]/20 text-[#2879E8] text-xs font-semibold transition-colors"
                       >
                         Close Preview
                       </button>
@@ -381,36 +381,36 @@ export const NotificationsPage: React.FC = () => {
                 {/* Settings Icon */}
                 <button
                   onClick={() => navigate('/settings')}
-                  className="p-2 rounded-lg text-[#AAB6C8] hover:text-white bg-[#172235] hover:bg-[#20304B] border border-[#293B55] transition-colors"
+                  className="p-2.5 rounded-xl text-[#AAB6C8] hover:text-white bg-[#172235] hover:bg-[#20304B] border border-[#293B55] transition-colors"
                   title="Workspace Settings"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Settings className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
             {/* MAIN TWO-COLUMN CONTENT GRID */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
               {/* LEFT & CENTER COLUMN: NOTIFICATION FEED (8 of 12 cols) */}
-              <div className="lg:col-span-8 space-y-4">
+              <div className="lg:col-span-8 space-y-5">
                 {/* NOTIFICATION FILTER TABS */}
-                <div className="flex items-center border-b border-[#293B55] text-xs font-medium space-x-6">
+                <div className="flex items-center border-b border-[#293B55] text-xs sm:text-sm font-medium space-x-7">
                   {(['All', 'Unread', 'Projects', 'AI Activity', 'Payments'] as const).map((tab) => {
                     const isActive = activeTab === tab;
                     return (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`pb-3 transition-colors relative flex items-center gap-1.5 ${
+                        className={`pb-3.5 transition-colors relative flex items-center gap-2 ${
                           isActive
-                            ? 'text-[#2879E8] font-semibold border-b-2 border-[#2879E8]'
+                            ? 'text-[#2879E8] font-bold border-b-2 border-[#2879E8]'
                             : 'text-[#AAB6C8] hover:text-[#F1F5F9]'
                         }`}
                       >
                         <span>{tab}</span>
                         {tab === 'Unread' && unreadCount > 0 && (
                           <span
-                            className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                            className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                               isActive ? 'bg-[#2879E8] text-white' : 'bg-[#172235] text-[#AAB6C8]'
                             }`}
                           >
@@ -423,20 +423,20 @@ export const NotificationsPage: React.FC = () => {
                 </div>
 
                 {/* NOTIFICATION CARDS LIST */}
-                <div className="space-y-3.5">
+                <div className="space-y-4">
                   {filteredNotifications.length === 0 ? (
-                    <div className="p-12 text-center rounded-2xl bg-[#172235] border border-[#293B55] space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-[#101A2D] text-[#AAB6C8] mx-auto flex items-center justify-center">
-                        <CheckCheck className="w-6 h-6 text-[#35C987]" />
+                    <div className="p-12 text-center rounded-2xl bg-[#172235] border border-[#293B55] space-y-3.5">
+                      <div className="w-14 h-14 rounded-full bg-[#101A2D] text-[#AAB6C8] mx-auto flex items-center justify-center">
+                        <CheckCheck className="w-7 h-7 text-[#35C987]" />
                       </div>
-                      <div className="text-base font-semibold text-white">No notifications in this filter</div>
-                      <p className="text-xs text-[#AAB6C8] max-w-sm mx-auto">
+                      <div className="text-lg font-bold text-white">No notifications in this filter</div>
+                      <p className="text-xs sm:text-sm text-[#AAB6C8] max-w-sm mx-auto">
                         You have addressed all alerts under <span className="text-[#2879E8] font-medium">"{activeTab}"</span>.
                         Switch to "All" to review recent activity.
                       </p>
                       <button
                         onClick={() => setActiveTab('All')}
-                        className="px-4 py-2 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs font-medium shadow-md shadow-blue-500/20 transition-colors"
+                        className="px-5 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
                       >
                         View All Activity
                       </button>
@@ -448,64 +448,64 @@ export const NotificationsPage: React.FC = () => {
                       return (
                         <div
                           key={item.id}
-                          className={`relative rounded-2xl transition-all duration-200 p-4 sm:p-5 ${
+                          className={`relative rounded-2xl transition-all duration-200 p-5 sm:p-6 ${
                             isUnread
                               ? 'bg-[#172235] border border-[#2879E8] shadow-lg shadow-blue-500/5'
                               : 'bg-[#172235] border border-[#293B55] hover:border-[#3B4F6E]'
                           }`}
                         >
                           {/* Top Row: Unread/Read Badge & Timestamp */}
-                          <div className="flex items-center justify-between text-[11px] mb-2.5">
+                          <div className="flex items-center justify-between text-xs mb-3">
                             <div>
                               {isUnread ? (
-                                <span className="font-bold text-[#2879E8] tracking-wider uppercase text-[10px]">
+                                <span className="font-extrabold text-[#2879E8] tracking-wider uppercase text-xs">
                                   UNREAD
                                 </span>
                               ) : (
-                                <span className="font-medium text-[#7A8B9E] tracking-wider uppercase text-[10px]">
+                                <span className="font-semibold text-[#7A8B9E] tracking-wider uppercase text-xs">
                                   READ
                                 </span>
                               )}
                             </div>
-                            <span className="text-[#AAB6C8] text-xs">{item.timestamp}</span>
+                            <span className="text-[#AAB6C8] text-xs font-mono">{item.timestamp}</span>
                           </div>
 
                           {/* Card Body: Icon + Details */}
-                          <div className="flex items-start gap-3.5">
+                          <div className="flex items-start gap-4">
                             {/* Card Icon */}
                             <div className="shrink-0 mt-0.5">
                               {item.type === 'ai' && (
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2879E8] to-[#60A5FA] flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
-                                  <BrainIcon className="w-5 h-5 text-white" />
+                                <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#2879E8] to-[#60A5FA] flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
+                                  <BrainIcon className="w-6 h-6 text-white" />
                                 </div>
                               )}
                               {item.type === 'paypal' && (
-                                <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                                  <PayPalLogo className="w-5 h-5" />
+                                <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                                  <PayPalLogo className="w-6 h-6" />
                                 </div>
                               )}
                               {item.type === 'github' && (
-                                <div className="w-9 h-9 rounded-xl bg-[#101A2D] border border-[#293B55] flex items-center justify-center text-white shadow-sm">
-                                  <GitHubLogo className="w-5 h-5 text-white" />
+                                <div className="w-11 h-11 rounded-xl bg-[#101A2D] border border-[#293B55] flex items-center justify-center text-white shadow-sm">
+                                  <GitHubLogo className="w-6 h-6 text-white" />
                                 </div>
                               )}
                               {item.type === 'milestone' && (
-                                <div className="w-9 h-9 rounded-xl bg-[#101A2D] border border-[#293B55] flex items-center justify-center text-[#AAB6C8] shadow-sm">
-                                  <Flag className="w-4 h-4 text-[#AAB6C8]" />
+                                <div className="w-11 h-11 rounded-xl bg-[#101A2D] border border-[#293B55] flex items-center justify-center text-[#AAB6C8] shadow-sm">
+                                  <Flag className="w-5 h-5 text-[#AAB6C8]" />
                                 </div>
                               )}
                             </div>
 
                             {/* Details & Actions */}
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-sm font-bold text-white tracking-tight leading-snug">
+                              <h3 className="font-heading text-base font-bold text-white tracking-tight leading-snug">
                                 {item.title}
                               </h3>
 
-                              <div className="text-xs text-[#AAB6C8] mt-1 flex flex-wrap items-center gap-1.5 leading-relaxed">
+                              <div className="text-xs sm:text-sm text-[#AAB6C8] mt-1.5 flex flex-wrap items-center gap-2 leading-relaxed">
                                 <span>{item.description}</span>
                                 <span
-                                  className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
                                     item.projectBadgeColor === 'amber'
                                       ? 'bg-[#382B14] text-[#FBBF24] border border-[#784F17]'
                                       : item.projectBadgeColor === 'blue'
@@ -517,27 +517,27 @@ export const NotificationsPage: React.FC = () => {
                                 </span>
                               </div>
 
-                              {/* Clickable text link reference if present (e.g. GitHub Pull Request reference) */}
+                              {/* Clickable text link reference if present */}
                               {item.linkText && (
-                                <div className="mt-2">
+                                <div className="mt-2.5">
                                   <button
                                     onClick={() => {
                                       if (item.linkRoute) navigate(item.linkRoute);
                                     }}
-                                    className="text-xs text-[#2879E8] hover:text-[#60A5FA] underline font-medium inline-flex items-center gap-1 transition-colors text-left"
+                                    className="text-xs sm:text-sm text-[#2879E8] hover:text-[#60A5FA] underline font-medium inline-flex items-center gap-1.5 transition-colors text-left"
                                   >
                                     <span>{item.linkText}</span>
-                                    <ExternalLink className="w-3 h-3 shrink-0" />
+                                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                                   </button>
                                 </div>
                               )}
 
                               {/* Card Action Buttons */}
-                              <div className="flex flex-wrap items-center gap-2 mt-3 pt-1">
+                              <div className="flex flex-wrap items-center gap-2.5 mt-4 pt-1">
                                 {item.actions?.primaryText && (
                                   <button
                                     onClick={item.actions.primaryAction}
-                                    className="px-3.5 py-1.5 rounded-lg bg-[#2879E8] hover:bg-blue-600 text-white text-xs font-semibold shadow-xs transition-colors"
+                                    className="px-4 py-2 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors"
                                   >
                                     {item.actions.primaryText}
                                   </button>
@@ -546,7 +546,7 @@ export const NotificationsPage: React.FC = () => {
                                 {item.actions?.secondaryText && (
                                   <button
                                     onClick={item.actions.secondaryAction}
-                                    className="px-3 py-1.5 rounded-lg bg-[#152438] hover:bg-[#1E334F] text-[#60A5FA] border border-[#2879E8]/30 text-xs font-medium transition-colors"
+                                    className="px-4 py-2 rounded-xl bg-[#152438] hover:bg-[#1E334F] text-[#60A5FA] border border-[#2879E8]/30 text-xs sm:text-sm font-medium transition-colors"
                                   >
                                     {item.actions.secondaryText}
                                   </button>
@@ -554,14 +554,14 @@ export const NotificationsPage: React.FC = () => {
 
                                 <button
                                   onClick={() => handleDismiss(item.id)}
-                                  className="px-2.5 py-1.5 rounded-lg text-[#AAB6C8] hover:text-white hover:bg-[#101A2D] text-xs font-medium transition-colors"
+                                  className="px-3 py-2 rounded-xl text-[#AAB6C8] hover:text-white hover:bg-[#101A2D] text-xs sm:text-sm font-medium transition-colors"
                                 >
                                   Dismiss
                                 </button>
 
                                 <button
                                   onClick={() => handleToggleRead(item.id)}
-                                  className="ml-auto px-2 py-1 text-[11px] text-[#AAB6C8] hover:text-white transition-colors"
+                                  className="ml-auto px-2.5 py-1 text-xs text-[#AAB6C8] hover:text-white transition-colors"
                                   title={isUnread ? 'Mark as read' : 'Mark as unread'}
                                 >
                                   {isUnread ? 'Mark as read' : 'Mark as unread'}
@@ -577,61 +577,61 @@ export const NotificationsPage: React.FC = () => {
               </div>
 
               {/* RIGHT COLUMN: NOTIFICATION UTILITY PANEL (4 of 12 cols) */}
-              <div className="lg:col-span-4 space-y-4">
+              <div className="lg:col-span-4 space-y-5">
                 {/* 1. UNREAD COUNT CARD */}
-                <div className="rounded-2xl bg-[#172235] border border-[#293B55] p-5 space-y-3">
-                  <div className="text-[11px] font-bold text-[#AAB6C8] uppercase tracking-wider">
+                <div className="rounded-2xl bg-[#172235] border border-[#293B55] p-6 space-y-4">
+                  <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
                     NOTIFICATION UTILITY PANEL
                   </div>
 
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-medium text-white">Unread Count:</span>
-                    <span className="text-3xl font-extrabold text-[#2879E8] tabular-nums">
+                    <span className="text-base font-medium text-white">Unread Count:</span>
+                    <span className="text-4xl font-extrabold text-[#2879E8] tabular-nums">
                       {unreadCount}
                     </span>
                   </div>
 
-                  <div className="pt-2 border-t border-[#293B55]/70 flex items-center justify-between text-xs">
+                  <div className="pt-3 border-t border-[#293B55]/70 flex items-center justify-between text-xs sm:text-sm">
                     <span className="text-[#AAB6C8]">Quick Action</span>
                     <button
                       onClick={handleMarkAllAsRead}
-                      className="text-[#2879E8] hover:text-[#60A5FA] font-medium transition-colors inline-flex items-center gap-1"
+                      className="text-[#2879E8] hover:text-[#60A5FA] font-semibold transition-colors inline-flex items-center gap-1.5"
                     >
-                      <CheckCheck className="w-3.5 h-3.5" />
+                      <CheckCheck className="w-4 h-4" />
                       Mark all as read
                     </button>
                   </div>
                 </div>
 
                 {/* 2. NOTIFICATION PREFERENCES CARD */}
-                <div className="rounded-2xl bg-[#172235] border border-[#293B55] p-5 space-y-4">
+                <div className="rounded-2xl bg-[#172235] border border-[#293B55] p-6 space-y-5">
                   <div>
-                    <h3 className="text-sm font-bold text-white tracking-tight">
+                    <h3 className="text-base font-bold text-white tracking-tight">
                       Notification Preferences
                     </h3>
-                    <p className="text-xs text-[#AAB6C8] mt-0.5">
+                    <p className="text-xs sm:text-sm text-[#AAB6C8] mt-1">
                       Manage your channel settings.
                     </p>
                   </div>
 
                   {/* Channel Toggles */}
-                  <div className="space-y-3 pt-1">
+                  <div className="space-y-3.5 pt-1">
                     {/* Email Toggle */}
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-2.5 text-xs text-[#F1F5F9] font-medium">
-                        <Mail className="w-4 h-4 text-[#AAB6C8]" />
+                    <div className="flex items-center justify-between py-1.5">
+                      <div className="flex items-center gap-3 text-xs sm:text-sm text-[#F1F5F9] font-medium">
+                        <Mail className="w-5 h-5 text-[#AAB6C8]" />
                         <span>Email</span>
                       </div>
                       <button
                         onClick={() => handleTogglePreference('email')}
-                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                           preferences.email ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
                         }`}
                         role="switch"
                         aria-checked={preferences.email}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
                             preferences.email ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />
@@ -639,14 +639,14 @@ export const NotificationsPage: React.FC = () => {
                     </div>
 
                     {/* Slack Toggle */}
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-2.5 text-xs text-[#F1F5F9] font-medium">
-                        <MessageSquare className="w-4 h-4 text-[#AAB6C8]" />
+                    <div className="flex items-center justify-between py-1.5">
+                      <div className="flex items-center gap-3 text-xs sm:text-sm text-[#F1F5F9] font-medium">
+                        <MessageSquare className="w-5 h-5 text-[#AAB6C8]" />
                         <span>Slack</span>
                       </div>
                       <button
                         onClick={() => handleTogglePreference('slack')}
-                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                           preferences.slack ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
                         }`}
                         role="switch"
@@ -661,21 +661,21 @@ export const NotificationsPage: React.FC = () => {
                     </div>
 
                     {/* Push Toggle */}
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-2.5 text-xs text-[#F1F5F9] font-medium">
-                        <Smartphone className="w-4 h-4 text-[#AAB6C8]" />
+                    <div className="flex items-center justify-between py-1.5">
+                      <div className="flex items-center gap-3 text-xs sm:text-sm text-[#F1F5F9] font-medium">
+                        <Smartphone className="w-5 h-5 text-[#AAB6C8]" />
                         <span>Push</span>
                       </div>
                       <button
                         onClick={() => handleTogglePreference('push')}
-                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                           preferences.push ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
                         }`}
                         role="switch"
                         aria-checked={preferences.push}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
                             preferences.push ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />

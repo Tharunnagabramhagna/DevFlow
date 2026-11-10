@@ -327,20 +327,20 @@ export const MilestoneVerificationPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 1: PAGE HEADER & MILESTONE SELECTOR */}
-        <header className="px-4 sm:px-8 pt-5 pb-4 border-b border-[#26344B] bg-[#0A101D] shrink-0 space-y-3">
+        <header className="px-4 sm:px-8 pt-6 pb-5 border-b border-[#26344B] bg-[#0A101D] shrink-0 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3.5">
               <button
                 onClick={openMobileSidebar}
-                className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg"
+                className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-xl"
               >
                 <Menu className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+                <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
                   Milestone Verification
                 </h1>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="font-sans text-sm sm:text-base text-slate-400 mt-1.5">
                   Review AI-generated evidence assessments and milestone requirements.
                 </p>
               </div>
@@ -349,105 +349,105 @@ export const MilestoneVerificationPage: React.FC = () => {
             {/* Quick Link to AI Agents page if user wants pipeline view */}
             <button
               onClick={() => navigate('/verification')}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#111C30] hover:bg-[#152238] border border-[#26344B] text-xs text-blue-400 font-medium transition-colors"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-[#111C30] hover:bg-[#152238] border border-[#26344B] text-xs sm:text-sm text-blue-400 font-semibold transition-colors"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-4 h-4" />
               <span>AI Agents Pipeline</span>
             </button>
           </div>
 
           {/* Milestone Selector Section */}
-          <div className="space-y-1.5 pt-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="space-y-2 pt-1">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
               Milestone Selector
             </span>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3.5">
               {/* Project Dropdown */}
-              <div className="relative min-w-[200px]">
+              <div className="relative min-w-[220px]">
                 <select
                   value={selectedProject}
                   onChange={(e) => {
                     setSelectedProject(e.target.value);
                     showToast('Project Selected', `Loaded verification scope for ${e.target.value}.`, 'info');
                   }}
-                  className="w-full bg-[#111C30] text-xs font-semibold text-white px-3.5 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-8"
+                  className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-4 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
                 >
                   <option value="Project Alpha v1.2">Project Alpha v1.2</option>
                   <option value="Apollo Portal">Apollo Portal</option>
                   <option value="Project Nova">Project Nova</option>
                   <option value="Aether Platform">Aether Platform</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Sprint Dropdown */}
-              <div className="relative min-w-[220px]">
+              <div className="relative min-w-[240px]">
                 <select
                   value={selectedSprint}
                   onChange={(e) => {
                     setSelectedSprint(e.target.value);
                     showToast('Sprint Selected', `Telemetry synchronized for ${e.target.value}.`, 'info');
                   }}
-                  className="w-full bg-[#111C30] text-xs font-semibold text-white px-3.5 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-8"
+                  className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-4 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
                 >
                   <option value="Sprint 8 - Backend API">Sprint 8 - Backend API</option>
                   <option value="Sprint 7 - Auth Gateway">Sprint 7 - Auth Gateway</option>
                   <option value="Sprint 9 - PayPal Settlements">Sprint 9 - PayPal Settlements</option>
                   <option value="Sprint 10 - Enterprise Audit">Sprint 10 - Enterprise Audit</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           </div>
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-5">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
           {/* PHASE 2: VERIFICATION SUMMARY CARD */}
-          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+          <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6">
+            <div className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider mb-4">
               Verification Summary
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-5 items-center">
               {/* 1. Requirements Evaluated */}
-              <div className="space-y-1">
-                <span className="text-xs text-slate-400 block font-medium">Requirements Evaluated</span>
-                <div className="text-2xl font-bold text-white font-mono">
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Requirements Evaluated</span>
+                <div className="text-3xl font-bold text-white font-mono">
                   {metrics.requirementsEvaluated}
                 </div>
               </div>
 
               {/* 2. Supported Requirements */}
-              <div className="space-y-1">
-                <span className="text-xs text-slate-400 block font-medium">Supported Requirements</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                  <span className="text-2xl font-bold text-white font-mono">
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Supported Requirements</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-3 h-3 rounded-full bg-emerald-400" />
+                  <span className="text-3xl font-bold text-white font-mono">
                     {metrics.supportedRequirements}
                   </span>
                 </div>
               </div>
 
               {/* 3. Partially Supported */}
-              <div className="space-y-1">
-                <span className="text-xs text-slate-400 block font-medium">Partially Supported</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                  <span className="text-2xl font-bold text-white font-mono">
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Partially Supported</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-3 h-3 rounded-full bg-amber-400" />
+                  <span className="text-3xl font-bold text-white font-mono">
                     {metrics.partiallySupported}
                   </span>
                 </div>
               </div>
 
               {/* 4. Missing Evidence */}
-              <div className="space-y-1">
-                <span className="text-xs text-slate-400 block font-medium">Missing Evidence</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center text-[8px] font-bold text-amber-400">
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Missing Evidence</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-3.5 h-3.5 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center text-[9px] font-bold text-amber-400">
                     !
                   </div>
-                  <span className="text-2xl font-bold text-white font-mono">
+                  <span className="text-3xl font-bold text-white font-mono">
                     {metrics.missingEvidence}
                   </span>
                 </div>
@@ -467,26 +467,26 @@ export const MilestoneVerificationPage: React.FC = () => {
           {/* MIDDLE GRID: 3 PANELS (REQUIREMENT ANALYSIS, EVIDENCE PANEL, AI ANALYSIS PANEL) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* PHASE 3: REQUIREMENT ANALYSIS (LEFT 6 COLS) */}
-            <div className="lg:col-span-6 rounded-xl bg-[#111C30] border border-[#26344B] overflow-hidden flex flex-col justify-between">
+            <div className="lg:col-span-6 rounded-2xl bg-[#111C30] border border-[#26344B] overflow-hidden flex flex-col justify-between">
               <div>
-                <div className="px-4 py-3 border-b border-[#26344B] bg-[#0C1524] flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="px-5 py-3.5 border-b border-[#26344B] bg-[#0C1524] flex items-center justify-between">
+                  <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                     Requirement Analysis
                   </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono">
                     5 Criteria
                   </span>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-[#26344B] text-[10px] text-slate-400 uppercase tracking-wider bg-[#0C1524]/60">
-                        <th className="py-2.5 px-3 font-semibold">Description</th>
-                        <th className="py-2.5 px-2 font-semibold text-center">Evidence Reference</th>
-                        <th className="py-2.5 px-2 font-semibold">Evidence Support Status</th>
-                        <th className="py-2.5 px-2 font-semibold">Confidence Indicator</th>
-                        <th className="py-2.5 px-3 font-semibold">AI Explanation</th>
+                      <tr className="border-b border-[#26344B] text-xs text-slate-400 uppercase tracking-wider bg-[#0C1524]/60">
+                        <th className="py-3 px-3.5 font-semibold">Description</th>
+                        <th className="py-3 px-2.5 font-semibold text-center">Evidence Reference</th>
+                        <th className="py-3 px-2.5 font-semibold">Evidence Support Status</th>
+                        <th className="py-3 px-2.5 font-semibold">Confidence Indicator</th>
+                        <th className="py-3 px-3.5 font-semibold">AI Explanation</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
@@ -499,53 +499,53 @@ export const MilestoneVerificationPage: React.FC = () => {
                               className="hover:bg-[#152238]/60 transition-colors cursor-pointer group"
                             >
                               {/* Description */}
-                              <td className="py-3 px-3 max-w-[150px] font-medium text-slate-200 leading-snug">
+                              <td className="py-3.5 px-3.5 max-w-[170px] font-medium text-slate-200 leading-snug text-xs sm:text-sm">
                                 {req.description}
                               </td>
 
                               {/* Evidence Reference Icon */}
-                              <td className="py-3 px-2 text-center whitespace-nowrap">
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400">
-                                  <RotateCw className="w-3 h-3" />
+                              <td className="py-3.5 px-2.5 text-center whitespace-nowrap">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400">
+                                  <RotateCw className="w-3.5 h-3.5" />
                                 </span>
                               </td>
 
                               {/* Support Status Badge */}
-                              <td className="py-3 px-2 whitespace-nowrap">
+                              <td className="py-3.5 px-2.5 whitespace-nowrap">
                                 <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${
                                     req.supportStatus === 'Green'
                                       ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
                                       : 'bg-amber-950/70 text-amber-400 border border-amber-500/30'
                                   }`}
                                 >
                                   {req.supportStatus === 'Green' ? (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
                                   ) : (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    <span className="w-2 h-2 rounded-full bg-amber-400" />
                                   )}
                                   <span>{req.supportStatus}</span>
                                 </span>
                               </td>
 
                               {/* Confidence Indicator */}
-                              <td className="py-3 px-2 whitespace-nowrap">
-                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                              <td className="py-3.5 px-2.5 whitespace-nowrap">
+                                <span className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-medium text-emerald-400">
+                                  <CheckCircle2 className="w-4 h-4" />
                                   <span className="hidden sm:inline">{req.confidence}</span>
                                 </span>
                               </td>
 
                               {/* AI Explanation / Accordion trigger */}
-                              <td className="py-3 px-3 text-slate-300">
-                                <div className="flex items-center justify-between gap-1 max-w-[150px]">
-                                  <span className="truncate text-[11px] text-slate-400">
+                              <td className="py-3.5 px-3.5 text-slate-300">
+                                <div className="flex items-center justify-between gap-1.5 max-w-[170px]">
+                                  <span className="truncate text-xs text-slate-400">
                                     {req.shortExplanation}
                                   </span>
                                   {isExpanded ? (
-                                    <ChevronUp className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
                                   ) : (
-                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                                   )}
                                 </div>
                               </td>
@@ -554,26 +554,26 @@ export const MilestoneVerificationPage: React.FC = () => {
                             {/* Expanded Explanation Accordion */}
                             {isExpanded && (
                               <tr className="bg-[#0C1524]">
-                                <td colSpan={5} className="p-3 text-xs text-slate-300 border-b border-[#26344B]">
-                                  <div className="space-y-2 p-2.5 rounded-lg bg-[#111C30] border border-[#26344B]/80">
+                                <td colSpan={5} className="p-4 text-sm text-slate-300 border-b border-[#26344B]">
+                                  <div className="space-y-2.5 p-3.5 rounded-xl bg-[#111C30] border border-[#26344B]/80">
                                     <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+                                      <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
                                         Full AST Evaluation Proof
                                       </span>
-                                      <span className="text-[10px] text-slate-400 font-mono">
+                                      <span className="text-xs text-slate-400 font-mono">
                                         Evidence: {req.evidenceRef}
                                       </span>
                                     </div>
-                                    <p className="text-[11px] leading-relaxed text-slate-300">
+                                    <p className="text-xs sm:text-sm leading-relaxed text-slate-300">
                                       {req.fullExplanation}
                                     </p>
                                     {req.matchedCommits && (
-                                      <div className="flex items-center gap-2 pt-1 text-[10px] text-slate-400 font-mono">
+                                      <div className="flex items-center gap-2 pt-1.5 text-xs text-slate-400 font-mono">
                                         <span>Matched Commit Hashes:</span>
                                         {req.matchedCommits.map((sha) => (
                                           <span
                                             key={sha}
-                                            className="px-1.5 py-0.5 rounded bg-[#152238] text-slate-200 border border-[#26344B]"
+                                            className="px-2 py-0.5 rounded bg-[#152238] text-slate-200 border border-[#26344B]"
                                           >
                                             {sha.substring(0, 7)}
                                           </span>
@@ -592,105 +592,105 @@ export const MilestoneVerificationPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-[#0C1524] border-t border-[#26344B] flex items-center justify-between text-[11px] text-slate-400">
+              <div className="p-3.5 bg-[#0C1524] border-t border-[#26344B] flex items-center justify-between text-xs text-slate-400">
                 <span>Click any row to inspect complete syntactic proof.</span>
-                <span className="font-mono text-emerald-400">100% Evaluated</span>
+                <span className="font-mono text-emerald-400 font-bold">100% Evaluated</span>
               </div>
             </div>
 
             {/* PHASE 4: EVIDENCE PANEL (MIDDLE 3 COLS) */}
-            <div className="lg:col-span-3 rounded-xl bg-[#111C30] border border-[#26344B] p-4 space-y-4">
-              <div className="pb-2 border-b border-[#26344B]/60">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="lg:col-span-3 rounded-2xl bg-[#111C30] border border-[#26344B] p-5 space-y-5">
+              <div className="pb-2.5 border-b border-[#26344B]/60">
+                <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                   Evidence Panel
                 </span>
               </div>
 
               {/* Subsection A: Commit References */}
-              <div className="space-y-1.5 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-2 text-xs sm:text-sm">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Commit References
                 </span>
-                <div className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1">
+                <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs text-blue-400 font-semibold">
+                    <span className="font-mono text-xs sm:text-sm text-blue-400 font-semibold">
                       commit: 8d494325368
                     </span>
                     <button
                       onClick={() => handleCopySha('8d494325368')}
-                      className="px-1.5 py-0.5 rounded bg-[#152238] border border-[#26344B] text-[10px] text-slate-300 hover:text-white flex items-center gap-1 font-mono"
+                      className="px-2 py-0.5 rounded-md bg-[#152238] border border-[#26344B] text-xs text-slate-300 hover:text-white flex items-center gap-1 font-mono cursor-pointer"
                       title="Copy full commit SHA"
                     >
                       {copiedSha === '8d494325368' ? (
                         <>
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
                           <span className="text-emerald-400">Copied</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3.5 h-3.5" />
                           <span>protocol</span>
                         </>
                       )}
                     </button>
                   </div>
-                  <div className="text-[11px] text-slate-300">
+                  <div className="text-xs sm:text-sm text-slate-300">
                     Author: <span className="text-white font-medium">Dackerd Alpha</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 font-mono">
+                  <div className="text-xs text-slate-400 font-mono">
                     Timestamp: 8 Jul 2024 11:33:47
                   </div>
-                  <div className="text-[11px] text-slate-400 truncate">
+                  <div className="text-xs text-slate-400 truncate">
                     Commit message: Implement user auth...
                   </div>
                 </div>
               </div>
 
               {/* Subsection B: Changed Files */}
-              <div className="space-y-1.5 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-2 text-xs sm:text-sm">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Changed Files
                 </span>
-                <div className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1 font-mono text-[11px] text-slate-300">
+                <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5 font-mono text-xs text-slate-300">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>changed.iss</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>document.php</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>cooument.json</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>changed.log</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>changed.me</span>
                   </div>
                 </div>
               </div>
 
               {/* Subsection C: Test Results */}
-              <div className="space-y-1.5 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-2 text-xs sm:text-sm">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Test Results
                 </span>
-                <div className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1.5 text-[11px]">
+                <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2 text-xs sm:text-sm">
                   <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>Test results: high</span>
                   </div>
                   <div className="flex items-center gap-2 text-amber-400 font-medium">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>Test results: missind</span>
                   </div>
                   <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>Test results: high</span>
                   </div>
                 </div>
@@ -698,32 +698,32 @@ export const MilestoneVerificationPage: React.FC = () => {
             </div>
 
             {/* PHASE 5: AI ANALYSIS PANEL (RIGHT 3 COLS) */}
-            <div className="lg:col-span-3 rounded-xl bg-[#111C30] border border-[#26344B] p-4 space-y-4 relative overflow-hidden">
-              <div className="pb-2 border-b border-[#26344B]/60">
-                <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+            <div className="lg:col-span-3 rounded-2xl bg-[#111C30] border border-[#26344B] p-5 space-y-5 relative overflow-hidden">
+              <div className="pb-2.5 border-b border-[#26344B]/60">
+                <span className="text-xs sm:text-[13px] font-bold text-white uppercase tracking-wider">
                   AI Analysis Panel
                 </span>
               </div>
 
               {/* Section A: What is Supported */}
-              <div className="space-y-1 text-xs">
-                <span className="font-bold text-slate-200 text-xs block">
+              <div className="space-y-1.5 text-xs sm:text-sm">
+                <span className="font-bold text-slate-200 text-xs sm:text-sm block">
                   What is Supported
                 </span>
-                <ul className="space-y-1 text-[11px] text-slate-300">
-                  <li className="flex items-start gap-1.5">
+                <ul className="space-y-1.5 text-xs text-slate-300">
+                  <li className="flex items-start gap-2">
                     <span className="text-emerald-400 font-bold">•</span>
                     <span>What is supported</span>
                   </li>
-                  <li className="flex items-start gap-1.5">
+                  <li className="flex items-start gap-2">
                     <span className="text-emerald-400 font-bold">•</span>
                     <span>What is supported</span>
                   </li>
-                  <li className="flex items-start gap-1.5">
+                  <li className="flex items-start gap-2">
                     <span className="text-emerald-400 font-bold">•</span>
                     <span>What is user supported</span>
                   </li>
-                  <li className="flex items-start gap-1.5">
+                  <li className="flex items-start gap-2">
                     <span className="text-emerald-400 font-bold">•</span>
                     <span>What is auchentication</span>
                   </li>
@@ -731,20 +731,20 @@ export const MilestoneVerificationPage: React.FC = () => {
               </div>
 
               {/* Section B: What is Incomplete */}
-              <div className="space-y-1 text-xs pt-1 border-t border-[#26344B]/40">
-                <span className="font-bold text-slate-200 text-xs block">
+              <div className="space-y-1.5 text-xs sm:text-sm pt-1.5 border-t border-[#26344B]/40">
+                <span className="font-bold text-slate-200 text-xs sm:text-sm block">
                   What is Incomplete
                 </span>
-                <ul className="space-y-1 text-[11px] text-slate-300">
-                  <li className="flex items-start gap-1.5">
+                <ul className="space-y-1.5 text-xs text-slate-300">
+                  <li className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">•</span>
                     <span>What is Incomplete</span>
                   </li>
-                  <li className="flex items-start gap-1.5">
+                  <li className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">•</span>
                     <span>What is Incomplete</span>
                   </li>
-                  <li className="flex items-start gap-1.5">
+                  <li className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">•</span>
                     <span>What is Incompliate Missing</span>
                   </li>
@@ -752,16 +752,16 @@ export const MilestoneVerificationPage: React.FC = () => {
               </div>
 
               {/* Section C: What Evidence is Missing */}
-              <div className="space-y-1 text-xs pt-1 border-t border-[#26344B]/40">
-                <span className="font-bold text-slate-200 text-xs block">
+              <div className="space-y-1.5 text-xs sm:text-sm pt-1.5 border-t border-[#26344B]/40">
+                <span className="font-bold text-slate-200 text-xs sm:text-sm block">
                   What Evidence is Missing
                 </span>
-                <ul className="space-y-1 text-[11px] text-slate-300">
-                  <li className="flex items-start gap-1.5">
+                <ul className="space-y-1.5 text-xs text-slate-300">
+                  <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
                     <span>What Evidence is Missing</span>
                   </li>
-                  <li className="flex items-start gap-1.5">
+                  <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
                     <span>What Evidence is Missing Missing</span>
                   </li>
@@ -769,20 +769,20 @@ export const MilestoneVerificationPage: React.FC = () => {
               </div>
 
               {/* Section D: Suggested Next Steps */}
-              <div className="space-y-1 text-xs pt-1 border-t border-[#26344B]/40">
-                <span className="font-bold text-slate-200 text-xs block">
+              <div className="space-y-1.5 text-xs sm:text-sm pt-1.5 border-t border-[#26344B]/40">
+                <span className="font-bold text-slate-200 text-xs sm:text-sm block">
                   Suggested Next Steps
                 </span>
-                <ul className="space-y-1 text-[11px] text-blue-400 font-medium">
-                  <li className="flex items-start gap-1.5 hover:text-white cursor-pointer transition-colors">
+                <ul className="space-y-1.5 text-xs text-blue-400 font-medium">
+                  <li className="flex items-start gap-2 hover:text-white cursor-pointer transition-colors">
                     <span>•</span>
                     <span>Suggested struse of Client Review</span>
                   </li>
-                  <li className="flex items-start gap-1.5 hover:text-white cursor-pointer transition-colors">
+                  <li className="flex items-start gap-2 hover:text-white cursor-pointer transition-colors">
                     <span>•</span>
                     <span>Request libed Next Steps</span>
                   </li>
-                  <li className="flex items-start gap-1.5 hover:text-white cursor-pointer transition-colors">
+                  <li className="flex items-start gap-2 hover:text-white cursor-pointer transition-colors">
                     <span>•</span>
                     <span>Suggested Next Steps for confidences</span>
                   </li>
@@ -791,7 +791,7 @@ export const MilestoneVerificationPage: React.FC = () => {
 
               {/* Decorative Sparkle Graphic (from reference image) */}
               <div className="absolute bottom-2 right-2 opacity-25 pointer-events-none">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" className="text-blue-300">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="text-blue-300">
                   <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
                 </svg>
               </div>
@@ -799,61 +799,61 @@ export const MilestoneVerificationPage: React.FC = () => {
           </div>
 
           {/* PHASE 6: HUMAN REVIEW SECTION (FULL-WIDTH BOTTOM CARD) */}
-          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5 space-y-3">
+          <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-bold text-white tracking-wide">
+                <h3 className="text-sm font-bold text-white tracking-wide">
                   Human Review Section
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 mt-1">
                   Authorize milestone transition or request evidence before client sign-off.
                 </p>
               </div>
 
               {/* Live Review Status Badge */}
               {reviewState === 'approved' && (
-                <span className="px-2.5 py-1 rounded-md bg-emerald-950/70 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5" /> Approved for Client Review
+                <span className="px-3 py-1 rounded-lg bg-emerald-950/70 text-emerald-300 border border-emerald-500/40 text-xs sm:text-sm font-bold flex items-center gap-2">
+                  <Check className="w-4 h-4" /> Approved for Client Review
                 </span>
               )}
               {reviewState === 'evidence_requested' && (
-                <span className="px-2.5 py-1 rounded-md bg-amber-950/70 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" /> Additional Evidence Requested
+                <span className="px-3 py-1 rounded-lg bg-amber-950/70 text-amber-300 border border-amber-500/40 text-xs sm:text-sm font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" /> Additional Evidence Requested
                 </span>
               )}
               {reviewState === 'further_review' && (
-                <span className="px-2.5 py-1 rounded-md bg-blue-950/70 text-blue-300 border border-blue-500/40 text-xs font-bold flex items-center gap-1.5">
-                  <RotateCw className="w-3.5 h-3.5" /> Queued for Technical Audit
+                <span className="px-3 py-1 rounded-lg bg-blue-950/70 text-blue-300 border border-blue-500/40 text-xs sm:text-sm font-bold flex items-center gap-2">
+                  <RotateCw className="w-4 h-4" /> Queued for Technical Audit
                 </span>
               )}
             </div>
 
             {/* Three Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-3.5 pt-1.5">
               <button
                 onClick={() => setApproveModalOpen(true)}
                 disabled={reviewState === 'approved'}
-                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 transition-colors cursor-pointer"
               >
                 Approve for Client Review
               </button>
 
               <button
                 onClick={() => setRequestEvidenceModalOpen(true)}
-                className="px-4 py-2 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs font-medium transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
               >
                 Request Additional Evidence
               </button>
 
               <button
                 onClick={() => setFurtherReviewModalOpen(true)}
-                className="px-4 py-2 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs font-medium transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
               >
                 Mark as Needing Further Review
               </button>
             </div>
 
-            <div className="pt-2 border-t border-[#26344B]/40 text-[10px] text-slate-400">
+            <div className="pt-2.5 border-t border-[#26344B]/40 text-xs text-slate-400">
               DevFlow Escrow Gate: Approving for client review does NOT trigger payment settlement. Invoices are dispatched solely after formal client sign-off.
             </div>
           </div>

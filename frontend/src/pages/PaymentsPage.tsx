@@ -423,61 +423,61 @@ export const PaymentsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 3: PAGE HEADER */}
-        <header className="h-16 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
+        <header className="h-18 sm:h-20 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
-              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg"
+              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-xl"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+              <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
                 Invoices
               </h1>
-              <p className="text-xs text-slate-400 mt-1 hidden sm:block">
+              <p className="font-sans text-sm text-slate-400 mt-1 hidden sm:block">
                 Manage milestone-based invoices and track client payments.
               </p>
             </div>
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             {/* Settings Icon */}
             <button
               onClick={() => navigate('/settings')}
-              className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-lg transition-colors"
+              className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl transition-colors"
               title="Settings"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-5 h-5" />
             </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-lg relative transition-colors"
+                className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 space-y-2 text-xs">
+                <div className="absolute right-0 mt-2 w-80 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-4 z-50 space-y-2.5 text-xs sm:text-sm">
                   <div className="flex items-center justify-between border-b border-[#26344B] pb-2 font-bold text-white">
                     <span>Invoicing Notifications</span>
                     <button
                       onClick={() => setNotificationsOpen(false)}
                       className="text-slate-400 hover:text-white"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
                     <span className="font-semibold text-emerald-400">INV-2026-001</span> settled via PayPal Webhook ($7,500.00).
                   </div>
-                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
                     <span className="font-semibold text-amber-400">INV-2026-004</span> client review completed.
                   </div>
                 </div>
@@ -487,14 +487,14 @@ export const PaymentsPage: React.FC = () => {
             {/* User Profile Avatar */}
             <div
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-[#152238] transition-colors"
+              className="flex items-center gap-2 cursor-pointer p-1 rounded-xl hover:bg-[#152238] transition-colors"
             >
               <img
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
                 alt="Alex Morgan"
-                className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/40"
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500/40"
               />
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <ChevronDown className="w-4 h-4 text-slate-400" />
             </div>
 
             {/* Create Invoice Button */}
@@ -507,37 +507,37 @@ export const PaymentsPage: React.FC = () => {
                 }
                 setIsCreateInvoiceModalOpen(true);
               }}
-              className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-colors"
+              className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               <span>Create Invoice</span>
             </button>
           </div>
         </header>
 
         {/* Scrollable Dashboard Workspace */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-5">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
           {/* PHASE 4: SEARCH & FILTER TOOLBAR */}
-          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-3">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5">
+            <div className="flex flex-wrap items-center gap-3.5">
               {/* Search input */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search invoices, clients, or projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-white placeholder-slate-400 pl-8 pr-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-white placeholder-slate-400 pl-10 pr-4 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 />
               </div>
 
               {/* Status Dropdown */}
-              <div className="relative min-w-[130px]">
+              <div className="relative min-w-[140px]">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-8 cursor-pointer"
                 >
                   <option value="All">Status: All</option>
                   <option value="Paid">Paid</option>
@@ -546,15 +546,15 @@ export const PaymentsPage: React.FC = () => {
                   <option value="Overdue">Overdue</option>
                   <option value="Draft">Draft</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Project Dropdown */}
-              <div className="relative min-w-[160px]">
+              <div className="relative min-w-[170px]">
                 <select
                   value={projectFilter}
                   onChange={(e) => setProjectFilter(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-8 cursor-pointer"
                 >
                   <option value="Select Project">Project: Select Project</option>
                   <option value="Apollo Mobile">Apollo Mobile</option>
@@ -563,15 +563,15 @@ export const PaymentsPage: React.FC = () => {
                   <option value="Delta Platform">Delta Platform</option>
                   <option value="Beta Engine">Beta Engine</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Client Dropdown */}
-              <div className="relative min-w-[150px]">
+              <div className="relative min-w-[160px]">
                 <select
                   value={clientFilter}
                   onChange={(e) => setClientFilter(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-8 cursor-pointer"
                 >
                   <option value="Select Client">Client: Select Client</option>
                   <option value="Acme Corp">Acme Corp</option>
@@ -580,22 +580,22 @@ export const PaymentsPage: React.FC = () => {
                   <option value="Future Tech">Future Tech</option>
                   <option value="TechSolutions">TechSolutions</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Date Range Dropdown */}
-              <div className="relative min-w-[140px]">
+              <div className="relative min-w-[150px]">
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-7 cursor-pointer"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-8 cursor-pointer"
                 >
                   <option value="Select Range">Date: Select Range</option>
                   <option value="This Month">This Month</option>
                   <option value="Last 30 Days">Last 30 Days</option>
                   <option value="Q4 2026">Q4 2026</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Clear Filters Button if filtered */}
@@ -608,9 +608,9 @@ export const PaymentsPage: React.FC = () => {
                     setClientFilter('Select Client');
                     setDateFilter('Select Range');
                   }}
-                  className="text-xs text-blue-400 hover:text-white flex items-center gap-1 font-semibold transition-colors"
+                  className="text-xs sm:text-sm text-blue-400 hover:text-white flex items-center gap-1.5 font-semibold transition-colors px-2 py-1"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                   <span>Clear</span>
                 </button>
               )}
@@ -618,77 +618,77 @@ export const PaymentsPage: React.FC = () => {
           </div>
 
           {/* PHASE 5: FINANCIAL SUMMARY (4 KPI CARDS) */}
-          <div className="space-y-1.5">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="space-y-2">
+            <span className="font-heading text-xs font-bold text-slate-400 uppercase tracking-wider block">
               3. FINANCIAL SUMMARY
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {/* Card 1: Total Invoiced */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-                  <DollarSign className="w-5 h-5" />
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <DollarSign className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-400 block font-medium">Total Invoiced</span>
-                  <div className="text-xl font-bold text-white font-mono tracking-tight">
+                  <span className="font-sans text-xs text-slate-400 block font-medium">Total Invoiced</span>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
                     ${summaryMetrics.totalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>
 
               {/* Card 2: Paid Invoices */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                    <DollarSign className="w-5 h-5" />
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                    <DollarSign className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Paid Invoices</span>
-                    <div className="text-xl font-bold text-white font-mono tracking-tight">
+                    <span className="font-sans text-xs text-slate-400 block font-medium">Paid Invoices</span>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
                       ${summaryMetrics.paidInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/30">
-                  <TrendingUp className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-xs text-emerald-400 font-semibold font-sans bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-500/30">
+                  <TrendingUp className="w-3.5 h-3.5" />
                   <span>Trend</span>
                 </div>
               </div>
 
               {/* Card 3: Pending Invoices */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-                    <FileText className="w-5 h-5" />
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                    <FileText className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Pending Invoices</span>
-                    <div className="text-xl font-bold text-white font-mono tracking-tight">
+                    <span className="font-sans text-xs text-slate-400 block font-medium">Pending Invoices</span>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
                       ${summaryMetrics.pendingInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-blue-400 font-semibold bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-500/30">
-                  <TrendingUp className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-xs text-blue-400 font-semibold font-sans bg-blue-950/40 px-2 py-1 rounded-lg border border-blue-500/30">
+                  <TrendingUp className="w-3.5 h-3.5" />
                   <span>Trend</span>
                 </div>
               </div>
 
               {/* Card 4: Overdue Invoices */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
-                    <AlertTriangle className="w-5 h-5" />
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                    <AlertTriangle className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Overdue Invoices</span>
-                    <div className="text-xl font-bold text-white font-mono tracking-tight">
+                    <span className="font-sans text-xs text-slate-400 block font-medium">Overdue Invoices</span>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
                       ${summaryMetrics.overdueInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-rose-400 font-semibold bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-500/30">
-                  <TrendingDown className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-xs text-rose-400 font-semibold bg-rose-950/40 px-2 py-1 rounded-lg border border-rose-500/30">
+                  <TrendingDown className="w-3.5 h-3.5" />
                   <span>Trend</span>
                 </div>
               </div>
@@ -696,32 +696,32 @@ export const PaymentsPage: React.FC = () => {
           </div>
 
           {/* MAIN GRID: INVOICE TABLE (LEFT 8 COLS) + INVOICE DETAILS PANEL (RIGHT 4 COLS) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* PHASE 6: INVOICE TABLE (8 COLS) */}
-            <div className="lg:col-span-8 rounded-xl bg-[#111C30] border border-[#26344B] overflow-hidden flex flex-col justify-between">
+            <div className="lg:col-span-8 rounded-2xl bg-[#111C30] border border-[#26344B] overflow-hidden flex flex-col justify-between">
               <div>
-                <div className="px-4 py-3 border-b border-[#26344B] bg-[#0C1524] flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="px-5 py-4 border-b border-[#26344B] bg-[#0C1524] flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     4. INVOICE TABLE
                   </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono">
                     {filteredInvoices.length} invoices
                   </span>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-xs sm:text-sm">
                     <thead>
-                      <tr className="border-b border-[#26344B] text-[10px] text-slate-400 uppercase tracking-wider bg-[#0C1524]/60">
-                        <th className="py-2.5 px-3 font-semibold">Invoice #</th>
-                        <th className="py-2.5 px-3 font-semibold">Project</th>
-                        <th className="py-2.5 px-3 font-semibold">Client</th>
-                        <th className="py-2.5 px-3 font-semibold">Related Milestone</th>
-                        <th className="py-2.5 px-3 font-semibold">Amount</th>
-                        <th className="py-2.5 px-3 font-semibold">Issue Date</th>
-                        <th className="py-2.5 px-3 font-semibold">Due Date</th>
-                        <th className="py-2.5 px-3 font-semibold">Payment Status</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Actions</th>
+                      <tr className="border-b border-[#26344B] text-xs text-slate-400 uppercase tracking-wider bg-[#0C1524]/60">
+                        <th className="py-3 px-4 font-semibold">Invoice #</th>
+                        <th className="py-3 px-4 font-semibold">Project</th>
+                        <th className="py-3 px-4 font-semibold">Client</th>
+                        <th className="py-3 px-4 font-semibold">Related Milestone</th>
+                        <th className="py-3 px-4 font-semibold">Amount</th>
+                        <th className="py-3 px-4 font-semibold">Issue Date</th>
+                        <th className="py-3 px-4 font-semibold">Due Date</th>
+                        <th className="py-3 px-4 font-semibold">Payment Status</th>
+                        <th className="py-3 px-4 font-semibold text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
@@ -738,46 +738,46 @@ export const PaymentsPage: React.FC = () => {
                             }`}
                           >
                             {/* Invoice # */}
-                            <td className="py-3 px-3 font-mono font-bold text-xs whitespace-nowrap">
+                            <td className="py-4 px-4 font-mono font-bold text-xs sm:text-sm whitespace-nowrap">
                               <span className={isSelected ? 'text-white' : 'text-blue-400'}>
                                 {row.invoiceNumber}
                               </span>
                             </td>
 
                             {/* Project */}
-                            <td className="py-3 px-3 font-semibold text-slate-200 whitespace-nowrap">
+                            <td className="py-4 px-4 font-semibold text-slate-200 whitespace-nowrap">
                               {row.project}
                             </td>
 
                             {/* Client */}
-                            <td className="py-3 px-3 text-slate-300 whitespace-nowrap">
+                            <td className="py-4 px-4 text-slate-300 whitespace-nowrap">
                               {row.client}
                             </td>
 
                             {/* Related Milestone */}
-                            <td className="py-3 px-3 text-slate-400 text-[11px] max-w-[160px] truncate">
+                            <td className="py-4 px-4 text-slate-400 text-xs sm:text-sm max-w-[180px] truncate">
                               {row.relatedMilestone}
                             </td>
 
                             {/* Amount */}
-                            <td className="py-3 px-3 font-mono font-bold text-white whitespace-nowrap">
+                            <td className="py-4 px-4 font-mono font-bold text-white whitespace-nowrap">
                               ${row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                             </td>
 
                             {/* Issue Date */}
-                            <td className="py-3 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                            <td className="py-4 px-4 font-mono text-xs text-slate-400 whitespace-nowrap">
                               {row.issueDate}
                             </td>
 
                             {/* Due Date */}
-                            <td className="py-3 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                            <td className="py-4 px-4 font-mono text-xs text-slate-400 whitespace-nowrap">
                               {row.dueDate}
                             </td>
 
                             {/* Payment Status Pill */}
-                            <td className="py-3 px-3 whitespace-nowrap">
+                            <td className="py-4 px-4 whitespace-nowrap">
                               <span
-                                className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
                                   row.status === 'Paid'
                                     ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
                                     : row.status === 'Sent'
@@ -794,14 +794,14 @@ export const PaymentsPage: React.FC = () => {
                             </td>
 
                             {/* Actions */}
-                            <td className="py-3 px-3 text-right whitespace-nowrap">
-                              <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                            <td className="py-4 px-4 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => setIsPrintModalOpen(true)}
-                                  className="p-1 text-slate-400 hover:text-white rounded hover:bg-[#152238] transition-colors"
+                                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#152238] transition-colors"
                                   title="Printable Invoice View"
                                 >
-                                  <Printer className="w-3.5 h-3.5" />
+                                  <Printer className="w-4 h-4" />
                                 </button>
                                 {row.status !== 'Paid' && (
                                   <button
@@ -815,10 +815,10 @@ export const PaymentsPage: React.FC = () => {
                                       setCheckoutStep('review');
                                       setIsCheckoutModalOpen(true);
                                     }}
-                                    className="p-1 text-blue-400 hover:text-blue-300 rounded hover:bg-[#152238] transition-colors"
+                                    className="p-1.5 text-blue-400 hover:text-blue-300 rounded-lg hover:bg-[#152238] transition-colors"
                                     title="Pay via Sandbox"
                                   >
-                                    <CreditCard className="w-3.5 h-3.5" />
+                                    <CreditCard className="w-4 h-4" />
                                   </button>
                                 )}
                               </div>
@@ -832,13 +832,13 @@ export const PaymentsPage: React.FC = () => {
               </div>
 
               {/* Table Footer with Rows per page and Pagination */}
-              <div className="p-3 bg-[#0C1524] border-t border-[#26344B] flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-3">
-                <div className="flex items-center gap-2">
+              <div className="p-4 bg-[#0C1524] border-t border-[#26344B] flex flex-wrap items-center justify-between text-xs sm:text-sm text-slate-400 gap-3">
+                <div className="flex items-center gap-2.5">
                   <span>Rows-per-page:</span>
                   <select
                     value={rowsPerPage}
                     onChange={(e) => setRowsPerPage(Number(e.target.value))}
-                    className="bg-[#111C30] border border-[#26344B] text-slate-300 rounded px-1.5 py-0.5 focus:outline-hidden"
+                    className="bg-[#111C30] border border-[#26344B] text-slate-300 rounded-lg px-2.5 py-1 focus:outline-hidden"
                   >
                     <option value={5}>5</option>
                     <option value={10}>10</option>
@@ -846,32 +846,32 @@ export const PaymentsPage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <span className="font-mono">Page {currentPage} of 1</span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white disabled:opacity-30"
                     >
                       |&lt;
                     </button>
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white disabled:opacity-30"
                     >
                       &lt;
                     </button>
                     <button
                       onClick={() => setCurrentPage(1)}
-                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white disabled:opacity-30"
                     >
                       &gt;
                     </button>
                     <button
                       onClick={() => setCurrentPage(1)}
-                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white disabled:opacity-30"
                     >
                       &gt;|
                     </button>
@@ -881,67 +881,67 @@ export const PaymentsPage: React.FC = () => {
             </div>
 
             {/* PHASE 7: INVOICE DETAILS SIDE PANEL (4 COLS) */}
-            <div className="lg:col-span-4 rounded-xl bg-[#111C30] border border-[#26344B] p-4 space-y-4 relative overflow-hidden">
+            <div className="lg:col-span-4 rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6 space-y-5 relative overflow-hidden">
               {/* Header: Title & Reference */}
-              <div className="pb-3 border-b border-[#26344B]/60 space-y-1">
-                <h3 className="text-sm font-bold text-white tracking-wide">
+              <div className="pb-3.5 border-b border-[#26344B]/60 space-y-1.5">
+                <h3 className="text-base font-bold text-white tracking-wide">
                   {selectedInvoice.invoiceNumber}: {selectedInvoice.project}
                 </h3>
-                <div className="flex items-center gap-1.5 font-mono text-[11px] text-blue-400">
+                <div className="flex items-center gap-1.5 font-mono text-xs sm:text-sm text-blue-400">
                   <span>{selectedInvoice.referenceNumber}</span>
-                  <PayPalIcon className="w-3 h-3 text-[#0079C1]" />
+                  <PayPalIcon className="w-3.5 h-3.5 text-[#0079C1]" />
                 </div>
               </div>
 
               {/* Client Info */}
-              <div className="space-y-1 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-1.5 text-xs sm:text-sm">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Client Info
                 </span>
                 <div className="text-slate-200 font-semibold">{selectedInvoice.client}</div>
-                <div className="text-[11px] text-slate-400 font-mono">{selectedInvoice.clientEmail}</div>
-                <div className="text-[11px] text-slate-400">{selectedInvoice.clientAddress || '123 Stellar St, Future City'}</div>
+                <div className="text-xs text-slate-400 font-mono">{selectedInvoice.clientEmail}</div>
+                <div className="text-xs text-slate-400">{selectedInvoice.clientAddress || '123 Stellar St, Future City'}</div>
               </div>
 
               {/* Client Project */}
-              <div className="space-y-1 text-xs pt-2 border-t border-[#26344B]/40">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-1.5 text-xs sm:text-sm pt-3 border-t border-[#26344B]/40">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Client
                 </span>
                 <div className="text-slate-200 font-semibold">{selectedInvoice.project}</div>
-                <div className="text-[11px] text-slate-400">{selectedInvoice.clientDescription || 'Connected Innovation.'}</div>
+                <div className="text-xs text-slate-400">{selectedInvoice.clientDescription || 'Connected Innovation.'}</div>
               </div>
 
               {/* Amount */}
-              <div className="space-y-1 pt-2 border-t border-[#26344B]/40">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-1.5 pt-3 border-t border-[#26344B]/40">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Amount
                 </span>
-                <div className="text-2xl font-bold text-white font-mono tracking-tight">
+                <div className="text-3xl font-extrabold text-white font-mono tracking-tight">
                   ${selectedInvoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>
-                <span className="text-[11px] text-slate-400 block">Approved milestone amount</span>
+                <span className="text-xs text-slate-400 block">Approved milestone amount</span>
               </div>
 
               {/* Timeline */}
-              <div className="space-y-2 pt-2 border-t border-[#26344B]/40">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-2.5 pt-3 border-t border-[#26344B]/40">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Timeline
                 </span>
-                <div className="space-y-1.5 text-xs text-slate-300">
+                <div className="space-y-2 text-xs sm:text-sm text-slate-300">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
                     <span>Created: {selectedInvoice.timelineCreated}</span>
                   </div>
-                  <div className="pl-1 text-slate-500 font-mono text-[10px] leading-none">|</div>
+                  <div className="pl-1 text-slate-500 font-mono text-xs leading-none">|</div>
                   <div className="flex items-center gap-2">
-                    <ArrowRight className="w-3 h-3 text-blue-400" />
+                    <ArrowRight className="w-3.5 h-3.5 text-blue-400" />
                     <span>Sent to Client: {selectedInvoice.timelineSent}</span>
                   </div>
-                  <div className="pl-1 text-slate-500 font-mono text-[10px] leading-none">|</div>
+                  <div className="pl-1 text-slate-500 font-mono text-xs leading-none">|</div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`w-2 h-2 rounded-full border ${
+                      className={`w-2.5 h-2.5 rounded-full border ${
                         selectedInvoice.status === 'Paid'
                           ? 'bg-emerald-400 border-emerald-400'
                           : 'border-slate-400'
@@ -955,45 +955,45 @@ export const PaymentsPage: React.FC = () => {
               </div>
 
               {/* Payment History */}
-              <div className="space-y-1 pt-2 border-t border-[#26344B]/40">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-1.5 pt-3 border-t border-[#26344B]/40">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Payment History
                 </span>
                 {selectedInvoice.status === 'Paid' ? (
-                  <div className="p-2 rounded bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono">
+                  <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-300 font-mono">
                     Paid via PayPal Webhook: {selectedInvoice.paypalWebhookEventId || 'WH-EVT-772910-PAID'}
                   </div>
                 ) : (
-                  <div className="text-[11px] text-slate-400 italic">No payments yet</div>
+                  <div className="text-xs text-slate-400 italic">No payments yet</div>
                 )}
               </div>
 
               {/* Hosted Invoice Link with Copy */}
-              <div className="space-y-1 pt-2 border-t border-[#26344B]/40">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-1.5 pt-3 border-t border-[#26344B]/40">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Hosted Invoice:
                 </span>
-                <div className="flex items-center justify-between p-2 rounded bg-[#0C1524] border border-[#26344B] text-xs">
-                  <span className="font-mono text-blue-400 text-[11px] truncate">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0C1524] border border-[#26344B] text-xs sm:text-sm">
+                  <span className="font-mono text-blue-400 text-xs truncate">
                     {selectedInvoice.hostedInvoiceUrl}
                   </span>
                   <button
                     onClick={handleCopyHostedLink}
-                    className="p-1 text-slate-400 hover:text-white transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-white transition-colors"
                     title="Copy Hosted Invoice URL"
                   >
-                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {/* Quick Action Buttons for Selected Invoice */}
-              <div className="pt-2 flex items-center gap-2 border-t border-[#26344B]/40">
+              <div className="pt-3 flex items-center gap-2.5 border-t border-[#26344B]/40">
                 <button
                   onClick={() => setIsPrintModalOpen(true)}
-                  className="flex-1 py-1.5 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-xs font-semibold text-slate-200 transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-xs sm:text-sm font-semibold text-slate-200 transition-colors flex items-center justify-center gap-2"
                 >
-                  <Printer className="w-3.5 h-3.5 text-slate-300" />
+                  <Printer className="w-4 h-4 text-slate-300" />
                   <span>Print View</span>
                 </button>
                 {selectedInvoice.status !== 'Paid' && (
@@ -1007,9 +1007,9 @@ export const PaymentsPage: React.FC = () => {
                       setCheckoutStep('review');
                       setIsCheckoutModalOpen(true);
                     }}
-                    className="flex-1 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-colors flex items-center justify-center gap-1.5"
+                    className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/30 transition-colors flex items-center justify-center gap-2"
                   >
-                    <PayPalIcon className="w-3.5 h-3.5" />
+                    <PayPalIcon className="w-4 h-4" />
                     <span>Pay Sandbox</span>
                   </button>
                 )}
@@ -1025,15 +1025,15 @@ export const PaymentsPage: React.FC = () => {
           </div>
 
           {/* PHASE 8: UNBILLED APPROVED MILESTONES & PENDING MILESTONE APPROVALS */}
-          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5">
+          <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               {/* Left Column: Unbilled Approved Milestones */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-2.5">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Unbilled Approved Milestones
                 </span>
-                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#0C1524] border border-[#26344B]">
-                  <div className="flex items-center gap-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
                     <span className="font-semibold text-white">Acme Corp</span>
                     <span className="text-slate-500">→</span>
                     <span className="text-slate-300">Apollo Mobile</span>
@@ -1041,10 +1041,10 @@ export const PaymentsPage: React.FC = () => {
                     <span className="text-blue-400 font-medium">Milestone 4: QA Testing</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-white text-xs">$8,200.00</span>
+                    <span className="font-mono font-bold text-white text-xs sm:text-sm">$8,200.00</span>
                     <button
                       onClick={handleGenerateInvoiceForUnbilled}
-                      className="text-xs text-blue-400 hover:text-white font-semibold transition-colors"
+                      className="text-xs sm:text-sm text-blue-400 hover:text-white font-semibold transition-colors"
                     >
                       Generate Invoice
                     </button>
@@ -1053,12 +1053,12 @@ export const PaymentsPage: React.FC = () => {
               </div>
 
               {/* Right Column: Pending Milestone Approvals */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-2.5">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Pending Milestone Approvals
                 </span>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C1524] border border-[#26344B]">
-                  <div className="text-xs text-slate-300">
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
+                  <div className="text-xs sm:text-sm text-slate-300">
                     <span className="font-semibold text-white">Stellar Innovations</span> &bull; Alpha Portal (Milestone 2)
                   </div>
                   <button
@@ -1070,7 +1070,7 @@ export const PaymentsPage: React.FC = () => {
                       }
                       setIsCreateInvoiceModalOpen(true);
                     }}
-                    className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-colors"
+                    className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 transition-colors"
                   >
                     Create Invoice
                   </button>

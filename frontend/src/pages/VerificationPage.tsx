@@ -263,52 +263,52 @@ export const VerificationPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Header Bar */}
-        <header className="h-16 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="h-18 sm:h-20 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3.5">
             <button
               onClick={openMobileSidebar}
-              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg"
+              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-xl"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+              <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
                 AI Agents
               </h1>
-              <p className="text-xs text-slate-400 mt-1 hidden sm:block">
+              <p className="font-sans text-sm sm:text-base text-slate-400 mt-1 hidden sm:block">
                 Your intelligent workforce for project analysis and payment workflows.
               </p>
             </div>
           </div>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-lg relative transition-colors"
+                className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 space-y-2 text-xs">
-                  <div className="flex items-center justify-between border-b border-[#26344B] pb-2 font-bold text-white">
+                <div className="absolute right-0 mt-2 w-80 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-4 z-50 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between border-b border-[#26344B] pb-2.5 font-bold text-white text-sm">
                     <span>Agent Activity Notifications</span>
                     <button
                       onClick={() => setNotificationsOpen(false)}
                       className="text-slate-400 hover:text-white"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
                     <span className="font-semibold text-blue-400">GitHub Evidence Agent</span> mapped 15 commits for Project Nova.
                   </div>
-                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
                     <span className="font-semibold text-emerald-400">Milestone Intelligence</span> verified AST syntax for V1.1.
                   </div>
                 </div>
@@ -319,20 +319,20 @@ export const VerificationPage: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setSampleDataDropdownOpen(!sampleDataDropdownOpen)}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-[#111C30] hover:bg-[#152238] border border-[#26344B] transition-colors"
+                className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-[#111C30] hover:bg-[#152238] border border-[#26344B] transition-colors"
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
                   TM
                 </div>
-                <span className="text-xs font-medium text-slate-200">
+                <span className="text-xs sm:text-sm font-semibold text-slate-200">
                   {sampleDataMode === 'sample' ? 'Sample data' : 'Live API'}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronDown className="w-4 h-4 text-slate-400" />
               </button>
 
               {sampleDataDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-2 z-50 space-y-1 text-xs">
-                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="absolute right-0 mt-2 w-56 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-2.5 z-50 space-y-1.5 text-xs">
+                  <div className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                     Data Environment
                   </div>
                   <button
@@ -341,14 +341,14 @@ export const VerificationPage: React.FC = () => {
                       setSampleDataDropdownOpen(false);
                       showToast('Environment: Sample Data', 'Loaded illustrative sandbox agent telemetry.', 'info');
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${
                       sampleDataMode === 'sample'
                         ? 'bg-[#2563EB] text-white font-medium'
                         : 'text-slate-300 hover:bg-[#152238]'
                     }`}
                   >
-                    <span>Sample Data (Mock)</span>
-                    {sampleDataMode === 'sample' && <Check className="w-3.5 h-3.5" />}
+                    <span className="text-xs sm:text-sm">Sample Data (Mock)</span>
+                    {sampleDataMode === 'sample' && <Check className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => {
@@ -357,16 +357,16 @@ export const VerificationPage: React.FC = () => {
                       loadData();
                       showToast('Environment: Live API', 'Querying backend service /api endpoints.', 'success');
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${
                       sampleDataMode === 'live'
                         ? 'bg-[#2563EB] text-white font-medium'
                         : 'text-slate-300 hover:bg-[#152238]'
                     }`}
                   >
-                    <span>Live Backend API</span>
-                    {sampleDataMode === 'live' && <Check className="w-3.5 h-3.5" />}
+                    <span className="text-xs sm:text-sm">Live Backend API</span>
+                    {sampleDataMode === 'live' && <Check className="w-4 h-4" />}
                   </button>
-                  <div className="pt-1 border-t border-[#26344B]/60 text-[10px] text-slate-400 px-2 leading-tight">
+                  <div className="pt-1.5 border-t border-[#26344B]/60 text-xs text-slate-400 px-2 leading-tight">
                     Explicitly distinguishes mock hackathon data from connected backend states.
                   </div>
                 </div>
@@ -376,44 +376,44 @@ export const VerificationPage: React.FC = () => {
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-6">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-8 max-w-[1780px] w-full mx-auto">
           {/* SECTION 1: AGENT OVERVIEW */}
           <div>
-            <h2 className="text-sm font-bold text-white mb-3 tracking-wide">
+            <h2 className="font-heading text-base sm:text-lg font-bold text-white mb-3.5 tracking-wide">
               Agent Overview
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* CARD 1: Agreement Analyzer */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
-                <div className="space-y-3">
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">Agreement Analyzer</span>
+                    <span className="font-bold text-white text-base">Agreement Analyzer</span>
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
                     <div className="relative">
-                      <FileSearch className="w-8 h-8 text-[#60A5FA]" />
+                      <FileSearch className="w-9 h-9 text-[#60A5FA]" />
                     </div>
                   </div>
 
                   {/* Status Badge */}
-                  <div className="flex items-center justify-between px-2.5 py-1 rounded-md bg-[#132A30] border border-emerald-500/30 text-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#132A30] border border-emerald-500/30 text-xs">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                       <span>READY</span>
                     </div>
                     {/* Activity bars */}
-                    <div className="flex items-end gap-0.5 h-3">
+                    <div className="flex items-end gap-1 h-3.5">
                       <span className="w-0.5 h-2 bg-emerald-400 rounded-xs" />
-                      <span className="w-0.5 h-3 bg-emerald-400 rounded-xs" />
-                      <span className="w-0.5 h-1.5 bg-emerald-400 rounded-xs" />
+                      <span className="w-0.5 h-3.5 bg-emerald-400 rounded-xs" />
+                      <span className="w-0.5 h-2 bg-emerald-400 rounded-xs" />
                     </div>
                   </div>
 
                   {/* Current Task Description */}
-                  <div className="text-[11px] text-slate-400 leading-snug">
+                  <div className="text-xs text-slate-400 leading-relaxed">
                     <span className="text-slate-300 font-medium block">Current Task</span>
                     <span>(No current task</span>
                     <br />
@@ -421,10 +421,10 @@ export const VerificationPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#26344B]/60 mt-3">
+                <div className="pt-3.5 border-t border-[#26344B]/60 mt-3.5">
                   <button
                     onClick={() => setSelectedAgentModal('analyzer')}
-                    className="text-xs font-semibold text-[#38BDF8] hover:text-white transition-colors"
+                    className="text-xs sm:text-sm font-semibold text-[#38BDF8] hover:text-white transition-colors"
                   >
                     View Details
                   </button>
@@ -432,39 +432,39 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* CARD 2: GitHub Evidence Agent */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
-                <div className="space-y-3">
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">GitHub Evidence Agent</span>
+                    <span className="font-bold text-white text-base">GitHub Evidence Agent</span>
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
-                    <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/30">
-                      <GitHubIcon className="w-7 h-7 text-white" />
+                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                    <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                      <GitHubIcon className="w-8 h-8 text-white" />
                     </div>
                   </div>
 
                   {/* Status Badge */}
-                  <div className="flex items-center justify-between px-2.5 py-1 rounded-md bg-[#132644] border border-blue-500/30 text-xs">
-                    <div className="flex items-center gap-1.5 text-blue-400 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#132644] border border-blue-500/30 text-xs">
+                    <div className="flex items-center gap-2 text-blue-400 font-bold">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse" />
                       <span>ACTIVE</span>
                     </div>
-                    <RotateCw className="w-3 h-3 text-blue-400 animate-spin" />
+                    <RotateCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
                   </div>
 
                   {/* Current Task Description */}
-                  <div className="text-[11px] text-slate-400 leading-snug">
+                  <div className="text-xs text-slate-400 leading-relaxed">
                     <span className="text-slate-300 font-medium block">Current Task</span>
                     <span>Retrieving PR #42 for &apos;Aether Platform&apos;</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#26344B]/60 mt-3">
+                <div className="pt-3.5 border-t border-[#26344B]/60 mt-3.5">
                   <button
                     onClick={() => setSelectedAgentModal('github')}
-                    className="text-xs font-semibold text-[#38BDF8] hover:text-white transition-colors"
+                    className="text-xs sm:text-sm font-semibold text-[#38BDF8] hover:text-white transition-colors"
                   >
                     View Details
                   </button>
@@ -472,39 +472,39 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* CARD 3: Milestone Intelligence Agent */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
-                <div className="space-y-3">
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">Milestone Intelligence...</span>
+                    <span className="font-bold text-white text-base">Milestone Intelligence...</span>
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
-                    <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
-                      <Cpu className="w-7 h-7 text-[#38BDF8]" />
+                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                    <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
+                      <Cpu className="w-8 h-8 text-[#38BDF8]" />
                     </div>
                   </div>
 
                   {/* Status Badge */}
-                  <div className="flex items-center justify-between px-2.5 py-1 rounded-md bg-[#2B2215] border border-amber-500/30 text-xs">
-                    <div className="flex items-center gap-1.5 text-amber-400 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#2B2215] border border-amber-500/30 text-xs">
+                    <div className="flex items-center gap-2 text-amber-400 font-bold">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                       <span>STANDBY</span>
                     </div>
-                    <span className="text-[10px] text-amber-400/80 font-medium">Amber idle</span>
+                    <span className="text-[11px] text-amber-400/80 font-medium">Amber idle</span>
                   </div>
 
                   {/* Current Task Description */}
-                  <div className="text-[11px] text-slate-400 leading-snug">
+                  <div className="text-xs text-slate-400 leading-relaxed">
                     <span className="text-slate-300 font-medium block">Current Task</span>
                     <span>Awaiting next trigger</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#26344B]/60 mt-3">
+                <div className="pt-3.5 border-t border-[#26344B]/60 mt-3.5">
                   <button
                     onClick={() => setSelectedAgentModal('milestone')}
-                    className="text-xs font-semibold text-[#38BDF8] hover:text-white transition-colors"
+                    className="text-xs sm:text-sm font-semibold text-[#38BDF8] hover:text-white transition-colors"
                   >
                     View Details
                   </button>
@@ -512,38 +512,38 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* CARD 4: Payment Assistant */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
-                <div className="space-y-3">
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex flex-col justify-between hover:border-[#3B82F6]/50 transition-all">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">Payment Assistant</span>
+                    <span className="font-bold text-white text-base">Payment Assistant</span>
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
-                      <Wallet className="w-7 h-7 text-emerald-400" />
+                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                      <Wallet className="w-8 h-8 text-emerald-400" />
                     </div>
                   </div>
 
                   {/* Status Badge */}
-                  <div className="flex items-center justify-between px-2.5 py-1 rounded-md bg-[#132A30] border border-emerald-500/30 text-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#132A30] border border-emerald-500/30 text-xs">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                       <span>READY</span>
                     </div>
                   </div>
 
                   {/* Current Task Description */}
-                  <div className="text-[11px] text-slate-400 leading-snug">
+                  <div className="text-xs text-slate-400 leading-relaxed">
                     <span className="text-slate-300 font-medium block">Current Task</span>
                     <span>Preparing invoice information</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#26344B]/60 mt-3">
+                <div className="pt-3.5 border-t border-[#26344B]/60 mt-3.5">
                   <button
                     onClick={() => setSelectedAgentModal('payment')}
-                    className="text-xs font-semibold text-[#38BDF8] hover:text-white transition-colors"
+                    className="text-xs sm:text-sm font-semibold text-[#38BDF8] hover:text-white transition-colors"
                   >
                     View Details
                   </button>
@@ -553,17 +553,17 @@ export const VerificationPage: React.FC = () => {
           </div>
 
           {/* SECTION 2: AI WORKFLOW PIPELINE */}
-          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-5">
               {/* STAGE 1: Agreement Analysis */}
-              <div className="flex flex-col items-center text-center space-y-2 flex-1 w-full lg:w-auto">
-                <div className="w-12 h-12 rounded-xl bg-[#16233B] border border-[#26344B] flex items-center justify-center">
-                  <FileSearch className="w-6 h-6 text-[#60A5FA]" />
+              <div className="flex flex-col items-center text-center space-y-2.5 flex-1 w-full lg:w-auto">
+                <div className="w-14 h-14 rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center">
+                  <FileSearch className="w-7 h-7 text-[#60A5FA]" />
                 </div>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="text-xs sm:text-sm font-semibold text-slate-200">
                   Agreement Analysis
                 </span>
-                <span className="text-[10px] text-emerald-400 font-medium bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30">
+                <span className="text-xs text-emerald-400 font-medium bg-emerald-950/40 px-2.5 py-1 rounded-md border border-emerald-500/30">
                   Complete
                 </span>
               </div>
@@ -575,14 +575,14 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* STAGE 2: GitHub Evidence Retrieval */}
-              <div className="flex flex-col items-center text-center space-y-2 flex-1 w-full lg:w-auto">
-                <div className="w-12 h-12 rounded-xl bg-[#16233B] border border-blue-500/40 flex items-center justify-center shadow-lg shadow-blue-500/10">
-                  <GitHubIcon className="w-6 h-6 text-white" />
+              <div className="flex flex-col items-center text-center space-y-2.5 flex-1 w-full lg:w-auto">
+                <div className="w-14 h-14 rounded-2xl bg-[#16233B] border border-blue-500/40 flex items-center justify-center shadow-lg shadow-blue-500/10">
+                  <GitHubIcon className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="text-xs sm:text-sm font-semibold text-slate-200">
                   GitHub Evidence Retrieval
                 </span>
-                <span className="text-[10px] text-blue-400 font-medium bg-blue-950/40 px-2 py-0.5 rounded border border-blue-500/30 animate-pulse">
+                <span className="text-xs text-blue-400 font-medium bg-blue-950/40 px-2.5 py-1 rounded-md border border-blue-500/30 animate-pulse">
                   Active
                 </span>
               </div>
@@ -594,14 +594,14 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* STAGE 3: Milestone Intelligence */}
-              <div className="flex flex-col items-center text-center space-y-2 flex-1 w-full lg:w-auto">
-                <div className="w-12 h-12 rounded-xl bg-[#16233B] border border-[#26344B] flex items-center justify-center">
-                  <Cpu className="w-6 h-6 text-[#38BDF8]" />
+              <div className="flex flex-col items-center text-center space-y-2.5 flex-1 w-full lg:w-auto">
+                <div className="w-14 h-14 rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center">
+                  <Cpu className="w-7 h-7 text-[#38BDF8]" />
                 </div>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="text-xs sm:text-sm font-semibold text-slate-200">
                   Milestone Intelligence
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700">
+                <span className="text-xs text-slate-400 font-medium bg-slate-800/40 px-2.5 py-1 rounded-md border border-slate-700">
                   Standby
                 </span>
               </div>
@@ -613,21 +613,21 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* STAGE 4: Human Approval */}
-              <div className="flex flex-col items-center text-center space-y-2 flex-1 w-full lg:w-auto">
+              <div className="flex flex-col items-center text-center space-y-2.5 flex-1 w-full lg:w-auto">
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-[#16233B] border border-[#26344B] flex items-center justify-center overflow-hidden">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-xs">
+                  <div className="w-14 h-14 rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center overflow-hidden">
+                    <div className="w-9 h-9 rounded-full bg-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-xs">
                       TM
                     </div>
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center text-black text-[9px] font-bold">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-black text-[10px] font-bold">
                     👍
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="text-xs sm:text-sm font-semibold text-slate-200">
                   Human Approval
                 </span>
-                <span className="text-[10px] text-amber-400 font-medium bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/30">
+                <span className="text-xs text-amber-400 font-medium bg-amber-950/40 px-2.5 py-1 rounded-md border border-amber-500/30">
                   Pending Review
                 </span>
               </div>
@@ -639,25 +639,25 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* STAGE 5: Payment Preparation */}
-              <div className="flex flex-col items-center text-center space-y-2 flex-1 w-full lg:w-auto">
-                <div className="w-12 h-12 rounded-xl bg-[#16233B] border border-[#26344B] flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-emerald-400" />
+              <div className="flex flex-col items-center text-center space-y-2.5 flex-1 w-full lg:w-auto">
+                <div className="w-14 h-14 rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center">
+                  <Wallet className="w-7 h-7 text-emerald-400" />
                 </div>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="text-xs sm:text-sm font-semibold text-slate-200">
                   Payment Preparation
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700">
+                <span className="text-xs text-slate-400 font-medium bg-slate-800/40 px-2.5 py-1 rounded-md border border-slate-700">
                   Awaiting Approval
                 </span>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#26344B]/60 flex items-center justify-between text-[11px] text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <div className="mt-5 pt-3.5 border-t border-[#26344B]/60 flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
                 DevFlow Human-in-the-Loop Gate: Reaching Payment Preparation does NOT execute payments until client signs off.
               </span>
-              <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+              <span className="text-xs font-mono text-slate-400 hidden sm:inline">
                 Pipeline v2.4 (Gemini 2.5 Flash)
               </span>
             </div>
@@ -667,13 +667,13 @@ export const VerificationPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* LEFT 7 COLS: RECENT EXECUTIONS TABLE */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] overflow-hidden">
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] overflow-hidden">
                 {/* Tabs Header */}
-                <div className="flex items-center justify-between px-4 sm:px-6 pt-4 border-b border-[#26344B] overflow-x-auto">
-                  <div className="flex items-center gap-6 text-xs font-semibold">
+                <div className="flex items-center justify-between px-5 sm:px-7 pt-4.5 border-b border-[#26344B] overflow-x-auto">
+                  <div className="flex items-center gap-6 text-xs sm:text-sm font-semibold">
                     <button
                       onClick={() => setActiveTab('recent')}
-                      className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${
+                      className={`pb-3.5 border-b-2 transition-colors whitespace-nowrap ${
                         activeTab === 'recent'
                           ? 'border-[#2563EB] text-white'
                           : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -683,7 +683,7 @@ export const VerificationPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setActiveTab('projects')}
-                      className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${
+                      className={`pb-3.5 border-b-2 transition-colors whitespace-nowrap ${
                         activeTab === 'projects'
                           ? 'border-[#2563EB] text-white'
                           : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -693,7 +693,7 @@ export const VerificationPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setActiveTab('agents')}
-                      className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${
+                      className={`pb-3.5 border-b-2 transition-colors whitespace-nowrap ${
                         activeTab === 'agents'
                           ? 'border-[#2563EB] text-white'
                           : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -702,25 +702,25 @@ export const VerificationPage: React.FC = () => {
                       Agent
                     </button>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-mono pb-3 hidden sm:inline">
+                  <span className="text-xs text-slate-400 font-mono pb-3.5 hidden sm:inline">
                     Showing {displayedExecutions.length} runs
                   </span>
                 </div>
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-[#26344B] text-[11px] text-slate-400 uppercase tracking-wider bg-[#0C1524]">
-                        <th className="py-3 px-4 font-semibold">
-                          <span className="flex items-center gap-1">
+                      <tr className="border-b border-[#26344B] text-xs text-slate-400 uppercase tracking-wider bg-[#0C1524]">
+                        <th className="py-3.5 px-4 font-semibold">
+                          <span className="flex items-center gap-1.5">
                             Execution <span className="text-[#38BDF8]">↓</span>
                           </span>
                         </th>
-                        <th className="py-3 px-4 font-semibold">Related Project</th>
-                        <th className="py-3 px-4 font-semibold">Agent</th>
-                        <th className="py-3 px-4 font-semibold">Status</th>
-                        <th className="py-3 px-4 font-semibold">Timestamp</th>
+                        <th className="py-3.5 px-4 font-semibold">Related Project</th>
+                        <th className="py-3.5 px-4 font-semibold">Agent</th>
+                        <th className="py-3.5 px-4 font-semibold">Status</th>
+                        <th className="py-3.5 px-4 font-semibold">Timestamp</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/60">
@@ -732,19 +732,19 @@ export const VerificationPage: React.FC = () => {
                             showToast(`Inspecting ${row.name}`, `${row.agent} run on ${row.project}`, 'info');
                           }}
                         >
-                          <td className="py-3 px-4 font-medium text-blue-400 group-hover:text-blue-300">
+                          <td className="py-4 px-4 font-medium text-blue-400 group-hover:text-blue-300">
                             {row.name}
                           </td>
-                          <td className="py-3 px-4 text-slate-300">
+                          <td className="py-4 px-4 text-slate-300">
                             {row.project}
                           </td>
-                          <td className="py-3 px-4 text-slate-300">
+                          <td className="py-4 px-4 text-slate-300">
                             {row.agent}
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-4 px-4">
                             <div className="space-y-0.5">
                               <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
+                                className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tracking-wider ${
                                   row.status === 'SUCCESS'
                                     ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30'
                                     : row.status === 'FAILED'
@@ -754,12 +754,12 @@ export const VerificationPage: React.FC = () => {
                               >
                                 {row.status}
                               </span>
-                              <div className="text-[10px] text-slate-400 font-mono">
+                              <div className="text-xs text-slate-400 font-mono">
                                 {row.statusCodeDesc}
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                          <td className="py-4 px-4 text-slate-400 font-mono text-xs">
                             {row.timestamp}
                           </td>
                         </tr>
@@ -768,16 +768,16 @@ export const VerificationPage: React.FC = () => {
                   </table>
                 </div>
 
-                <div className="p-3 bg-[#0C1524] border-t border-[#26344B] flex items-center justify-between text-[11px] text-slate-400">
+                <div className="p-3.5 bg-[#0C1524] border-t border-[#26344B] flex items-center justify-between text-xs text-slate-400">
                   <span>Filtered by: {activeTab.toUpperCase()}</span>
                   <button
                     onClick={() => {
                       loadData();
                       showToast('Executions Refreshed', 'Telemetry synced with AST validation engine.', 'success');
                     }}
-                    className="text-[#38BDF8] hover:text-white flex items-center gap-1 font-semibold"
+                    className="text-[#38BDF8] hover:text-white flex items-center gap-1.5 font-semibold"
                   >
-                    <RotateCw className="w-3 h-3" /> Refresh Logs
+                    <RotateCw className="w-3.5 h-3.5" /> Refresh Logs
                   </button>
                 </div>
               </div>
@@ -786,37 +786,37 @@ export const VerificationPage: React.FC = () => {
             {/* RIGHT 5 COLS: COMPACT RECENT EXECUTION + HUMAN APPROVAL + ACTIVITY LOG */}
             <div className="lg:col-span-5 space-y-6">
               {/* 1. RECENT EXECUTION (COMPACT CARD) */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4">
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5">
                 <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
-                  <h3 className="text-xs font-bold text-white tracking-wide">
+                  <h3 className="text-sm font-bold text-white tracking-wide">
                     Recent Execution
                   </h3>
-                  <span className="text-[10px] text-slate-400 font-mono">Real-time Stream</span>
+                  <span className="text-xs text-slate-400 font-mono">Real-time Stream</span>
                 </div>
 
                 <div className="overflow-x-auto mt-2">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-xs sm:text-sm">
                     <thead>
-                      <tr className="text-[10px] text-slate-400 uppercase tracking-wider border-b border-[#26344B]/60">
-                        <th className="py-2 font-medium">Execution</th>
-                        <th className="py-2 font-medium">Agent</th>
-                        <th className="py-2 font-medium">Status</th>
-                        <th className="py-2 font-medium text-right">Timestamp</th>
+                      <tr className="text-xs text-slate-400 uppercase tracking-wider border-b border-[#26344B]/60">
+                        <th className="py-2.5 font-medium">Execution</th>
+                        <th className="py-2.5 font-medium">Agent</th>
+                        <th className="py-2.5 font-medium">Status</th>
+                        <th className="py-2.5 font-medium text-right">Timestamp</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
                       {rightRecentExecutions.map((r) => (
                         <tr key={r.id} className="hover:bg-[#152238]/40 transition-colors">
-                          <td className="py-2.5 font-medium text-slate-200 text-xs">
+                          <td className="py-3 font-medium text-slate-200 text-xs sm:text-sm">
                             {r.execution}
                           </td>
-                          <td className="py-2.5 text-slate-300 text-xs">
+                          <td className="py-3 text-slate-300 text-xs sm:text-sm">
                             {r.agent}
                           </td>
-                          <td className="py-2.5">
+                          <td className="py-3">
                             <div>
                               <span
-                                className={`inline-block text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                                className={`inline-block text-xs font-bold px-2 py-0.5 rounded-md ${
                                   r.status === 'SUCCESS'
                                     ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
                                     : 'bg-rose-950/70 text-rose-400 border border-rose-500/30'
@@ -824,12 +824,12 @@ export const VerificationPage: React.FC = () => {
                               >
                                 {r.status}
                               </span>
-                              <div className="text-[9px] text-slate-400 font-mono max-w-[120px] truncate">
+                              <div className="text-[10px] text-slate-400 font-mono max-w-[130px] truncate">
                                 {r.statusDesc}
                               </div>
                             </div>
                           </td>
-                          <td className="py-2.5 text-right text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                          <td className="py-3 text-right text-slate-400 font-mono text-xs whitespace-nowrap">
                             {r.time}
                           </td>
                         </tr>
@@ -840,25 +840,25 @@ export const VerificationPage: React.FC = () => {
               </div>
 
               {/* 2. HUMAN APPROVAL QUEUE */}
-              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4">
+              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5">
                 <div className="pb-3 border-b border-[#26344B]">
-                  <h3 className="text-xs font-bold text-white tracking-wide">
+                  <h3 className="text-sm font-bold text-white tracking-wide">
                     Human Approval Queue
                   </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-400 mt-1">
                     AI-generated recommendations awaiting review.
                   </p>
                 </div>
 
                 {/* Collapsible Recommendation Item */}
-                <div className="mt-3 rounded-lg bg-[#0C1524] border border-[#26344B] p-3 space-y-3">
+                <div className="mt-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] p-4 space-y-3.5">
                   <div
                     onClick={() => setApprovalAccordionOpen(!approvalAccordionOpen)}
                     className="flex items-center justify-between cursor-pointer"
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-400" />
-                      <span className="text-xs font-bold text-white">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                      <span className="text-sm font-bold text-white">
                         Acceptance for Alpha Milestone 3
                       </span>
                     </div>
@@ -870,46 +870,46 @@ export const VerificationPage: React.FC = () => {
                   </div>
 
                   {approvalAccordionOpen && (
-                    <div className="space-y-3 text-[11px] text-slate-300 leading-relaxed border-t border-[#26344B]/60 pt-2.5">
+                    <div className="space-y-3.5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-[#26344B]/60 pt-3">
                       <p>
                         <strong className="text-slate-100">Summary:</strong> AI Alpha Milestone 3 receives notation scope operating, acceptance for commendante: storomnarez to entrote-useo, and, and aeviliotm-dusionity to comsats a commnts-and recommendation, review.
                       </p>
 
                       {/* Approval Status State pill if triggered */}
                       {approvalState === 'approved' && (
-                        <div className="p-2 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2 font-medium">
+                        <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
                           <CheckCircle className="w-4 h-4 text-emerald-400" />
                           <span>Milestone approved by client. Ready for PayPal invoicing.</span>
                         </div>
                       )}
                       {approvalState === 'changes_requested' && (
-                        <div className="p-2 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs flex items-center gap-2 font-medium">
+                        <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
                           <Clock className="w-4 h-4 text-amber-400" />
                           <span>Changes requested. Developer notified in backlog.</span>
                         </div>
                       )}
 
                       {/* Action buttons */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <span className="text-[11px] font-semibold text-slate-400 mr-1">Actions:</span>
+                      <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+                        <span className="text-xs font-semibold text-slate-400 mr-1">Actions:</span>
                         <button
                           onClick={() => setEvidenceModalOpen(true)}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-[11px] font-medium transition-colors"
+                          className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors"
                         >
                           Review Evidence
                         </button>
                         <button
                           onClick={() => setChangesModalOpen(true)}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-[11px] font-medium transition-colors"
+                          className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors"
                         >
                           Request Changes
                         </button>
                         <button
                           onClick={handleApproveAndPay}
                           disabled={isSubmittingApproval || approvalState === 'approved'}
-                          className="px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-[11px] font-bold shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-colors"
+                          className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Sparkles className="w-4 h-4" />
                           <span>{approvalState === 'approved' ? 'Approved' : 'Approve & Pay'}</span>
                         </button>
                       </div>

@@ -450,73 +450,73 @@ export const EvidencePage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 1: PAGE HEADER */}
-        <header className="h-16 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="h-18 sm:h-20 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3.5">
             <button
               onClick={openMobileSidebar}
-              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-lg"
+              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-xl"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+              <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
                 Evidence Explorer
               </h1>
-              <p className="text-xs text-slate-400 mt-1 hidden sm:block">
+              <p className="font-sans text-sm sm:text-base text-slate-400 mt-1 hidden sm:block">
                 Explore development activity and connect proof of work to project milestones.
               </p>
             </div>
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             {/* Header Search Input */}
-            <div className="relative hidden md:block w-48 lg:w-60">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="relative hidden md:block w-52 lg:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search evidence..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111C30] text-xs text-white placeholder-slate-400 pl-8 pr-3 py-1.5 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                className="w-full bg-[#111C30] text-xs sm:text-sm text-white placeholder-slate-400 pl-10 pr-3.5 py-2 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
               />
             </div>
 
             {/* Help Button */}
             <button
               onClick={() => setHelpModalOpen(true)}
-              className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-lg transition-colors"
+              className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl transition-colors"
               title="Evidence Guide"
             >
-              <HelpCircle className="w-4 h-4" />
+              <HelpCircle className="w-5 h-5" />
             </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-lg relative transition-colors"
+                className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 space-y-2 text-xs">
-                  <div className="flex items-center justify-between border-b border-[#26344B] pb-2 font-bold text-white">
+                <div className="absolute right-0 mt-2 w-80 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-4 z-50 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between border-b border-[#26344B] pb-2 font-bold text-white text-sm">
                     <span>Evidence Telemetry Alerts</span>
                     <button
                       onClick={() => setNotificationsOpen(false)}
                       className="text-slate-400 hover:text-white"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
                     <span className="font-semibold text-blue-400">PR #102</span> matched to Requirement 1.1 with 98% confidence.
                   </div>
-                  <div className="p-2 rounded-lg bg-[#152238] text-[11px] text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
                     <span className="font-semibold text-emerald-400">Commit 8c92a10</span> verified against OAuth rotation spec.
                   </div>
                 </div>
@@ -526,53 +526,53 @@ export const EvidencePage: React.FC = () => {
             {/* Create Report Button */}
             <button
               onClick={() => setCreateReportModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-colors"
+              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4" />
               <span>Create Report</span>
             </button>
           </div>
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-5">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
           {/* TOP SPLIT: REPOSITORY OVERVIEW (LEFT) + EVIDENCE SUMMARY (RIGHT) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* PHASE 2: REPOSITORY OVERVIEW CARD (5 COLS) */}
-            <div className="lg:col-span-5 rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex flex-col justify-between">
-              <div className="flex items-center justify-between pb-3 border-b border-[#26344B]/60">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="lg:col-span-5 rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6 flex flex-col justify-between">
+              <div className="flex items-center justify-between pb-3.5 border-b border-[#26344B]/60">
+                <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                   REPOSITORY OVERVIEW
                 </span>
-                <GitHubIcon className="w-4 h-4 text-slate-400" />
+                <GitHubIcon className="w-5 h-5 text-slate-400" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-3 text-xs">
+              <div className="grid grid-cols-2 gap-4 pt-3.5 text-xs sm:text-sm">
                 <div>
-                  <span className="text-[11px] text-slate-400 block">Connected Repository</span>
+                  <span className="text-xs text-slate-400 block">Connected Repository</span>
                   <a
                     href="https://github.com/northstar-studio/payment-gateway"
                     target="_blank"
                     rel="noreferrer"
-                    className="font-semibold text-white hover:text-blue-400 transition-colors truncate block"
+                    className="font-semibold text-white hover:text-blue-400 transition-colors truncate block mt-0.5"
                   >
                     northstar-studio/payment-gateway
                   </a>
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-400 block">Last Synchronization</span>
-                  <span className="font-semibold text-white">2 mins ago</span>
+                  <span className="text-xs text-slate-400 block">Last Synchronization</span>
+                  <span className="font-semibold text-white mt-0.5 block">2 mins ago</span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-400 block">Branch</span>
-                  <span className="font-mono text-xs font-semibold text-blue-400 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-500/30 inline-block mt-0.5">
+                  <span className="text-xs text-slate-400 block">Branch</span>
+                  <span className="font-mono text-xs sm:text-sm font-semibold text-blue-400 bg-blue-950/40 px-2.5 py-1 rounded-md border border-blue-500/30 inline-block mt-1">
                     main
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-400 block">Connection Status</span>
-                  <span className="flex items-center gap-1.5 font-semibold text-emerald-400 mt-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs text-slate-400 block">Connection Status</span>
+                  <span className="flex items-center gap-2 font-semibold text-emerald-400 mt-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                     Connected
                   </span>
                 </div>
@@ -580,61 +580,60 @@ export const EvidencePage: React.FC = () => {
             </div>
 
             {/* PHASE 3: EVIDENCE SUMMARY CARD (7 COLS) */}
-            <div className="lg:col-span-7 rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex flex-col justify-between">
-              <div className="pb-3 border-b border-[#26344B]/60 flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="lg:col-span-7 rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6 flex flex-col justify-between">
+              <div className="pb-3.5 border-b border-[#26344B]/60 flex items-center justify-between">
+                <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                   EVIDENCE SUMMARY
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">Sample Telemetry</span>
+                <span className="text-xs text-slate-400 font-mono">Sample Telemetry</span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-3.5">
                 {/* 1. Total Commits */}
-                <div className="p-3 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1">
-                  <div className="flex items-center gap-1.5 text-blue-400">
-                    <GitCommit className="w-3.5 h-3.5" />
-                    <span className="text-[10px] text-slate-400 font-medium">Total Commits</span>
+                <div className="p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <GitCommit className="w-4 h-4" />
+                    <span className="text-xs text-slate-400 font-medium">Total Commits</span>
                   </div>
-                  <div className="text-xl font-bold text-white font-mono">142</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">142</div>
                 </div>
 
                 {/* 2. Pull Requests */}
-                <div className="p-3 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1">
-                  <div className="flex items-center gap-1.5 text-indigo-400">
-                    <GitPullRequest className="w-3.5 h-3.5" />
-                    <span className="text-[10px] text-slate-400 font-medium">Pull Requests</span>
+                <div className="p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                  <div className="flex items-center gap-2 text-indigo-400">
+                    <GitPullRequest className="w-4 h-4" />
+                    <span className="text-xs text-slate-400 font-medium">Pull Requests</span>
                   </div>
-                  <div className="text-xl font-bold text-white font-mono">28</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">28</div>
                 </div>
 
                 {/* 3. Issues */}
-                <div className="p-3 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1">
-                  <div className="flex items-center gap-1.5 text-cyan-400">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span className="text-[10px] text-slate-400 font-medium">Issues</span>
+                <div className="p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                  <div className="flex items-center gap-2 text-cyan-400">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-xs text-slate-400 font-medium">Issues</span>
                   </div>
-                  <div className="text-xl font-bold text-white font-mono">17</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">17</div>
                 </div>
 
                 {/* 4. Linked Milestone Requirements */}
-                <div className="p-3 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1.5">
-                  <div className="flex items-center gap-1 text-emerald-400">
-                    <ListChecks className="w-3.5 h-3.5" />
-                    <span className="text-[10px] text-slate-400 font-medium truncate">Linked Req.</span>
+                <div className="p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2">
+                  <div className="flex items-center gap-1.5 text-emerald-400">
+                    <ListChecks className="w-4 h-4" />
+                    <span className="text-xs text-slate-400 font-medium truncate">Linked Req.</span>
                   </div>
-                  <div className="text-xl font-bold text-white font-mono">7/11</div>
-                  <div className="w-full bg-[#152238] h-1.5 rounded-full overflow-hidden">
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">7/11</div>
+                  <div className="w-full bg-[#152238] h-2 rounded-full overflow-hidden">
                     <div className="bg-[#2563EB] h-full rounded-full" style={{ width: '64%' }} />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
           {/* PHASE 4: EVIDENCE FILTERS TOOLBAR */}
-          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 space-y-3">
+          <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                 EVIDENCE FILTERS
               </span>
               {(searchQuery || typeFilter !== 'All' || appliedFilters.length > 0) && (
@@ -645,32 +644,32 @@ export const EvidencePage: React.FC = () => {
                     setContributorFilter('All');
                     setAppliedFilters([]);
                   }}
-                  className="text-[11px] text-blue-400 hover:text-white transition-colors"
+                  className="text-xs text-blue-400 hover:text-white transition-colors cursor-pointer"
                 >
                   Clear Filters
                 </button>
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3.5">
               {/* Search Evidence input */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Search Evidence..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-white placeholder-slate-400 pl-8 pr-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-white placeholder-slate-400 pl-10 pr-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 />
               </div>
 
               {/* Type Dropdown */}
-              <div className="min-w-[130px]">
+              <div className="min-w-[140px]">
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value as any)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="All">Type: All</option>
                   <option value="Commits">Commits</option>
@@ -680,11 +679,11 @@ export const EvidencePage: React.FC = () => {
               </div>
 
               {/* Milestone Dropdown */}
-              <div className="min-w-[160px]">
+              <div className="min-w-[170px]">
                 <select
                   value={milestoneFilter}
                   onChange={(e) => setMilestoneFilter(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="Alpha Launch v1.0">Alpha Launch v1.0</option>
                   <option value="V1.1 Release">V1.1 Release</option>
@@ -694,11 +693,11 @@ export const EvidencePage: React.FC = () => {
               </div>
 
               {/* Contributor Dropdown */}
-              <div className="min-w-[120px]">
+              <div className="min-w-[130px]">
                 <select
                   value={contributorFilter}
                   onChange={(e) => setContributorFilter(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="All">Contributor: All</option>
                   <option value="Alex Morgan">Alex Morgan</option>
@@ -707,11 +706,11 @@ export const EvidencePage: React.FC = () => {
               </div>
 
               {/* Date Range Dropdown */}
-              <div className="min-w-[130px]">
+              <div className="min-w-[140px]">
                 <select
                   value={dateRangeFilter}
                   onChange={(e) => setDateRangeFilter(e.target.value)}
-                  className="w-full bg-[#0C1524] text-xs text-slate-200 px-3 py-2 rounded-lg border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                  className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="This Month">This Month</option>
                   <option value="Last 14 Days">Last 14 Days</option>
@@ -720,21 +719,21 @@ export const EvidencePage: React.FC = () => {
               </div>
 
               {/* Applied Filters Section */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] text-slate-400 font-semibold uppercase mr-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-400 font-semibold uppercase mr-1">
                   Applied Filters
                 </span>
                 {appliedFilters.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1B2A47] border border-blue-500/40 text-[11px] text-blue-200 font-medium"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1B2A47] border border-blue-500/40 text-xs text-blue-200 font-medium"
                   >
                     <span>{tag}</span>
                     <button
                       onClick={() => removeAppliedFilter(tag)}
                       className="text-slate-400 hover:text-white"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </span>
                 ))}
@@ -743,42 +742,42 @@ export const EvidencePage: React.FC = () => {
           </div>
 
           {/* LOWER SPLIT: EVIDENCE TABLE (LEFT) + EVIDENCE DETAIL & MILESTONE MAPPING (RIGHT) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* PHASE 5: EVIDENCE TABLE (LEFT 8 COLS) */}
-            <div className="lg:col-span-8 rounded-xl bg-[#111C30] border border-[#26344B] overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#26344B] flex items-center justify-between bg-[#0C1524]">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="lg:col-span-8 rounded-2xl bg-[#111C30] border border-[#26344B] overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#26344B] flex items-center justify-between bg-[#0C1524]">
+                <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                   EVIDENCE TABLE
                 </span>
-                <span className="text-[11px] text-slate-400 font-mono">
+                <span className="text-xs text-slate-400 font-mono">
                   Showing {filteredEvidence.length} items
                 </span>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-[#26344B] text-[10px] text-slate-400 uppercase tracking-wider bg-[#0C1524]/60">
-                      <th className="py-2.5 px-3 font-semibold">Type</th>
-                      <th className="py-2.5 px-3 font-semibold">Title/Commit Message</th>
-                      <th className="py-2.5 px-3 font-semibold">Contributor</th>
-                      <th className="py-2.5 px-3 font-semibold">Related Milestone</th>
-                      <th className="py-2.5 px-3 font-semibold">Timestamp</th>
-                      <th className="py-2.5 px-3 font-semibold">Evidence Status</th>
-                      <th className="py-2.5 px-3 font-semibold text-center">GitHub Source</th>
+                    <tr className="border-b border-[#26344B] text-xs text-slate-400 uppercase tracking-wider bg-[#0C1524]/60">
+                      <th className="py-3 px-3.5 font-semibold">Type</th>
+                      <th className="py-3 px-3.5 font-semibold">Title/Commit Message</th>
+                      <th className="py-3 px-3.5 font-semibold">Contributor</th>
+                      <th className="py-3 px-3.5 font-semibold">Related Milestone</th>
+                      <th className="py-3 px-3.5 font-semibold">Timestamp</th>
+                      <th className="py-3 px-3.5 font-semibold">Evidence Status</th>
+                      <th className="py-3 px-3.5 font-semibold text-center">GitHub Source</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#26344B]/40">
                     {loading ? (
                       <tr>
-                        <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
-                          <RotateCw className="w-4 h-4 animate-spin mx-auto mb-2 text-blue-400" />
+                        <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
+                          <RotateCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-400" />
                           Loading Evidence Telemetry...
                         </td>
                       </tr>
                     ) : filteredEvidence.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                        <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
                           No evidence items match the filter criteria.
                         </td>
                       </tr>
@@ -796,53 +795,53 @@ export const EvidencePage: React.FC = () => {
                             }`}
                           >
                             {/* Type */}
-                            <td className="py-2.5 px-3 whitespace-nowrap">
-                              <span className="flex items-center gap-1.5 font-medium text-xs">
+                            <td className="py-3.5 px-3.5 whitespace-nowrap">
+                              <span className="flex items-center gap-2 font-medium text-xs sm:text-sm">
                                 {row.type === 'Commit' ? (
-                                  <GitCommit className="w-3.5 h-3.5 text-blue-400" />
+                                  <GitCommit className="w-4 h-4 text-blue-400" />
                                 ) : (
-                                  <GitPullRequest className="w-3.5 h-3.5 text-indigo-400" />
+                                  <GitPullRequest className="w-4 h-4 text-indigo-400" />
                                 )}
                                 <span>{row.type}</span>
                               </span>
                             </td>
 
                             {/* Title/Commit Message */}
-                            <td className="py-2.5 px-3 max-w-[240px] truncate font-medium">
+                            <td className="py-3.5 px-3.5 max-w-[260px] truncate font-medium text-xs sm:text-sm">
                               <span className={isSelected ? 'text-white' : 'text-slate-200'}>
                                 {row.title}
                               </span>
                             </td>
 
                             {/* Contributor */}
-                            <td className="py-2.5 px-3 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
+                            <td className="py-3.5 px-3.5 whitespace-nowrap">
+                              <div className="flex items-center gap-2.5">
                                 <img
                                   src={
                                     row.contributorAvatar ||
                                     'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces'
                                   }
                                   alt={row.contributor}
-                                  className="w-5 h-5 rounded-full object-cover"
+                                  className="w-6 h-6 rounded-full object-cover"
                                 />
-                                <span className="text-xs text-slate-300">{row.contributor}</span>
+                                <span className="text-xs sm:text-sm text-slate-300">{row.contributor}</span>
                               </div>
                             </td>
 
                             {/* Related Milestone */}
-                            <td className="py-2.5 px-3 whitespace-nowrap text-slate-400 font-mono text-[11px]">
+                            <td className="py-3.5 px-3.5 whitespace-nowrap text-slate-400 font-mono text-xs">
                               {row.relatedMilestone}
                             </td>
 
                             {/* Timestamp */}
-                            <td className="py-2.5 px-3 whitespace-nowrap text-slate-400 font-mono text-[11px]">
+                            <td className="py-3.5 px-3.5 whitespace-nowrap text-slate-400 font-mono text-xs">
                               {row.timestamp}
                             </td>
 
                             {/* Evidence Status */}
-                            <td className="py-2.5 px-3 whitespace-nowrap">
+                            <td className="py-3.5 px-3.5 whitespace-nowrap">
                               <span
-                                className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                                className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold ${
                                   row.status === 'Verified'
                                     ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
                                     : row.status === 'Pending Review'
@@ -855,7 +854,7 @@ export const EvidencePage: React.FC = () => {
                             </td>
 
                             {/* GitHub Source Link */}
-                            <td className="py-2.5 px-3 whitespace-nowrap text-center">
+                            <td className="py-3.5 px-3.5 whitespace-nowrap text-center">
                               <a
                                 href={row.sourceUrl}
                                 target="_blank"

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,20 +31,67 @@
     overflow-x: hidden;
     scroll-behavior: smooth;
     background-color: #F8F9FC;
+    font-size: 100%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Responsive UI Scaling: prominent 15–18% zoom for desktop and laptop displays */
+  @media (min-width: 768px) {
+    html {
+      font-size: 106%; /* Tablet scale (~6%) */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      font-size: 115%; /* Standard laptops & desktops (~15% scale increase) */
+    }
+  }
+
+  @media (min-width: 1440px) {
+    html {
+      font-size: 118%; /* High-res desktops (~18% scale increase) */
+    }
+  }
+
+  @media (min-width: 1920px) {
+    html {
+      font-size: 120%; /* Ultra-wide monitors (~20% scale increase) */
+    }
   }
 
   body {
     background-color: #F8F9FC;
     color: #25263A;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Tabular numbers for financial metrics and git shas */
-  .tabular-nums {
+  /* Secondary Font: Plus Jakarta Sans for all main headings and titles */
+  h1, h2, h3, h4, h5, h6,
+  .font-heading,
+  [data-font="heading"] {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  /* Primary Font: Inter for general body, forms, inputs, tables, labels and buttons */
+  p, span, label, input, button, select, textarea, td, th {
+    font-family: inherit;
+  }
+
+  /* Tabular numbers for financial metrics, amounts, percentages, and hashes */
+  .tabular-nums,
+  table,
+  [data-numeric="true"],
+  .metric-value,
+  .stat-value,
+  .financial-val {
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
   }
 
   /* Accessible, visible focus rings with pastel powder blue */
@@ -166,29 +215,29 @@
 }
 
 /* ==========================================================================
-   DevFlow Light Mode & Theme Consistency Specifications
+   DevFlow Modern Glassmorphism & Theme Specifications
    ========================================================================== */
 
 /* 1. Base Theme Configuration */
 html.dark {
   color-scheme: dark;
-  background-color: #080D18;
+  background-color: #060A14;
   color: #F8FAFC;
 }
 
 html.dark body {
-  background-color: #080D18;
+  background-color: #060A14;
   color: #F8FAFC;
 }
 
 html.light {
   color-scheme: light;
-  background-color: #F8FAFC;
+  background-color: #F4F7FC;
   color: #0F172A;
 }
 
 html.light body {
-  background-color: #F8FAFC;
+  background-color: #F4F7FC;
   color: #0F172A;
 }
 
@@ -206,46 +255,75 @@ html.light [class*="bg-[#080D1B]"],
 html.light [class*="bg-[#060A15]"],
 html.light [class*="bg-[#0A0F1D]"],
 html.light [class*="bg-[#0A101D]"] {
-  background-color: #F8FAFC !important;
+  background-color: transparent !important;
 }
 
-/* 3. Headers & Top Bars */
+/* 3. Headers & Top Bars (Frosted Glass) */
 html.light header,
 html.light header.bg-\[\#080D18\]\/90,
 html.light header.bg-\[\#080D1B\]\/85,
 html.light header.bg-\[\#0A101D\],
 html.light header.bg-\[\#0A101D\]\/90,
 html.light [class*="header"][class*="bg-"] {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border-color: #E2E8F0 !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
   color: #0F172A !important;
 }
 
-/* 4. Left Sidebar & Rails */
+html.dark header,
+html.dark [class*="header"][class*="bg-"] {
+  background-color: rgba(9, 14, 29, 0.82) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 4. Left Sidebar & Rails (Frosted Glass) */
 html.light aside,
 html.light aside.bg-\[\#101A2D\] {
-  background-color: #FFFFFF !important;
-  border-color: #E2E8F0 !important;
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 4px 0 24px -2px rgba(31, 38, 135, 0.04) !important;
+}
+
+html.dark aside,
+html.dark aside.bg-\[\#101A2D\] {
+  background-color: rgba(10, 16, 31, 0.82) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 4px 0 32px 0 rgba(0, 0, 0, 0.4) !important;
 }
 
 html.light aside .bg-\[\#0C1424\]\/60,
 html.light aside [class*="bg-[#0C1424]"] {
-  background-color: #F8FAFC !important;
-  border-color: #E2E8F0 !important;
+  background-color: rgba(248, 250, 252, 0.8) !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+html.dark aside .bg-\[\#0C1424\]\/60,
+html.dark aside [class*="bg-[#0C1424]"] {
+  background-color: rgba(12, 20, 36, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 html.light aside button:hover:not([class*="bg-"]) {
-  background-color: #F1F5F9 !important;
+  background-color: rgba(241, 245, 249, 0.8) !important;
   color: #0F172A !important;
 }
 
 html.light aside button.bg-\[\#1B2A47\] {
-  background-color: #EFF6FF !important;
+  background-color: rgba(239, 246, 255, 0.9) !important;
   color: #1D4ED8 !important;
-  border-color: #BFDBFE !important;
+  border-color: rgba(191, 219, 254, 0.8) !important;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.15) !important;
 }
 
-/* 5. Cards, Panels, Modals, Drawers & Popovers */
+/* 5. Cards, Panels, Modals, Drawers & Popovers (Frosted Glass Surfaces) */
 html.light .bg-\[\#111C30\],
 html.light .bg-\[\#101A2D\],
 html.light .bg-\[\#0C1424\],
@@ -261,8 +339,33 @@ html.light [class*="bg-[#111C30]"],
 html.light [class*="bg-[#0C1424]"],
 html.light [class*="bg-[#101A2D]"],
 html.light .bg-\[\#0F172A\]:not(button):not(a):not([class*="text-"]):not(.hero-banner) {
-  background-color: #FFFFFF !important;
-  border-color: #E2E8F0 !important;
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 8px 30px 0 rgba(31, 38, 135, 0.05), 0 2px 6px 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+html.dark .bg-\[\#111C30\],
+html.dark .bg-\[\#101A2D\],
+html.dark .bg-\[\#0C1424\],
+html.dark .bg-\[\#0C1524\],
+html.dark .bg-\[\#0D1226\],
+html.dark .bg-\[\#0D1526\],
+html.dark .bg-\[\#0E1726\],
+html.dark .bg-\[\#0B1222\],
+html.dark .bg-\[\#171E30\],
+html.dark .bg-\[\#172235\],
+html.dark .bg-\[\#17233B\],
+html.dark [class*="bg-[#111C30]"],
+html.dark [class*="bg-[#0C1424]"],
+html.dark [class*="bg-[#101A2D]"],
+html.dark .bg-\[\#0F172A\]:not(button):not(a):not([class*="text-"]):not(.hero-banner) {
+  background-color: rgba(16, 26, 45, 0.74) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.06) !important;
 }
 
 /* 6. Subtle Surfaces, Pill Tags, Table Headers, Inset Boxes & Progress Tracks */
@@ -290,8 +393,40 @@ html.light .bg-\[\#20304B\],
 html.light .bg-\[\#22324C\],
 html.light .bg-\[\#25263A\],
 html.light .bg-\[\#26344B\] {
-  background-color: #F1F5F9 !important;
-  border-color: #E2E8F0 !important;
+  background-color: rgba(241, 245, 249, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+html.dark .bg-\[\#132038\],
+html.dark .bg-\[\#132644\],
+html.dark .bg-\[\#132A30\],
+html.dark .bg-\[\#141E33\],
+html.dark .bg-\[\#152238\],
+html.dark .bg-\[\#15233D\],
+html.dark .bg-\[\#152438\],
+html.dark .bg-\[\#152B4D\],
+html.dark .bg-\[\#16233B\],
+html.dark .bg-\[\#182C4E\],
+html.dark .bg-\[\#1A1B29\],
+html.dark .bg-\[\#1A2538\],
+html.dark .bg-\[\#1A253A\],
+html.dark .bg-\[\#1A263D\],
+html.dark .bg-\[\#1A2840\],
+html.dark .bg-\[\#1B2A47\]:not(aside button),
+html.dark .bg-\[\#1E293B\],
+html.dark .bg-\[\#1E2E48\],
+html.dark .bg-\[\#1E2E4E\],
+html.dark .bg-\[\#1E334F\],
+html.dark .bg-\[\#20304B\],
+html.dark .bg-\[\#22324C\],
+html.dark .bg-\[\#25263A\],
+html.dark .bg-\[\#26344B\] {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* 7. Hover States */
@@ -397,13 +532,25 @@ html.light .text-teal-300 {
   color: #0F766E !important;
 }
 
-/* 10. Form Controls, Search Bars, Selects & Textareas */
+/* 10. Form Controls, Search Bars, Selects & Textareas (Glass Inputs) */
 html.light input:not([type="checkbox"]):not([type="radio"]),
 html.light select,
 html.light textarea {
-  background-color: #FFFFFF !important;
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   color: #0F172A !important;
-  border-color: #CBD5E1 !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: #F8FAFC !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 html.light input::placeholder,
@@ -411,15 +558,40 @@ html.light textarea::placeholder {
   color: #94A3B8 !important;
 }
 
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748B !important;
+}
+
 html.light option {
   background-color: #FFFFFF !important;
   color: #0F172A !important;
 }
 
-/* 11. Modal, Popover & Drawer Backdrops */
+html.dark option {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+/* 11. Modal, Popover & Drawer Backdrops (Frosted Ambient Glass) */
 html.light .bg-black\/70,
-html.light .bg-black\/60 {
-  background-color: rgba(15, 23, 42, 0.45) !important;
+html.light .bg-black\/60,
+html.light .bg-black\/50,
+html.light [class*="bg-black/"],
+html.light .bg-\[\#25263A\]\/40 {
+  background-color: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+html.dark .bg-black\/70,
+html.dark .bg-black\/60,
+html.dark .bg-black\/50,
+html.dark [class*="bg-black/"],
+html.dark .bg-\[\#25263A\]\/40 {
+  background-color: rgba(3, 7, 18, 0.65) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
 }
 
 /* 12. Badges & Status Chips in Light Mode */
@@ -498,4 +670,133 @@ html.light a.bg-\[\#0070BA\] *,
 html.light a.bg-\[\#2563EB\] *,
 html.light [class*="bg-gradient-to-tr"] * {
   color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   16. Explicit Glassmorphism Component Classes
+   ========================================================================== */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 30px 0 rgba(31, 38, 135, 0.06);
+}
+
+html.dark .glass-card {
+  background: rgba(16, 26, 45, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-card-interactive {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px 0 rgba(37, 99, 235, 0.12), 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+  border-color: rgba(147, 197, 253, 0.7);
+}
+
+html.dark .glass-card-interactive:hover {
+  box-shadow: 0 16px 48px -4px rgba(37, 99, 235, 0.22), 0 6px 16px 0 rgba(0, 0, 0, 0.4);
+  border-color: rgba(96, 165, 250, 0.25);
+}
+
+.glass-pill {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+html.light .glass-pill {
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glass-nav-active {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+html.light .glass-nav-active {
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.95), rgba(245, 243, 255, 0.85));
+  border: 1px solid rgba(191, 219, 254, 0.9);
+  color: #1D4ED8;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .glass-nav-active {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(99, 102, 241, 0.15));
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  color: #93C5FD;
+  box-shadow: 0 0 20px -2px rgba(59, 130, 246, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   17. Enterprise Fintech Typography System
+   Primary: Inter (Body, navigation, tables, financial data, inputs, buttons)
+   Secondary: Plus Jakarta Sans (Headings, titles, KPI cards, hero display)
+   ========================================================================== */
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    letter-spacing: -0.025em;
+  }
+
+  .font-sans {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Specific Fintech Hierarchy Tokens */
+  .text-heading-hero {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+  }
+
+  .text-heading-page {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  .text-heading-section {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .text-heading-card {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+  }
+
+  .text-stat-value {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
+    letter-spacing: -0.02em;
+  }
+
+  .text-table-data {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
 }

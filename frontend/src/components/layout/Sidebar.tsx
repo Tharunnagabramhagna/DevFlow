@@ -117,30 +117,30 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#101A2D] border-r border-slate-200 dark:border-[#26344B] flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
+      className={`fixed lg:static inset-y-0 left-0 z-50 bg-white/80 dark:bg-[#0A101F]/80 backdrop-blur-2xl border-r border-slate-200/70 dark:border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.4)] flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
         isMobileOpen
-          ? 'translate-x-0 w-60'
+          ? 'translate-x-0 w-72'
           : '-translate-x-full lg:translate-x-0'
       } ${
         isSidebarCollapsed
-          ? 'lg:w-16'
-          : 'lg:w-60'
+          ? 'lg:w-20'
+          : 'lg:w-72'
       }`}
     >
-      <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
+      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-7">
         {/* Top Branding Section & Global Collapse/Expand Toggle */}
         <div className="flex items-center justify-between px-1 mb-2">
           {/* Desktop Collapsed View: Centered Expand Button inside remaining rail */}
-          <div className={`w-full ${isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'} flex-col items-center justify-center gap-2`}>
+          <div className={`w-full ${isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'} flex-col items-center justify-center gap-2.5`}>
             <button
               onClick={toggleSidebar}
-              className="items-center justify-center w-10 h-10 text-slate-300 hover:text-white rounded-lg hover:bg-[#1B2A47] border border-[#26344B]/70 hover:border-[#2563EB] transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              className="items-center justify-center w-11 h-11 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 border border-slate-200/60 dark:border-white/10 hover:border-blue-500/50 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-[#2563EB] shadow-xs backdrop-blur-md cursor-pointer"
               aria-label="Expand sidebar"
               title="Expand sidebar"
             >
-              <PanelLeftOpen className="w-5 h-5 text-slate-300 hover:text-white transition-colors" />
+              <PanelLeftOpen className="w-5 h-5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors" />
             </button>
-            <ThemeToggle className="w-10 h-10" />
+            <ThemeToggle className="w-11 h-11 rounded-xl" />
           </div>
 
           {/* Expanded View (and always full on Mobile) */}
@@ -150,27 +150,27 @@ export const Sidebar: React.FC = () => {
               className="flex items-center gap-2.5 cursor-pointer group"
               title="Return to Landing Page"
             >
-              <DevFlowLogo variant="horizontal" theme="auto" size="sm" />
+              <DevFlowLogo variant="horizontal" theme="auto" size="md" />
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {/* Global Theme Toggle */}
-              <ThemeToggle className="p-1.5" />
+              <ThemeToggle className="p-2" />
 
               {/* Desktop Global Sidebar Collapse Toggle */}
               <button
                 onClick={toggleSidebar}
-                className="hidden lg:flex items-center justify-center p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1B2A47] border border-transparent hover:border-[#26344B] transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                className="hidden lg:flex items-center justify-center p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100/70 dark:hover:bg-white/10 border border-transparent hover:border-slate-200/60 dark:hover:border-white/10 transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
                 aria-label="Collapse sidebar"
                 title="Collapse sidebar"
               >
-                <PanelLeftClose className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                <PanelLeftClose className="w-5 h-5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" />
               </button>
 
               {/* Mobile Close Button */}
               <button
                 onClick={closeMobileSidebar}
-                className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E] transition-colors"
+                className="lg:hidden p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 aria-label="Close navigation"
                 title="Close menu"
               >
@@ -181,11 +181,11 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Navigation Groups */}
-        <div className="space-y-6 text-xs">
+        <div className="space-y-6 text-sm font-sans">
           {navGroups.map((group) => (
-            <div key={group.title} className="space-y-1">
+            <div key={group.title} className="space-y-1.5">
               <div
-                className={`px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500 ${
+                className={`px-4 text-xs font-sans font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500 ${
                   isSidebarCollapsed ? 'block lg:hidden' : 'block'
                 }`}
               >
@@ -202,18 +202,20 @@ export const Sidebar: React.FC = () => {
                     onClick={() => handleNavigate(item.path)}
                     className={`w-full flex items-center ${
                       isSidebarCollapsed
-                        ? 'gap-2.5 px-3 py-2 lg:justify-center lg:px-0 lg:py-2.5'
-                        : 'gap-2.5 px-3 py-2'
-                    } rounded-lg transition-colors ${
+                        ? 'gap-3 px-3 py-3 lg:justify-center lg:px-0 lg:py-3'
+                        : 'gap-3.5 px-4 py-3'
+                    } rounded-xl font-sans text-sm transition-all duration-200 cursor-pointer ${
                       active
-                        ? 'bg-[#1B2A47] text-white font-semibold shadow-xs'
-                        : 'text-slate-400 hover:text-white hover:bg-[#152238]'
+                        ? 'bg-gradient-to-r from-blue-500/15 via-blue-500/10 to-indigo-500/10 dark:from-blue-600/25 dark:via-blue-600/20 dark:to-indigo-600/15 text-blue-700 dark:text-blue-300 font-semibold border border-blue-500/30 dark:border-blue-400/30 shadow-xs backdrop-blur-md'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 dark:hover:bg-white/5 border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 font-medium'
                     }`}
                     title={item.name}
                   >
                     <Icon
-                      className={`w-4 h-4 shrink-0 ${
-                        active ? item.iconColor : 'text-slate-400'
+                      className={`w-5 h-5 shrink-0 transition-transform duration-200 ${
+                        active
+                          ? `${item.iconColor} scale-110 drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]`
+                          : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'
                       }`}
                     />
                     <span className={isSidebarCollapsed ? 'inline lg:hidden' : 'inline'}>
@@ -228,55 +230,55 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* User Session Profile & Logout */}
-      <div className="border-t border-slate-200 dark:border-[#26344B] p-2.5 shrink-0 bg-slate-50 dark:bg-[#0C1424]/60">
+      <div className="border-t border-slate-200/60 dark:border-white/10 p-3.5 shrink-0 bg-slate-50/60 dark:bg-[#0C1424]/40 backdrop-blur-md">
         {isSidebarCollapsed ? (
-          <div className="hidden lg:flex flex-col items-center gap-2">
+          <div className="hidden lg:flex flex-col items-center gap-2.5">
             <div
-              className={`w-9 h-9 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
+              className={`w-10 h-10 rounded-xl ${avatarGradient} text-white flex items-center justify-center font-bold text-sm ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
               title={`${userName} (${isGuest ? 'Guest Mode' : role === 'CLIENT' ? 'Client' : 'Developer'})`}
             >
               {initials}
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors focus:outline-none"
+              className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-xl transition-colors focus:outline-none cursor-pointer"
               title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
               aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
         ) : null}
 
-        <div className={isSidebarCollapsed ? 'lg:hidden flex items-center justify-between gap-2' : 'flex items-center justify-between gap-2'}>
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className={isSidebarCollapsed ? 'lg:hidden flex items-center justify-between gap-3' : 'flex items-center justify-between gap-3'}>
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className={`w-8 h-8 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
+              className={`w-10 h-10 rounded-xl ${avatarGradient} text-white flex items-center justify-center font-bold text-sm shrink-0 ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
             >
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate leading-tight">
+              <div className="text-sm font-bold text-slate-900 dark:text-white truncate leading-tight">
                 {userName}
               </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="flex items-center gap-1.5 mt-1">
                 {isGuest ? (
-                  <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/60 font-mono">
-                    <Eye className="w-2.5 h-2.5" />
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/60 font-mono">
+                    <Eye className="w-3 h-3" />
                     <span>GUEST MODE</span>
                   </span>
                 ) : (
                   <span
-                    className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
+                    className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
                       role === 'CLIENT'
                         ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
                         : 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
                     }`}
                   >
                     {role === 'CLIENT' ? (
-                      <BriefcaseBusiness className="w-2.5 h-2.5" />
+                      <BriefcaseBusiness className="w-3 h-3" />
                     ) : (
-                      <Code2 className="w-2.5 h-2.5" />
+                      <Code2 className="w-3 h-3" />
                     )}
                     <span>{role === 'CLIENT' ? 'Client' : 'Developer'}</span>
                   </span>
@@ -286,18 +288,18 @@ export const Sidebar: React.FC = () => {
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors shrink-0 focus:outline-none"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-xl transition-colors shrink-0 focus:outline-none cursor-pointer"
             title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
             aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {/* Sidebar Footer Info */}
       <div
-        className={`p-3 border-t border-slate-200 dark:border-[#26344B] text-[10px] text-slate-500 items-center justify-between shrink-0 ${
+        className={`p-3 border-t border-slate-200/60 dark:border-white/10 text-[10px] text-slate-500 items-center justify-between shrink-0 ${
           isSidebarCollapsed ? 'flex lg:hidden' : 'flex'
         }`}
       >
@@ -306,7 +308,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <div
-        className={`p-3 border-t border-slate-200 dark:border-[#26344B] text-[10px] text-slate-500 items-center justify-center shrink-0 ${
+        className={`p-3 border-t border-slate-200/60 dark:border-white/10 text-[10px] text-slate-500 items-center justify-center shrink-0 ${
           isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'
         }`}
         title="DevFlow Sandbox v2.4 (Demo)"

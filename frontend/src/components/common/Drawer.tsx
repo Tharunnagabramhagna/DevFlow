@@ -48,11 +48,11 @@ export const Drawer: React.FC<DrawerProps> = ({
   if (!isOpen) return null;
 
   const sizes = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-2xl',
-    '2xl': 'max-w-3xl',
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-xl',
+    xl: 'max-w-3xl',
+    '2xl': 'max-w-4xl',
     full: 'max-w-full',
   };
 
@@ -62,7 +62,7 @@ export const Drawer: React.FC<DrawerProps> = ({
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-[#25263A]/40 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
+        className="fixed inset-0 bg-slate-950/40 dark:bg-black/65 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -72,7 +72,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           role="dialog"
           aria-modal="true"
           className={cn(
-            'w-screen bg-white dark:bg-[#111C30] text-[#0F172A] dark:text-[#F8FAFC] shadow-drawer-elevated border-slate-200 dark:border-[#26344B] flex flex-col transform transition-transform duration-300 ease-in-out',
+            'w-screen backdrop-blur-2xl bg-white/95 dark:bg-[#0F172A]/90 text-slate-900 dark:text-white shadow-2xl border-slate-200/80 dark:border-white/15 flex flex-col transform transition-transform duration-300 ease-in-out',
             isRight ? 'border-l animate-in slide-in-from-right' : 'border-r animate-in slide-in-from-left',
             sizes[size],
             className
@@ -80,11 +80,11 @@ export const Drawer: React.FC<DrawerProps> = ({
         >
           {/* Header */}
           {(title || description) && (
-            <div className="px-6 py-4.5 border-b border-slate-200 dark:border-[#26344B] flex items-start justify-between shrink-0 bg-white dark:bg-[#111C30]">
+            <div className="px-6 py-4.5 border-b border-slate-200/70 dark:border-white/10 flex items-start justify-between shrink-0 bg-transparent">
               <div className="space-y-1 pr-4 min-w-0">
                 {title && (
                   typeof title === 'string' ? (
-                    <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white tracking-tight truncate">
+                    <h2 className="font-heading text-base sm:text-lg font-semibold text-slate-900 dark:text-white tracking-tight truncate">
                       {title}
                     </h2>
                   ) : (
@@ -93,7 +93,7 @@ export const Drawer: React.FC<DrawerProps> = ({
                 )}
                 {description && (
                   typeof description === 'string' ? (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                    <p className="font-sans text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
                       {description}
                     </p>
                   ) : (
@@ -103,7 +103,7 @@ export const Drawer: React.FC<DrawerProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1A253A] transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
                 aria-label="Close drawer"
               >
                 <X className="w-5 h-5" />
@@ -112,11 +112,11 @@ export const Drawer: React.FC<DrawerProps> = ({
           )}
 
           {/* Body */}
-          <div className="p-6 overflow-y-auto flex-1 bg-white dark:bg-[#111C30]">{children}</div>
+          <div className="p-6 overflow-y-auto flex-1 bg-transparent">{children}</div>
 
           {/* Footer */}
           {footer && (
-            <div className="px-6 py-4 bg-slate-50 dark:bg-[#0A101D] border-t border-slate-200 dark:border-[#26344B] flex items-center justify-end gap-2.5 shrink-0">
+            <div className="px-6 py-4 bg-slate-50/80 dark:bg-white/5 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-end gap-2.5 shrink-0 backdrop-blur-md">
               {footer}
             </div>
           )}

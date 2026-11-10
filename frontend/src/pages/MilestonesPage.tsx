@@ -321,20 +321,20 @@ export const MilestonesPage: React.FC = () => {
         )}
 
         {/* SCROLLABLE MILESTONES BODY */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-7 py-5 space-y-6">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-8 max-w-[1780px] w-full mx-auto">
           {/* PHASE 2: PAGE HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2.5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={openMobileSidebar}
-                  className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D]"
+                  className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D]"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Milestones</h1>
+                <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">Milestones</h1>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400">
+              <p className="text-sm sm:text-base text-slate-400">
                 Track deliverables, evaluate progress and manage milestone approvals.
               </p>
             </div>
@@ -350,7 +350,7 @@ export const MilestonesPage: React.FC = () => {
                   }
                   setIsNewModalOpen(true);
                 }}
-                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-all"
+                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create Milestone</span>
@@ -359,24 +359,24 @@ export const MilestonesPage: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-2 text-slate-400 hover:text-white rounded-lg bg-[#111C30] border border-[#26344B] transition-colors relative"
+                  className="p-3 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] transition-colors relative"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#111C30]" />
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#111C30]" />
                 </button>
                 {notificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 text-xs space-y-2">
-                    <div className="font-bold text-white flex justify-between items-center pb-2 border-b border-[#26344B]">
-                      <span>Milestone Alerts</span>
-                      <span className="text-[10px] text-blue-400 cursor-pointer" onClick={() => setNotificationsOpen(false)}>
+                  <div className="absolute right-0 mt-2 w-80 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-4 z-50 text-xs space-y-2.5">
+                    <div className="font-bold text-white flex justify-between items-center pb-2.5 border-b border-[#26344B]">
+                      <span className="text-sm">Milestone Alerts</span>
+                      <span className="text-xs text-blue-400 cursor-pointer hover:underline" onClick={() => setNotificationsOpen(false)}>
                         Close
                       </span>
                     </div>
-                    <div className="space-y-2">
-                      <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
-                        <div className="font-semibold text-white">V1.1 Release Approved</div>
-                        <div className="text-[11px] text-slate-400">Ready for PayPal Invoice dispatch</div>
+                    <div className="space-y-2.5">
+                      <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B]">
+                        <div className="font-semibold text-white text-xs sm:text-sm">V1.1 Release Approved</div>
+                        <div className="text-xs text-slate-400 mt-0.5">Ready for PayPal Invoice dispatch</div>
                       </div>
                     </div>
                   </div>
@@ -384,14 +384,14 @@ export const MilestonesPage: React.FC = () => {
               </div>
 
               {/* Initial Badge */}
-              <div className="w-8 h-8 rounded-lg bg-[#111C30] border border-[#26344B] flex items-center justify-center font-bold text-xs text-white">
+              <div className="w-9 h-9 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-center font-bold text-xs sm:text-sm text-white">
                 NV
               </div>
 
               {/* User Avatar */}
               <div
                 onClick={() => navigate('/settings')}
-                className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] cursor-pointer shadow-sm"
+                className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs sm:text-sm ring-1 ring-[#26344B] cursor-pointer shadow-sm"
                 title="Account Settings"
               >
                 AM
@@ -400,12 +400,12 @@ export const MilestonesPage: React.FC = () => {
           </div>
 
           {/* PHASE 3: COMPACT FILTER TOOLBAR */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 p-2 rounded-xl bg-[#111C30] border border-[#26344B] text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-3 sm:p-4 rounded-2xl bg-[#111C30] border border-[#26344B] text-xs sm:text-sm">
             {/* 1. Project Selector Dropdown */}
             <select
               value={selectedProjectFilter}
               onChange={(e) => setSelectedProjectFilter(e.target.value)}
-              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB] truncate"
+              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB] truncate"
             >
               <option value="all">All Projects (Northstar)</option>
               {projects.map((p) => (
@@ -417,13 +417,13 @@ export const MilestonesPage: React.FC = () => {
 
             {/* 2. Search Input */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search milestones..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#080D18] text-xs text-white placeholder-slate-500 pl-8 pr-3 py-2 rounded-lg border border-[#26344B] focus:outline-none focus:border-[#2563EB]"
+                className="w-full bg-[#080D18] text-xs sm:text-sm text-white placeholder-slate-500 pl-10 pr-3.5 py-2.5 rounded-xl border border-[#26344B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
@@ -431,7 +431,7 @@ export const MilestonesPage: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
+              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
             >
               <option value="all">Status: All</option>
               <option value="completed">Status: Completed</option>
@@ -443,7 +443,7 @@ export const MilestonesPage: React.FC = () => {
             <select
               value={deadlineFilter}
               onChange={(e) => setDeadlineFilter(e.target.value)}
-              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
+              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
             >
               <option value="all">Deadline: This Month</option>
               <option value="next_month">Deadline: Next Month</option>
@@ -454,7 +454,7 @@ export const MilestonesPage: React.FC = () => {
             <select
               value={approvalFilter}
               onChange={(e) => setApprovalFilter(e.target.value)}
-              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
+              className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
             >
               <option value="all">Approval: All</option>
               <option value="approved">Approval: Approved</option>
@@ -463,55 +463,55 @@ export const MilestonesPage: React.FC = () => {
           </div>
 
           {/* PHASE 4: KPI SUMMARY CARDS */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Card 1: Total Milestones */}
-            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 font-medium">Total Milestones</span>
-                <div className="text-2xl sm:text-3xl font-black font-mono text-white mt-1">
+                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Total Milestones</span>
+                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
                   {totalMilestonesCount}
                 </div>
               </div>
-              <div className="p-2.5 rounded-lg bg-[#080D18] border border-[#26344B] text-slate-400">
+              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-slate-400">
                 <Flag className="w-5 h-5" />
               </div>
             </div>
 
             {/* Card 2: Completed */}
-            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 font-medium">Completed</span>
-                <div className="text-2xl sm:text-3xl font-black font-mono text-white mt-1">
+                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Completed</span>
+                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
                   {completedCount}
                 </div>
               </div>
-              <div className="p-2.5 rounded-lg bg-[#080D18] border border-[#26344B] text-emerald-400">
+              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-emerald-400">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
             </div>
 
             {/* Card 3: In Progress */}
-            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 font-medium">In Progress</span>
-                <div className="text-2xl sm:text-3xl font-black font-mono text-white mt-1">
+                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">In Progress</span>
+                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
                   {String(inProgressCount).padStart(2, '0')}
                 </div>
               </div>
-              <div className="p-2.5 rounded-lg bg-[#080D18] border border-[#26344B] text-blue-400">
+              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-blue-400">
                 <Clock className="w-5 h-5" />
               </div>
             </div>
 
             {/* Card 4: Awaiting Review */}
-            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 font-medium">Awaiting Review</span>
-                <div className="text-2xl sm:text-3xl font-black font-mono text-white mt-1">
+                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Awaiting Review</span>
+                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
                   {String(awaitingReviewCount).padStart(2, '0')}
                 </div>
               </div>
-              <div className="p-2.5 rounded-lg bg-[#080D18] border border-[#26344B] text-amber-400">
+              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-amber-400">
                 <MessageSquare className="w-5 h-5" />
               </div>
             </div>
@@ -520,13 +520,13 @@ export const MilestonesPage: React.FC = () => {
           {/* PHASE 5 & 6: TIMELINE & MILESTONE DETAIL WORKSPACE */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* Left Column: Vertical Timeline (lg:col-span-4) */}
-            <div className="lg:col-span-4 space-y-3 relative">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+            <div className="lg:col-span-4 space-y-3.5 relative">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">
                 MILESTONE TIMELINE
               </div>
 
               {/* Vertical Timeline Track Line */}
-              <div className="relative pl-6 space-y-3.5 before:absolute before:left-2.5 before:top-4 before:bottom-4 before:w-0.5 before:bg-[#26344B]">
+              <div className="relative pl-7 space-y-4 before:absolute before:left-3 before:top-4 before:bottom-4 before:w-0.5 before:bg-[#26344B]">
                 {filteredMilestones.map((ms) => {
                   const isSelected = selectedMilestone?.id === ms.id;
 
@@ -534,7 +534,7 @@ export const MilestonesPage: React.FC = () => {
                     <div key={ms.id} className="relative">
                       {/* Timeline Node Indicator */}
                       <span
-                        className={`absolute -left-6 top-4 w-3.5 h-3.5 rounded-full transition-all ring-4 ring-[#080D18] ${
+                        className={`absolute -left-7 top-4 w-4 h-4 rounded-full transition-all ring-4 ring-[#080D18] ${
                           isSelected
                             ? 'bg-[#2563EB] shadow-md shadow-blue-500/50 scale-110 ring-blue-900/50'
                             : 'bg-slate-600'
@@ -544,26 +544,26 @@ export const MilestonesPage: React.FC = () => {
                       {/* Milestone Timeline Card */}
                       <div
                         onClick={() => setSelectedMilestoneId(ms.id)}
-                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
                             ? 'bg-[#15233D] border-[#2563EB] shadow-lg shadow-blue-900/20'
                             : 'bg-[#111C30] border-[#26344B] hover:border-slate-500 hover:bg-[#132038]'
                         }`}
                       >
-                        <div className="space-y-0.5 min-w-0 pr-2">
+                        <div className="space-y-1 min-w-0 pr-2">
                           <h4
-                            className={`text-xs font-bold uppercase tracking-wider truncate ${
+                            className={`font-heading text-sm font-bold uppercase tracking-wider truncate ${
                               isSelected ? 'text-white' : 'text-slate-300'
                             }`}
                           >
                             {ms.versionTag || ms.title}
                           </h4>
-                          <p className="text-[10px] text-slate-400 uppercase font-mono tracking-wider truncate">
+                          <p className="text-xs text-slate-400 uppercase font-sans tracking-wider truncate">
                             PROJECT: {ms.projectName || 'APOLLO PORTAL'}
                           </p>
                         </div>
                         <ChevronRight
-                          className={`w-4 h-4 shrink-0 transition-transform ${
+                          className={`w-5 h-5 shrink-0 transition-transform ${
                             isSelected ? 'text-[#38BDF8] translate-x-0.5' : 'text-slate-500'
                           }`}
                         />
@@ -577,34 +577,34 @@ export const MilestonesPage: React.FC = () => {
             {/* Right Column: Expanded Detail Card (lg:col-span-8) */}
             <div className="lg:col-span-8">
               {selectedMilestone ? (
-                <div className="p-5 sm:p-6 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl space-y-6">
+                <div className="p-6 sm:p-7 rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl space-y-6">
                   {/* DETAIL HEADER */}
                   <div className="flex items-start justify-between border-b border-[#26344B] pb-4">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" />
-                        <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight uppercase">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                        <h3 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight uppercase">
                           MILESTONE: {selectedMilestone.versionTag || selectedMilestone.title}
                         </h3>
                       </div>
-                      <p className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                      <p className="text-xs font-sans uppercase tracking-wider text-slate-400">
                         PROJECT: {selectedMilestone.projectName || 'APOLLO PORTAL'}
                       </p>
                     </div>
 
                     <button
                       onClick={() => setIsDetailExpanded(!isDetailExpanded)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1B2A47] transition-colors"
+                      className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-[#1B2A47] transition-colors"
                       title={isDetailExpanded ? 'Collapse view' : 'Expand view'}
                     >
-                      {isDetailExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      {isDetailExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </button>
                   </div>
 
                   {isDetailExpanded && (
                     <>
                       {/* DESCRIPTION */}
-                      <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                      <p className="font-sans text-sm text-slate-300 leading-relaxed font-normal">
                         {selectedMilestone.description ||
                           'Deploy V1.1 Release, including multi-factor authentication and payment gateway integration.'}
                       </p>
@@ -612,38 +612,38 @@ export const MilestonesPage: React.FC = () => {
                       {/* TWO-COLUMN DETAIL BODY */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                         {/* LEFT COLUMN: CRITERIA & DELIVERABLES */}
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                           {/* 1. Acceptance Criteria */}
-                          <div className="space-y-2">
-                            <h4 className="text-xs font-bold text-white tracking-wide">
+                          <div className="space-y-2.5">
+                            <h4 className="font-heading text-sm font-bold text-white tracking-wide">
                               Acceptance Criteria
                             </h4>
-                            <div className="space-y-1.5 text-xs text-slate-300">
-                              <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                                <Check className="w-3.5 h-3.5" />
-                                <span className="text-slate-200">MFA fully implemented</span>
+                            <div className="space-y-2 text-xs sm:text-sm text-slate-300">
+                              <div className="flex items-center gap-2.5 text-emerald-400 font-medium">
+                                <Check className="w-4 h-4" />
+                                <span className="text-slate-200 font-sans">MFA fully implemented</span>
                               </div>
-                              <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                                <Check className="w-3.5 h-3.5" />
-                                <span className="text-slate-200">Payment integration tested</span>
+                              <div className="flex items-center gap-2.5 text-emerald-400 font-medium">
+                                <Check className="w-4 h-4" />
+                                <span className="text-slate-200 font-sans">Payment integration tested</span>
                               </div>
-                              <div className="flex items-center gap-2 text-amber-400 font-medium">
-                                <AlertTriangle className="w-3.5 h-3.5" />
-                                <span className="text-slate-200">Unit tests &gt; 95% coverage</span>
+                              <div className="flex items-center gap-2.5 text-amber-400 font-medium">
+                                <AlertTriangle className="w-4 h-4" />
+                                <span className="text-slate-200 font-sans">Unit tests &gt; 95% coverage</span>
                               </div>
-                              <div className="flex items-center gap-2 text-rose-400 font-medium">
-                                <X className="w-3.5 h-3.5" />
-                                <span className="text-slate-200">Mobile responsive bugs fixed</span>
+                              <div className="flex items-center gap-2.5 text-rose-400 font-medium">
+                                <X className="w-4 h-4" />
+                                <span className="text-slate-200 font-sans">Mobile responsive bugs fixed</span>
                               </div>
                             </div>
                           </div>
 
                           {/* 2. Required Deliverables */}
-                          <div className="space-y-1.5 pt-1">
-                            <h4 className="text-xs font-bold text-white tracking-wide">
+                          <div className="space-y-2 pt-1">
+                            <h4 className="font-heading text-sm font-bold text-white tracking-wide">
                               Required Deliverables
                             </h4>
-                            <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                            <ul className="text-xs sm:text-sm text-slate-400 space-y-1.5 list-disc list-inside">
                               <li>Codebase Deployment</li>
                               <li>User Documentation</li>
                               <li>Test Reports</li>
@@ -651,11 +651,11 @@ export const MilestonesPage: React.FC = () => {
                           </div>
 
                           {/* 3. Missing Requirements */}
-                          <div className="space-y-1.5 pt-1">
-                            <h4 className="text-xs font-bold text-white tracking-wide">
+                          <div className="space-y-2 pt-1">
+                            <h4 className="text-sm font-bold text-white tracking-wide">
                               Missing Requirements
                             </h4>
-                            <ul className="text-xs text-rose-400 space-y-1 list-disc list-inside">
+                            <ul className="text-xs sm:text-sm text-rose-400 space-y-1.5 list-disc list-inside">
                               <li>4 Unit Tests failing</li>
                               <li>User Docs draft incomplete</li>
                               <li>2 Mobile UI issues open</li>
@@ -664,66 +664,66 @@ export const MilestonesPage: React.FC = () => {
                         </div>
 
                         {/* RIGHT COLUMN: GITHUB EVIDENCE & AI CONFIDENCE */}
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                           {/* Associated GitHub Evidence */}
-                          <div className="space-y-2">
-                            <h4 className="text-xs font-bold text-white tracking-wide">
+                          <div className="space-y-2.5">
+                            <h4 className="text-sm font-bold text-white tracking-wide">
                               Associated GitHub Evidence
                             </h4>
-                            <div className="text-[10px] font-mono text-emerald-400 font-bold uppercase">
+                            <div className="text-xs font-mono text-emerald-400 font-bold uppercase">
                               EVIDENCE STATUS: 8/11 ITEMS LINKED
                             </div>
-                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                              <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
                                 2 PRs (#124, #130)
                               </span>
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
+                              <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
                                 27 COMMITS
                               </span>
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
+                              <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
                                 3 ISSUES
                               </span>
                             </div>
                           </div>
 
                           {/* AI Confidence */}
-                          <div className="space-y-1.5 p-3 rounded-xl bg-[#080D18] border border-[#26344B]">
-                            <div className="text-xs font-bold text-emerald-400 font-mono flex items-center justify-between">
+                          <div className="space-y-2 p-4 rounded-xl bg-[#080D18] border border-[#26344B]">
+                            <div className="text-sm font-bold text-emerald-400 font-mono flex items-center justify-between">
                               <span>AI CONFIDENCE: 88%</span>
-                              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                             </div>
-                            <p className="text-[11px] text-slate-300 leading-relaxed">
+                            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                               Based on analysis, requirements are partially met. Documentation needs final
                               update. MFA and Payment features verified.
                             </p>
                           </div>
 
                           {/* Missing Requirements Tags */}
-                          <div className="space-y-1.5">
-                            <span className="text-[11px] font-bold text-white">Missing Requirements</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              <span className="text-[10px] bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2 py-0.5 rounded">
+                          <div className="space-y-2">
+                            <span className="text-xs sm:text-sm font-bold text-white">Missing Requirements</span>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="text-xs bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-md">
                                 4 Unit Tests failing
                               </span>
-                              <span className="text-[10px] bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-md">
                                 User Docs draft incomplete
                               </span>
-                              <span className="text-[10px] bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-md">
                                 2 Mobile UI issues open
                               </span>
                             </div>
                           </div>
 
                           {/* Related Invoice Information */}
-                          <div className="space-y-1 pt-1 border-t border-[#26344B]/70 text-xs">
-                            <div className="text-[10px] font-mono text-slate-400 uppercase font-bold">
+                          <div className="space-y-1.5 pt-1.5 border-t border-[#26344B]/70 text-xs sm:text-sm">
+                            <div className="text-xs font-mono text-slate-400 uppercase font-bold">
                               Related Invoice Information
                             </div>
-                            <div className="text-[11px] text-amber-400 font-semibold font-mono">
+                            <div className="text-xs sm:text-sm text-amber-400 font-semibold font-mono">
                               INVOICE STATUS: PENDING APPROVAL
                             </div>
-                            <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-mono">
-                              <PayPalIcon className="w-3.5 h-3.5" />
+                            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-300 font-mono">
+                              <PayPalIcon className="w-4 h-4" />
                               <span>INV-2023-11-04 (PayPal)</span>
                             </div>
                           </div>
@@ -731,40 +731,40 @@ export const MilestonesPage: React.FC = () => {
                       </div>
 
                       {/* BOTTOM WORKFLOW BAR */}
-                      <div className="pt-4 border-t border-[#26344B] flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+                      <div className="pt-5 border-t border-[#26344B] flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
                         {/* Left: Preview Badges & Pagination */}
                         <div className="space-y-2">
-                          <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">
+                          <div className="text-xs font-mono uppercase text-slate-400 font-bold">
                             MILESTONE TIMELINE AND DETAILS PREVIEW
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
+                            <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
                               8/11 ITEMS LINKED
                             </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
+                            <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
                               2 PRs (#124, #130)
                             </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
+                            <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
                               27 COMMITS
                             </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
+                            <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
                               3 ISSUES (3)
                             </span>
 
                             {/* Pagination Controls */}
-                            <div className="flex items-center gap-1 pl-2 font-mono text-xs text-slate-400">
-                              <button className="p-1 hover:text-white" title="First page">
-                                <ChevronsLeft className="w-3.5 h-3.5" />
+                            <div className="flex items-center gap-1.5 pl-2 font-mono text-xs text-slate-400">
+                              <button className="p-1.5 hover:text-white" title="First page">
+                                <ChevronsLeft className="w-4 h-4" />
                               </button>
-                              <button className="p-1 hover:text-white" title="Previous page">
-                                <ChevronLeft className="w-3.5 h-3.5" />
+                              <button className="p-1.5 hover:text-white" title="Previous page">
+                                <ChevronLeft className="w-4 h-4" />
                               </button>
-                              <span className="text-[10px] text-slate-300 px-1">Page 1 / 1</span>
-                              <button className="p-1 hover:text-white" title="Next page">
-                                <ChevronRight className="w-3.5 h-3.5" />
+                              <span className="text-xs text-slate-300 px-1.5">Page 1 / 1</span>
+                              <button className="p-1.5 hover:text-white" title="Next page">
+                                <ChevronRight className="w-4 h-4" />
                               </button>
-                              <button className="p-1 hover:text-white" title="Last page">
-                                <ChevronsRight className="w-3.5 h-3.5" />
+                              <button className="p-1.5 hover:text-white" title="Last page">
+                                <ChevronsRight className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
@@ -772,13 +772,13 @@ export const MilestonesPage: React.FC = () => {
 
                         {/* Right: Approval Actions */}
                         <div className="space-y-2 text-right self-start xl:self-auto">
-                          <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">
+                          <div className="text-xs font-mono uppercase text-slate-400 font-bold">
                             APPROVAL WORKFLOW
                           </div>
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2.5">
                             <button
                               onClick={() => navigate('/evidence')}
-                              className="px-3.5 py-2 rounded-lg bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs text-slate-200 transition-colors"
+                              className="px-4 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs sm:text-sm text-slate-200 transition-colors"
                             >
                               Review Evidence
                             </button>
@@ -786,7 +786,7 @@ export const MilestonesPage: React.FC = () => {
                               onClick={() =>
                                 showToast('Changes Requested', 'Notified developer team to resolve open unit tests.', 'info')
                               }
-                              className="px-3.5 py-2 rounded-lg bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs text-slate-200 transition-colors"
+                              className="px-4 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs sm:text-sm text-slate-200 transition-colors"
                             >
                               Request Changes
                             </button>
@@ -795,9 +795,9 @@ export const MilestonesPage: React.FC = () => {
                                 handleClientApprove(selectedMilestone.id);
                                 handleGenerateInvoice(selectedMilestone.id);
                               }}
-                              className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all flex items-center gap-1.5"
+                              className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 cursor-pointer"
                             >
-                              <Check className="w-3.5 h-3.5" />
+                              <Check className="w-4 h-4" />
                               <span>Approve Milestone</span>
                             </button>
                           </div>
@@ -807,9 +807,9 @@ export const MilestonesPage: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div className="p-12 text-center rounded-xl bg-[#111C30] border border-[#26344B] text-slate-400">
-                  <FileCode className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-xs">Select a milestone on the left to inspect its deliverables.</p>
+                <div className="p-14 text-center rounded-2xl bg-[#111C30] border border-[#26344B] text-slate-400">
+                  <FileCode className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Select a milestone on the left to inspect its deliverables.</p>
                 </div>
               )}
             </div>
@@ -819,24 +819,24 @@ export const MilestonesPage: React.FC = () => {
       {/* CREATE NEW MILESTONE MODAL */}
       {isNewModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="bg-[#111C30] border border-[#26344B] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
-              <h3 className="text-base font-bold text-white">Create New Milestone</h3>
+          <div className="bg-[#111C30] border border-[#26344B] rounded-2xl w-full max-w-lg p-7 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#26344B]">
+              <h3 className="text-lg font-bold text-white">Create New Milestone</h3>
               <button
                 onClick={() => setIsNewModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateMilestone} className="space-y-3.5 text-xs">
+            <form onSubmit={handleCreateMilestone} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Target Project</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Target Project</label>
                 <select
                   value={selectedProjectId}
                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2563EB]"
                 >
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -847,53 +847,53 @@ export const MilestonesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Milestone Deliverable Title *</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Milestone Deliverable Title *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. V1.2 - Automated Payment Gateway Integration"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Payout Amount (USD) *</label>
+                  <label className="block font-semibold text-slate-300 mb-1.5">Payout Amount (USD) *</label>
                   <input
                     type="number"
                     required
                     value={newAmount}
                     onChange={(e) => setNewAmount(e.target.value)}
-                    className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Target Due Date *</label>
+                  <label className="block font-semibold text-slate-300 mb-1.5">Target Due Date *</label>
                   <input
                     type="date"
                     required
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
-                    className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Scope Description</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Scope Description</label>
                 <textarea
                   rows={2}
                   placeholder="Detailed functional goals of this milestone release..."
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg p-2.5 text-white focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl p-3 text-white text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
+                <label className="block font-semibold text-slate-300 mb-1.5">
                   Acceptance Criteria (one per line)
                 </label>
                 <textarea
@@ -901,22 +901,22 @@ export const MilestonesPage: React.FC = () => {
                   placeholder="MFA authentication enabled&#10;PayPal sandbox tests passing&#10;Unit tests coverage &gt; 95%"
                   value={newCriteria}
                   onChange={(e) => setNewCriteria(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl p-3 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#26344B]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#26344B]">
                 <button
                   type="button"
                   onClick={() => setIsNewModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-[#080D18] border border-[#26344B] text-slate-300 hover:text-white"
+                  className="px-5 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] text-slate-300 hover:text-white text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/30 transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-sm shadow-md shadow-blue-600/30 transition-all cursor-pointer"
                 >
                   {isSubmitting ? 'Creating...' : 'Create Milestone'}
                 </button>

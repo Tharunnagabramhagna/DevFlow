@@ -450,8 +450,8 @@ export const EvidencePage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 1: PAGE HEADER */}
-        <header className="h-18 sm:h-20 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3.5">
+        <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
               className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-xl"
@@ -459,47 +459,47 @@ export const EvidencePage: React.FC = () => {
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
+              <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
                 Evidence Explorer
               </h1>
-              <p className="font-sans text-sm sm:text-base text-slate-400 mt-1 hidden sm:block">
+              <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
                 Explore development activity and connect proof of work to project milestones.
               </p>
             </div>
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Header Search Input */}
-            <div className="relative hidden md:block w-52 lg:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="relative hidden md:block w-48 lg:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search evidence..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111C30] text-xs sm:text-sm text-white placeholder-slate-400 pl-10 pr-3.5 py-2 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
+                className="w-full bg-[#111C30] text-xs sm:text-sm text-white placeholder-slate-400 pl-9 pr-3 py-1.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
               />
             </div>
 
             {/* Help Button */}
             <button
               onClick={() => setHelpModalOpen(true)}
-              className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl transition-colors"
+              className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl transition-colors"
               title="Evidence Guide"
             >
-              <HelpCircle className="w-5 h-5" />
+              <HelpCircle className="w-4 h-4" />
             </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
+                className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
               </button>
 
               {notificationsOpen && (
@@ -526,16 +526,16 @@ export const EvidencePage: React.FC = () => {
             {/* Create Report Button */}
             <button
               onClick={() => setCreateReportModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 shrink-0" />
               <span>Create Report</span>
             </button>
           </div>
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* TOP SPLIT: REPOSITORY OVERVIEW (LEFT) + EVIDENCE SUMMARY (RIGHT) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* PHASE 2: REPOSITORY OVERVIEW CARD (5 COLS) */}

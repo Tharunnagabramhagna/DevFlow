@@ -210,27 +210,27 @@ export const LandingPage: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             {/* Left Column: Headline & CTA */}
-            <div className="lg:col-span-5 space-y-6 sm:space-y-7 text-left">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08]">
+            <div className="lg:col-span-5 space-y-6 text-left">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08]">
                 From Code <br />
                 to Cash.
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-lg leading-relaxed font-normal">
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md leading-relaxed font-normal">
                 Turn development progress into verified milestones and seamless payments with
                 AI-powered project intelligence.
               </p>
 
-              <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
                   onClick={() => navigate('/signup')}
-                  className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-sm sm:text-base font-semibold px-7 py-3.5 rounded-full transition-all shadow-lg shadow-[#0070BA]/30 hover:shadow-[#0070BA]/50 flex items-center gap-2 cursor-pointer"
+                  className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-lg shadow-[#0070BA]/30 hover:shadow-[#0070BA]/50 flex items-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   Get Started
                 </button>
                 <button
                   onClick={() => scrollToSection('how-it-works')}
-                  className="bg-white hover:bg-slate-100 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-300 dark:border-[#1E293B] hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm sm:text-base font-semibold px-7 py-3.5 rounded-full transition-all shadow-xs cursor-pointer"
+                  className="bg-white hover:bg-slate-100 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-300 dark:border-[#1E293B] hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-xs cursor-pointer whitespace-nowrap"
                 >
                   Explore How It Works
                 </button>

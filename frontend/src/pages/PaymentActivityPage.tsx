@@ -290,7 +290,7 @@ export const PaymentActivityPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* PAGE HEADER */}
-        <header className="h-18 sm:h-20 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
+        <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
@@ -300,10 +300,10 @@ export const PaymentActivityPage: React.FC = () => {
             </button>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-none">
+                <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
                   Payment Activity &amp; Settlements
                 </h1>
-                <span className="text-xs font-sans font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2.5 py-1 rounded-full">
+                <span className="text-[10px] font-sans font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full whitespace-nowrap">
                   SANDBOX TELEMETRY
                 </span>
               </div>
@@ -311,25 +311,25 @@ export const PaymentActivityPage: React.FC = () => {
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <button
               onClick={() => {
                 showToast('Synchronized', 'Payment ledger synchronized with PayPal sandbox webhooks.', 'info');
               }}
-              className="p-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D] transition-colors"
+              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D] transition-colors"
               title="Refresh ledger"
             >
-              <RotateCw className="w-5 h-5" />
+              <RotateCw className="w-4 h-4" />
             </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D] relative transition-colors"
+                className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D] relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#080D18]" />
               </button>
 
@@ -358,54 +358,54 @@ export const PaymentActivityPage: React.FC = () => {
             {/* User Profile Avatar */}
             <div
               onClick={() => navigate('/settings')}
-              className="flex items-center gap-2.5 pl-3 border-l border-[#26344B] cursor-pointer hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 pl-2.5 border-l border-[#26344B] cursor-pointer hover:opacity-90 transition-opacity"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs sm:text-sm ring-1 ring-[#26344B] shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-sm">
                 AM
               </div>
               <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs sm:text-sm font-semibold text-white leading-tight">Alex Morgan</span>
-                <span className="text-xs text-slate-400">Project Administrator</span>
+                <span className="text-xs font-semibold text-white leading-tight">Alex Morgan</span>
+                <span className="text-[10px] text-slate-400">Project Administrator</span>
               </div>
-              <ChevronDown className="w-4 h-4 text-slate-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
           </div>
         </header>
 
         {/* Scrollable Dashboard Workspace */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* FINANCIAL SUMMARY CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs sm:text-sm text-slate-400 block font-medium">Total Settled (Demo)</span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-sans tabular-nums tracking-tight mt-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="font-sans text-xs text-slate-400 block font-medium">Total Settled (Demo)</span>
+              <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 font-sans tabular-nums tracking-tight mt-1">
                 ${summaryMetrics.totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-xs text-slate-500 font-sans tabular-nums mt-1 block">4 settled milestone invoices</span>
+              <span className="text-[11px] text-slate-500 font-sans tabular-nums mt-0.5 block">4 settled milestone invoices</span>
             </div>
 
-            <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs sm:text-sm text-slate-400 block font-medium">Pending Client Sign-off</span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-sans tabular-nums tracking-tight mt-1.5">
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="font-sans text-xs text-slate-400 block font-medium">Pending Client Sign-off</span>
+              <div className="text-xl sm:text-2xl font-extrabold text-amber-400 font-sans tabular-nums tracking-tight mt-1">
                 ${summaryMetrics.pending.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-xs text-slate-500 font-sans tabular-nums mt-1 block">2 deliverables under review</span>
+              <span className="text-[11px] text-slate-500 font-sans tabular-nums mt-0.5 block">2 deliverables under review</span>
             </div>
 
-            <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs sm:text-sm text-slate-400 block font-medium">Verification Pass Rate</span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-blue-400 font-sans tabular-nums tracking-tight mt-1.5">
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="font-sans text-xs text-slate-400 block font-medium">Verification Pass Rate</span>
+              <div className="text-xl sm:text-2xl font-extrabold text-blue-400 font-sans tabular-nums tracking-tight mt-1">
                 {summaryMetrics.verifiedRate}%
               </div>
-              <span className="text-xs text-slate-500 font-sans mt-1 block">AST requirement matching</span>
+              <span className="text-[11px] text-slate-500 font-sans mt-0.5 block">AST requirement matching</span>
             </div>
 
-            <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs sm:text-sm text-slate-400 block font-medium">PayPal Webhooks Active</span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight mt-1.5">
+            <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
+              <span className="font-sans text-xs text-slate-400 block font-medium">PayPal Webhooks Active</span>
+              <div className="text-xl sm:text-2xl font-extrabold text-white font-sans tabular-nums tracking-tight mt-1">
                 100%
               </div>
-              <span className="text-xs text-emerald-400 font-sans mt-1 block">CRC32 / HMAC verified</span>
+              <span className="text-[11px] text-emerald-400 font-sans mt-0.5 block">CRC32 / HMAC verified</span>
             </div>
           </div>
 

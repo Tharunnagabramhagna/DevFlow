@@ -263,8 +263,8 @@ export const VerificationPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Header Bar */}
-        <header className="h-18 sm:h-20 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3.5">
+        <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
               className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-xl"
@@ -272,26 +272,26 @@ export const VerificationPage: React.FC = () => {
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
+              <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
                 AI Agents
               </h1>
-              <p className="font-sans text-sm sm:text-base text-slate-400 mt-1 hidden sm:block">
+              <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
                 Your intelligent workforce for project analysis and payment workflows.
               </p>
             </div>
           </div>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
+                className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
               </button>
 
               {notificationsOpen && (
@@ -319,15 +319,15 @@ export const VerificationPage: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setSampleDataDropdownOpen(!sampleDataDropdownOpen)}
-                className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-[#111C30] hover:bg-[#152238] border border-[#26344B] transition-colors"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#111C30] hover:bg-[#152238] border border-[#26344B] transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold">
                   TM
                 </div>
-                <span className="text-xs sm:text-sm font-semibold text-slate-200">
+                <span className="text-xs font-semibold text-slate-200 whitespace-nowrap">
                   {sampleDataMode === 'sample' ? 'Sample data' : 'Live API'}
                 </span>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
               {sampleDataDropdownOpen && (
@@ -376,7 +376,7 @@ export const VerificationPage: React.FC = () => {
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-8 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* SECTION 1: AGENT OVERVIEW */}
           <div>
             <h2 className="font-heading text-base sm:text-lg font-bold text-white mb-3.5 tracking-wide">
@@ -392,7 +392,7 @@ export const VerificationPage: React.FC = () => {
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
                     <div className="relative">
                       <FileSearch className="w-9 h-9 text-[#60A5FA]" />
                     </div>
@@ -439,7 +439,7 @@ export const VerificationPage: React.FC = () => {
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
                     <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30">
                       <GitHubIcon className="w-8 h-8 text-white" />
                     </div>
@@ -479,7 +479,7 @@ export const VerificationPage: React.FC = () => {
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
                     <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
                       <Cpu className="w-8 h-8 text-[#38BDF8]" />
                     </div>
@@ -519,7 +519,7 @@ export const VerificationPage: React.FC = () => {
                   </div>
 
                   {/* Icon illustration */}
-                  <div className="w-18 h-18 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center my-2 shadow-inner">
                     <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
                       <Wallet className="w-8 h-8 text-emerald-400" />
                     </div>
@@ -669,7 +669,7 @@ export const VerificationPage: React.FC = () => {
             <div className="lg:col-span-7 space-y-6">
               <div className="rounded-2xl bg-[#111C30] border border-[#26344B] overflow-hidden">
                 {/* Tabs Header */}
-                <div className="flex items-center justify-between px-5 sm:px-7 pt-4.5 border-b border-[#26344B] overflow-x-auto">
+                <div className="flex items-center justify-between px-5 sm:px-7 pt-4 border-b border-[#26344B] overflow-x-auto">
                   <div className="flex items-center gap-6 text-xs sm:text-sm font-semibold">
                     <button
                       onClick={() => setActiveTab('recent')}

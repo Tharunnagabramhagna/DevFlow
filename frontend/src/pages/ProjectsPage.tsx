@@ -304,26 +304,26 @@ export const ProjectsPage: React.FC = () => {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#080D18]">
         {/* SCROLLABLE PROJECTS BODY */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-8 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* 1. PAGE HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <button
                   onClick={openMobileSidebar}
-                  className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D]"
+                  className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D]"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">Projects</h1>
+                <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">Projects</h1>
               </div>
-              <p className="text-sm sm:text-base text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-400">
                 Manage your development projects, milestones and client relationships.
               </p>
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex items-center gap-3 self-start sm:self-auto">
+            <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
               <button
                 onClick={() => {
                   if (isGuest) {
@@ -332,16 +332,16 @@ export const ProjectsPage: React.FC = () => {
                   }
                   setIsCreateModalOpen(true);
                 }}
-                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
+                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 shrink-0" />
                 <span>New Project</span>
               </button>
 
               <div className="relative">
                 <button
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-3 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors relative"
+                  className="p-2.5 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors relative"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4" />
@@ -373,7 +373,7 @@ export const ProjectsPage: React.FC = () => {
 
               <button
                 onClick={() => document.getElementById('project-search-input')?.focus()}
-                className="p-3 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors"
+                className="p-2.5 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors"
                 title="Search Focus"
               >
                 <Search className="w-4 h-4" />
@@ -382,67 +382,67 @@ export const ProjectsPage: React.FC = () => {
           </div>
 
           {/* 2. KPI SUMMARY CARDS */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Card 1: Total Projects */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-              <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Total Projects</span>
-              <div className="mt-3 flex items-baseline justify-between">
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
+              <span className="font-sans text-xs text-slate-400 font-semibold">Total Projects</span>
+              <div className="mt-2.5 flex items-baseline justify-between">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
                     {String(projects.length || 12).padStart(2, '0')}
                   </span>
                   <span className="text-xs text-slate-500 font-sans tabular-nums">+2 this month</span>
                 </div>
                 {/* Green Trend Sparkline */}
-                <svg className="w-16 h-7 text-emerald-400 shrink-0" viewBox="0 0 50 20" fill="none">
+                <svg className="w-14 h-6 text-emerald-400 shrink-0" viewBox="0 0 50 20" fill="none">
                   <path d="M2 15 Q 12 18, 25 10 T 48 4" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
 
             {/* Card 2: Active Projects */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Active Projects</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                <span className="font-sans text-xs text-slate-400 font-semibold">Active Projects</span>
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
               </div>
-              <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white">
+              <div className="mt-2.5 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
                   {String(activeCount || 8).padStart(2, '0')}
                 </span>
                 {/* Blue Trend Sparkline */}
-                <svg className="w-16 h-7 text-blue-500 shrink-0" viewBox="0 0 50 20" fill="none">
+                <svg className="w-14 h-6 text-blue-500 shrink-0" viewBox="0 0 50 20" fill="none">
                   <path d="M2 14 Q 15 5, 28 12 T 48 6" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
 
             {/* Card 3: Completed Projects */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Completed Projects</span>
-                <Check className="w-4 h-4 text-slate-400" />
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="font-sans text-xs text-slate-400 font-semibold">Completed Projects</span>
+                <Check className="w-3.5 h-3.5 text-slate-400" />
               </div>
-              <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white">
+              <div className="mt-2.5 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
                   {String(completedCount || 3).padStart(2, '0')}
                 </span>
                 {/* Cyan Trend Sparkline */}
-                <svg className="w-16 h-7 text-slate-300 shrink-0" viewBox="0 0 50 20" fill="none">
+                <svg className="w-14 h-6 text-slate-300 shrink-0" viewBox="0 0 50 20" fill="none">
                   <path d="M2 12 Q 15 16, 28 8 T 48 5" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
 
             {/* Card 4: On Hold */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-              <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">On Hold</span>
-              <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-slate-500">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
+              <span className="font-sans text-xs text-slate-400 font-semibold">On Hold</span>
+              <div className="mt-2.5 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-slate-500">
                   {String(onHoldCount || 1).padStart(2, '0')}
                 </span>
                 {/* Muted Sparkline */}
-                <svg className="w-16 h-7 text-slate-600 shrink-0" viewBox="0 0 50 20" fill="none">
+                <svg className="w-14 h-6 text-slate-600 shrink-0" viewBox="0 0 50 20" fill="none">
                   <path d="M2 8 Q 15 12, 28 10 T 48 11" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </div>
@@ -450,10 +450,10 @@ export const ProjectsPage: React.FC = () => {
           </div>
 
           {/* 3. SEARCH AND FILTER TOOLBAR */}
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-3 sm:p-4 rounded-2xl bg-[#111C30] border border-[#26344B]">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 p-3 rounded-xl bg-[#111C30] border border-[#26344B]">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 id="project-search-input"
                 type="text"

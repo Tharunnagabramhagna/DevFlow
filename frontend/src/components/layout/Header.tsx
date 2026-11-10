@@ -148,45 +148,45 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-20 backdrop-blur-xl bg-white/75 dark:bg-[#090E1D]/75 border-b border-slate-200/70 dark:border-white/10 shadow-xs select-none transition-colors duration-200">
-      <div className="flex items-center justify-between h-18 sm:h-20 px-4 sm:px-7 lg:px-9">
+      <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
         {/* Left: Mobile Trigger + Breadcrumb */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <MobileMenuTrigger onClick={onOpenMobileMenu} />
 
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="hidden xs:inline text-xs font-sans font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="hidden xs:inline text-[11px] font-sans font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0">
                 {currentMeta.section}
               </span>
               <span className="hidden xs:inline text-slate-300 dark:text-slate-600">/</span>
-              <h1 className="font-heading text-base sm:text-lg lg:text-xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
+              <h1 className="font-heading text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
                 {currentMeta.title}
               </h1>
             </div>
-            <p className="hidden md:block font-sans text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate max-w-lg mt-0.5">
+            <p className="hidden md:block font-sans text-xs text-slate-500 dark:text-slate-400 truncate max-w-md">
               {currentMeta.subtitle}
             </p>
           </div>
         </div>
 
         {/* Right: Quick Command Search + Notifications + Help + Profile */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Quick Search / Command Palette Trigger */}
           <button
             onClick={onOpenCommandPalette}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-md bg-white/60 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-blue-400/50 dark:hover:border-blue-400/40 hover:bg-white/80 dark:hover:bg-white/10 transition-all duration-150 text-xs sm:text-sm lg:text-[15px] w-52 sm:w-72 lg:w-96 shadow-xs cursor-pointer"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl backdrop-blur-md bg-white/60 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-blue-400/50 dark:hover:border-blue-400/40 hover:bg-white/80 dark:hover:bg-white/10 transition-all duration-150 text-xs w-48 sm:w-60 lg:w-72 shadow-xs cursor-pointer"
             title="Open Command Palette (Ctrl+K)"
           >
-            <Search className="w-4.5 h-4.5 sm:w-5 sm:h-5 shrink-0" />
+            <Search className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate flex-1 text-left">Search projects, invoices...</span>
-            <kbd className="hidden sm:inline px-2 py-0.5 rounded-lg bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-xs font-mono shadow-xs text-slate-600 dark:text-slate-300">
+            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[10px] font-mono shadow-xs text-slate-600 dark:text-slate-300">
               ⌘K
             </kbd>
           </button>
 
           {/* Sandbox Status Badge */}
-          <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur-md bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/30 text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-300 shadow-xs">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0070BA] animate-pulse" />
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/30 text-[11px] font-semibold text-blue-700 dark:text-blue-300 shadow-xs whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-[#0070BA] animate-pulse" />
             <span>PayPal Sandbox</span>
           </div>
 
@@ -197,17 +197,17 @@ export const Header: React.FC<HeaderProps> = ({
                 setIsNotificationsOpen(!isNotificationsOpen);
                 setIsProfileOpen(false);
               }}
-              className="relative p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10 border border-transparent hover:border-slate-200/50 dark:hover:border-white/10 transition-all cursor-pointer"
+              className="relative p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10 border border-transparent hover:border-slate-200/50 dark:hover:border-white/10 transition-all cursor-pointer"
               aria-label="View notifications"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#0070BA] ring-2 ring-white dark:ring-[#090E1D]" />
               )}
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-88 max-w-sm backdrop-blur-2xl bg-white/90 dark:bg-[#0E172A]/90 text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-white/60 dark:border-white/15 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm backdrop-blur-2xl bg-white/90 dark:bg-[#0E172A]/90 text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-white/60 dark:border-white/15 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-4 py-2.5 border-b border-slate-200/70 dark:border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-slate-900 dark:text-white">Activity & Notifications</span>

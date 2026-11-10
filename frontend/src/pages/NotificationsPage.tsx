@@ -261,8 +261,8 @@ export const NotificationsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* Scrollable Page Content */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-7">
-          <div className="max-w-[1780px] mx-auto space-y-7">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5">
+          <div className="max-w-[1600px] mx-auto space-y-6">
             {/* PAGE HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
@@ -274,9 +274,9 @@ export const NotificationsPage: React.FC = () => {
                   >
                     <Menu className="w-5 h-5" />
                   </button>
-                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#F1F5F9]">Notifications</h1>
+                  <h1 className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-[#F1F5F9]">Notifications</h1>
                 </div>
-                <p className="text-sm sm:text-base text-[#AAB6C8] mt-1.5">
+                <p className="text-xs sm:text-sm text-[#AAB6C8] mt-1">
                   Stay informed about important project, verification, and payment activity.
                 </p>
               </div>

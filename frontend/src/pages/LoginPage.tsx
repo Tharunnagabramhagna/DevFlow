@@ -180,7 +180,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('CLIENT')}
-                  className="w-full text-left p-4.5 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
+                  className="w-full text-left p-4 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
                 >
                   <div className="p-3 rounded-xl bg-[#2563EB]/15 text-[#2563EB] dark:text-[#38BDF8] border border-[#2563EB]/30 group-hover:scale-105 transition-transform shrink-0">
                     <BriefcaseBusiness className="w-6 h-6 sm:w-7 sm:h-7 text-[#2563EB] group-hover:text-[#1D4ED8] dark:group-hover:text-[#60A5FA]" />
@@ -204,7 +204,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('DEVELOPER')}
-                  className="w-full text-left p-4.5 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
+                  className="w-full text-left p-4 sm:p-5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.04] backdrop-blur-md hover:bg-white/90 dark:hover:bg-white/[0.08] hover:border-[#2563EB]/70 transition-all group flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-xs"
                 >
                   <div className="p-3 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
                     <Code2 className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300" />

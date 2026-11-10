@@ -346,8 +346,8 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* Scrollable Page Content */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-7">
-          <div className="max-w-[1780px] mx-auto space-y-7">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5">
+          <div className="max-w-[1600px] mx-auto space-y-6">
             {/* PAGE HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
@@ -359,9 +359,9 @@ export const SettingsPage: React.FC = () => {
                   >
                     <Menu className="w-5 h-5" />
                   </button>
-                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#F1F5F9]">Settings</h1>
+                  <h1 className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-[#F1F5F9]">Settings</h1>
                 </div>
-                <p className="text-sm sm:text-base text-[#AAB6C8] mt-1.5">
+                <p className="text-xs sm:text-sm text-[#AAB6C8] mt-1">
                   Manage your account, security and application preferences.
                 </p>
               </div>
@@ -1179,7 +1179,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-3 text-[#AAB6C8] hover:text-white"
                   >
-                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -1203,7 +1203,7 @@ export const SettingsPage: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-xl bg-[#101A2D] border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5">
-                <Info className="w-4.5 h-4.5 shrink-0 text-amber-400 mt-0.5" />
+                <Info className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                 <span>
                   <strong>Security Audit Disclosure:</strong> This password form is a frontend presentation interface. Passwords are never stored in localStorage or transmitted without an enterprise identity server.
                 </span>
@@ -1256,7 +1256,7 @@ export const SettingsPage: React.FC = () => {
                 <strong>Audit Notice:</strong> Live two-factor authentication requires a connected backend TOTP/OAuth service. In this hackathon build, no secret keys or production tokens are generated or saved.
               </div>
 
-              <div className="p-4.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-center space-y-2.5">
+              <div className="p-4 rounded-xl bg-[#101A2D] border border-[#293B55] text-center space-y-2.5">
                 <div className="w-28 h-28 mx-auto bg-white rounded-xl p-2.5 flex items-center justify-center text-slate-800 text-center font-mono text-xs">
                   [Demo QR Preview]
                 </div>

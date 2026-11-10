@@ -100,7 +100,7 @@ export const IntegrationsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PAGE HEADER */}
-        <header className="h-18 sm:h-20 px-4 sm:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
+        <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
@@ -110,39 +110,39 @@ export const IntegrationsPage: React.FC = () => {
             </button>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
+                <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
                   Integrations &amp; Webhooks
                 </h1>
-                <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider font-sans">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider font-sans whitespace-nowrap">
                   SANDBOX
                 </span>
               </div>
-              <p className="font-sans text-sm text-slate-400 mt-1 hidden sm:block">
+              <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
                 Connect and monitor the services powering code verification, telemetry, and PayPal settlement.
               </p>
             </div>
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Settings Gear */}
             <button
               onClick={() => navigate('/settings')}
-              className="p-2.5 text-slate-400 hover:text-white hover:bg-[#1E2E4E] rounded-xl transition-colors"
+              className="p-2 text-slate-400 hover:text-white hover:bg-[#1E2E4E] rounded-xl transition-colors"
               title="Settings"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4" />
             </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2.5 text-slate-400 hover:text-white hover:bg-[#1E2E4E] rounded-xl relative transition-colors"
+                className="p-2 text-slate-400 hover:text-white hover:bg-[#1E2E4E] rounded-xl relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#080D18]" />
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#080D18]" />
               </button>
 
               {notificationsOpen && (
@@ -169,9 +169,9 @@ export const IntegrationsPage: React.FC = () => {
             {/* User Profile Avatar */}
             <div
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-2 cursor-pointer p-1 rounded-xl hover:bg-[#1E2E4E] transition-colors"
+              className="flex items-center gap-1.5 cursor-pointer p-1 rounded-xl hover:bg-[#1E2E4E] transition-colors"
             >
-              <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/40 text-xs sm:text-sm font-bold text-blue-400 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/40 text-xs font-bold text-blue-400 flex items-center justify-center">
                 AM
               </div>
               <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -180,7 +180,7 @@ export const IntegrationsPage: React.FC = () => {
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* CONNECTED INTEGRATIONS (3 CARDS IN A ROW) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">

@@ -150,7 +150,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#080D18]">
       {/* TOP HEADER */}
-      <header className="h-16 sm:h-[4.25rem] border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0">
+      <header className="h-14 sm:h-16 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0">
         {/* Header Left */}
         <div className="flex items-center gap-3">
           {/* Mobile Slide-in Drawer Trigger */}
@@ -163,20 +163,20 @@ export const DashboardPage: React.FC = () => {
             <Menu className="w-5 h-5" />
           </button>
 
-          <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">Dashboard</h1>
+          <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">Dashboard</h1>
         </div>
 
           {/* Header Right */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
             {/* Search Field */}
-            <div className="relative hidden sm:block w-52 lg:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative hidden sm:block w-48 lg:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#101A2D] text-xs sm:text-sm text-white placeholder-slate-500 pl-9 pr-3.5 py-2 rounded-xl border border-[#26344B] focus:outline-none focus:border-[#2563EB]"
+                className="w-full bg-[#101A2D] text-xs sm:text-sm text-white placeholder-slate-500 pl-9 pr-3 py-1.5 rounded-xl border border-[#26344B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
@@ -321,16 +321,16 @@ export const DashboardPage: React.FC = () => {
         </header>
 
         {/* SCROLLABLE DASHBOARD BODY */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-7 space-y-8 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* 3. WELCOME SECTION */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#26344B]/40">
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2.5 border-b border-[#26344B]/40">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
                   Welcome back, {firstName}
                 </h2>
                 <span
-                  className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shrink-0 ${
                     isGuest
                       ? 'bg-teal-950/80 text-teal-300 border-teal-800/60'
                       : isClientRole
@@ -341,7 +341,7 @@ export const DashboardPage: React.FC = () => {
                   {isGuest ? 'DEMO MODE' : roleBadgeLabel.toUpperCase()}
                 </span>
               </div>
-              <p className="text-sm sm:text-base text-slate-400 mt-1.5 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
                 {isGuest
                   ? 'Fictional demo data \u2022 Real-time telemetry, mock commit proofs and simulated milestone intelligence.'
                   : isClientRole
@@ -357,24 +357,24 @@ export const DashboardPage: React.FC = () => {
                 }
                 setIsNewProjectModalOpen(true);
               }}
-              className="self-start sm:self-auto bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-5 py-3 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
+              className="self-start sm:self-auto shrink-0 whitespace-nowrap bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>New Project</span>
             </button>
           </div>
 
           {/* 4. KPI CARDS */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3.5">
             {/* Card 1: Active Projects */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Active Projects</span>
-              <div className="flex items-center justify-between mt-3.5">
-                <span className="text-3xl sm:text-4xl font-extrabold font-sans tabular-nums text-white">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
+              <span className="font-sans text-xs text-slate-400 font-semibold">Active Projects</span>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-white">
                   {String(projects.length || 4).padStart(2, '0')}
                 </span>
                 {/* Mini Trend Sparkline */}
-                <svg className="w-20 h-8 text-[#2563EB]" viewBox="0 0 60 25" fill="none">
+                <svg className="w-16 h-7 text-[#2563EB] shrink-0" viewBox="0 0 60 25" fill="none">
                   <path
                     d="M2 18 Q 15 5, 28 16 T 58 6"
                     stroke="#2563EB"
@@ -386,72 +386,72 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Card 2: Total Milestones */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Total Milestones</span>
-              <div className="mt-3.5 text-3xl sm:text-4xl font-extrabold font-sans tabular-nums text-white">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
+              <span className="font-sans text-xs text-slate-400 font-semibold">Total Milestones</span>
+              <div className="mt-3 text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-white">
                 {String(milestones.length || 14).padStart(2, '0')}
               </div>
             </div>
 
             {/* Card 3: Pending Approvals */}
-            <div className="p-5 rounded-2xl bg-white dark:bg-[#171E30] border border-amber-200 dark:border-amber-900/60 flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-700 transition-colors shadow-xs">
-              <span className="font-sans text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide">Pending Client Review</span>
-              <div className="mt-3.5 flex items-center gap-2.5">
-                <span className="text-3xl sm:text-4xl font-extrabold font-sans tabular-nums text-amber-600 dark:text-amber-400">
+            <div className="p-4 rounded-xl bg-white dark:bg-[#171E30] border border-amber-200 dark:border-amber-900/60 flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-700 transition-colors shadow-xs">
+              <span className="font-sans text-xs text-slate-500 dark:text-slate-400 font-semibold">Pending Client Review</span>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-amber-600 dark:text-amber-400">
                   02
                 </span>
-                <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse" />
               </div>
             </div>
 
             {/* Card 4: Outstanding Invoices */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Outstanding Invoices</span>
-              <div className="mt-3.5 text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-white">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
+              <span className="font-sans text-xs text-slate-400 font-semibold">Outstanding Invoices</span>
+              <div className="mt-3 text-xl sm:text-2xl font-extrabold font-sans tabular-nums text-white">
                 ${telemetry ? telemetry.pendingInvoicesAmount.toLocaleString() : '4,500'}
               </div>
             </div>
 
             {/* Card 5: Confirmed Payments */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Confirmed Settlements</span>
-              <div className="mt-3.5 text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-emerald-400">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-slate-600 transition-colors shadow-xs">
+              <span className="font-sans text-xs text-slate-400 font-semibold">Confirmed Settlements</span>
+              <div className="mt-3 text-xl sm:text-2xl font-extrabold font-sans tabular-nums text-emerald-400">
                 ${telemetry ? telemetry.totalRevenuePaid.toLocaleString() : '9,500'}
               </div>
             </div>
           </div>
 
           {/* 5 & 6. MAIN CONTENT & FINANCIAL OVERVIEW (2-Column Grid) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             {/* Left Column: Project Overview + AI Agent Activity (lg:col-span-8) */}
-            <div className="lg:col-span-8 space-y-5">
+            <div className="lg:col-span-8 space-y-4">
               {/* SECTION: PROJECT OVERVIEW */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-[#111C30] border border-[#26344B] space-y-5">
+              <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
                 {/* Table Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-[#26344B]">
-                  <div className="flex items-center gap-3">
-                    <FolderGit2 className="w-5 h-5 text-blue-400" />
-                    <h3 className="font-heading text-sm sm:text-base font-semibold uppercase tracking-wider text-slate-200">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2.5">
+                    <FolderGit2 className="w-4 h-4 text-blue-400 shrink-0" />
+                    <h3 className="font-heading text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-200">
                       Active Projects &amp; Deliverables
                     </h3>
                   </div>
-                  <div className="inline-flex items-center gap-2 text-xs font-bold font-sans bg-blue-950/70 border border-blue-800/60 text-blue-400 px-3 py-1 rounded-full">
-                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                  <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold font-sans bg-blue-950/70 border border-blue-800/60 text-blue-400 px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                     <span>4 Active Projects &bull; Fictional Demo Data</span>
                   </div>
                 </div>
 
                 {/* Overview Table */}
-                <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
-                  <table className="w-full text-left text-sm whitespace-nowrap font-sans tabular-nums">
+                <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                  <table className="w-full text-left text-xs sm:text-[13px] whitespace-nowrap font-sans tabular-nums">
                     <thead>
-                      <tr className="border-b border-[#26344B]/70 text-xs text-slate-400 uppercase tracking-wider">
-                        <th className="pb-3.5 font-semibold">Project Name</th>
-                        <th className="pb-3.5 font-semibold">Client</th>
-                        <th className="pb-3.5 font-semibold">Progress</th>
-                        <th className="pb-3.5 font-semibold">Current Deliverable</th>
-                        <th className="pb-3.5 font-semibold">Target Date</th>
-                        <th className="pb-3.5 font-semibold text-right">Status</th>
+                      <tr className="border-b border-[#26344B]/70 text-[11px] text-slate-400 uppercase tracking-wider">
+                        <th className="pb-2.5 pr-3 font-semibold">Project Name</th>
+                        <th className="pb-2.5 pr-3 font-semibold">Client</th>
+                        <th className="pb-2.5 pr-3 font-semibold">Progress</th>
+                        <th className="pb-2.5 pr-3 font-semibold">Current Deliverable</th>
+                        <th className="pb-2.5 pr-3 font-semibold">Target Date</th>
+                        <th className="pb-2.5 font-semibold text-right">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
@@ -470,20 +470,20 @@ export const DashboardPage: React.FC = () => {
                             onClick={() => navigate('/projects')}
                             className="hover:bg-[#15233D] transition-colors cursor-pointer"
                           >
-                            <td className="py-4 font-bold text-white">{proj.name}</td>
-                            <td className="py-4 text-slate-300">{proj.clientName}</td>
-                            <td className="py-4">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-28 bg-[#1E2E4E] h-2 rounded-full overflow-hidden">
+                            <td className="py-3 pr-3 font-bold text-white">{proj.name}</td>
+                            <td className="py-3 pr-3 text-slate-300">{proj.clientName}</td>
+                            <td className="py-3 pr-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-20 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
                                   <div className="bg-[#2563EB] h-full rounded-full" style={{ width: `${progress}%` }} />
                                 </div>
-                                <span className="text-xs font-mono text-slate-400">{progress}%</span>
+                                <span className="text-[11px] font-mono text-slate-400">{progress}%</span>
                               </div>
                             </td>
-                            <td className="py-4 font-mono text-slate-300 text-xs sm:text-sm">{milestoneLabel}</td>
-                            <td className="py-4 text-slate-400 font-mono text-xs sm:text-sm">Nov {10 + idx * 3}</td>
-                            <td className="py-4 text-right">
-                              <span className={`text-xs font-bold border px-2.5 py-1 rounded-md ${statusStyle}`}>
+                            <td className="py-3 pr-3 font-mono text-slate-300 text-xs">{milestoneLabel}</td>
+                            <td className="py-3 pr-3 text-slate-400 font-mono text-xs">Nov {10 + idx * 3}</td>
+                            <td className="py-3 text-right">
+                              <span className={`text-[11px] font-bold border px-2 py-0.5 rounded-md ${statusStyle}`}>
                                 {statusLabel}
                               </span>
                             </td>
@@ -496,97 +496,97 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* 7. AI AGENT ACTIVITY SECTION */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-[#111C30] border border-[#26344B] space-y-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-[#26344B]">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-purple-400" />
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
+              <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
                       Autonomous Verification Agents
                     </h3>
                   </div>
-                  <span className="text-xs text-slate-400 font-mono bg-[#080D18] px-3 py-1 rounded-md border border-[#26344B]">
+                  <span className="text-[11px] text-slate-400 font-mono bg-[#080D18] px-2.5 py-0.5 rounded-md border border-[#26344B]">
                     AST Code Parser &bull; Human-in-the-Loop Governance
                   </span>
                 </div>
 
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-xs sm:text-[13px] text-slate-400 leading-relaxed">
                   AI agents validate cryptographic commits and AST proofs against requirement acceptance criteria. Human client sign-off is always required prior to invoice creation and money movement.
                 </p>
 
                 {/* 4 Agent Cards in a Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                   {/* Card 1: AST Syntax Auditor */}
-                  <div className="p-4 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2.5 flex flex-col justify-between">
+                  <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[11px] font-mono font-semibold text-slate-400">AGENT 01</span>
-                        <MoreVertical className="w-4 h-4" />
+                        <span className="text-[10px] font-mono font-semibold text-slate-400">AGENT 01</span>
+                        <MoreVertical className="w-3.5 h-3.5" />
                       </div>
-                      <h4 className="font-bold text-sm text-white mt-1.5">AST Syntax Auditor</h4>
-                      <div className="flex items-center gap-2 text-xs text-emerald-400 mt-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <h4 className="font-bold text-xs sm:text-sm text-white mt-1">AST Syntax Auditor</h4>
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 mt-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         <span>Active &bull; 98% Pass</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">Parsed TypeScript abstract syntax trees</p>
+                      <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Parsed TypeScript abstract syntax trees</p>
                     </div>
-                    <div className="pt-2.5 border-t border-[#26344B]/60 text-xs text-slate-500 flex items-center gap-1.5">
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
                       <span>Verified commit a1e9482</span>
                     </div>
                   </div>
 
                   {/* Card 2: Requirement Matcher */}
-                  <div className="p-4 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2.5 flex flex-col justify-between">
+                  <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[11px] font-mono font-semibold text-slate-400">AGENT 02</span>
-                        <MoreVertical className="w-4 h-4" />
+                        <span className="text-[10px] font-mono font-semibold text-slate-400">AGENT 02</span>
+                        <MoreVertical className="w-3.5 h-3.5" />
                       </div>
-                      <h4 className="font-bold text-sm text-white mt-1.5">Requirement Matcher</h4>
-                      <div className="flex items-center gap-2 text-xs text-blue-400 mt-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      <h4 className="font-bold text-xs sm:text-sm text-white mt-1">Requirement Matcher</h4>
+                      <div className="flex items-center gap-1.5 text-[11px] text-blue-400 mt-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                         <span>Evaluating &bull; 94.2%</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">Matching milestone acceptance criteria</p>
+                      <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Matching milestone acceptance criteria</p>
                     </div>
-                    <div className="pt-2.5 border-t border-[#26344B]/60 text-xs text-slate-500 flex items-center gap-1.5">
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
                       <span>4 criteria satisfied</span>
                     </div>
                   </div>
 
                   {/* Card 3: Milestone Intelligence Agent */}
-                  <div className="p-4 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2.5 flex flex-col justify-between">
+                  <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[11px] font-mono font-semibold text-slate-400">AGENT 03</span>
-                        <MoreVertical className="w-4 h-4" />
+                        <span className="text-[10px] font-mono font-semibold text-slate-400">AGENT 03</span>
+                        <MoreVertical className="w-3.5 h-3.5" />
                       </div>
-                      <h4 className="font-bold text-sm text-white mt-1.5">Milestone Intelligence</h4>
-                      <div className="flex items-center gap-2 text-xs text-emerald-400 mt-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <h4 className="font-bold text-xs sm:text-sm text-white mt-1">Milestone Intelligence</h4>
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 mt-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         <span>Audit Ready</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">Synthesizing evidence audit report</p>
+                      <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Synthesizing evidence audit report</p>
                     </div>
-                    <div className="pt-2.5 border-t border-[#26344B]/60 text-xs text-slate-500 flex items-center gap-1.5">
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
                       <span>Client review queued</span>
                     </div>
                   </div>
 
                   {/* Card 4: Payment Assistant */}
-                  <div className="p-4 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2.5 flex flex-col justify-between">
+                  <div className="p-3.5 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-500">
-                        <span className="text-[11px] font-mono font-semibold text-slate-400">AGENT 04</span>
-                        <MoreVertical className="w-4 h-4" />
+                        <span className="text-[10px] font-mono font-semibold text-slate-400">AGENT 04</span>
+                        <MoreVertical className="w-3.5 h-3.5" />
                       </div>
-                      <h4 className="font-bold text-sm text-white mt-1.5">Payment Assistant</h4>
-                      <div className="flex items-center gap-2 text-xs text-amber-400 mt-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      <h4 className="font-bold text-xs sm:text-sm text-white mt-1">Payment Assistant</h4>
+                      <div className="flex items-center gap-1.5 text-[11px] text-amber-400 mt-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                         <span>Awaiting Sign-off</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">PayPal Invoicing REST client standby</p>
+                      <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">PayPal Invoicing REST client standby</p>
                     </div>
-                    <div className="pt-2.5 border-t border-[#26344B]/60 text-xs text-slate-500 flex items-center gap-1.5">
+                    <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
                       <span>Awaiting human approval</span>
                     </div>
                   </div>
@@ -595,42 +595,42 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Right Column: Financial Overview + Recent Activity (lg:col-span-4) */}
-            <div className="lg:col-span-4 space-y-5">
+            <div className="lg:col-span-4 space-y-4">
               {/* 6. FINANCIAL OVERVIEW CARD */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-[#111C30] border border-[#26344B] space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-emerald-400" />
-                    <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-slate-200">
+              <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
+                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CreditCard className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <h3 className="font-heading text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200 truncate">
                       Financial Telemetry
                     </h3>
                   </div>
-                  <span className="text-[11px] font-sans font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-2.5 py-1 rounded-md">
+                  <span className="text-[10px] font-sans font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">
                     SANDBOX
                   </span>
                 </div>
 
                 {/* Submetrics */}
-                <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
+                <div className="flex items-center justify-between gap-2 text-xs pt-0.5">
                   <div>
-                    <div className="flex items-center gap-2 text-slate-400">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
-                      <span className="font-medium font-sans">Confirmed (Demo)</span>
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <span className="w-2 h-2 rounded-full bg-[#2563EB] shrink-0" />
+                      <span className="font-medium font-sans whitespace-nowrap">Confirmed (Demo)</span>
                     </div>
-                    <div className="text-lg sm:text-xl font-bold font-sans tabular-nums text-white mt-1">$9,500.00</div>
+                    <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">$9,500.00</div>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center justify-end gap-2 text-slate-400">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8]" />
-                      <span className="font-medium font-sans">Pending Client</span>
+                    <div className="flex items-center justify-end gap-1.5 text-slate-400">
+                      <span className="w-2 h-2 rounded-full bg-[#38BDF8] shrink-0" />
+                      <span className="font-medium font-sans whitespace-nowrap">Pending Client</span>
                     </div>
-                    <div className="text-lg sm:text-xl font-bold font-sans tabular-nums text-white mt-1">$4,500.00</div>
+                    <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">$4,500.00</div>
                   </div>
                 </div>
 
                 {/* Smooth Two-Line Area Chart */}
-                <div className="pt-2">
-                  <svg className="w-full h-32" viewBox="0 0 300 100" fill="none">
+                <div className="pt-1">
+                  <svg className="w-full h-28" viewBox="0 0 300 100" fill="none">
                     <defs>
                       <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#2563EB" stopOpacity="0.45" />
@@ -656,7 +656,7 @@ export const DashboardPage: React.FC = () => {
                       opacity="0.8"
                     />
                   </svg>
-                  <div className="flex justify-between text-xs text-slate-400 font-mono pt-2">
+                  <div className="flex justify-between text-[11px] text-slate-400 font-mono pt-1.5">
                     <span>Aug</span>
                     <span>Sep</span>
                     <span>Oct</span>
@@ -666,53 +666,53 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* 8. RECENT ACTIVITY TIMELINE CARD */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-[#111C30] border border-[#26344B] space-y-5 relative overflow-hidden">
-                <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
-                  <div className="flex items-center gap-3">
-                    <FileCode className="w-5 h-5 text-blue-400" />
-                    <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-slate-200">
+              <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4 relative overflow-hidden">
+                <div className="flex items-center justify-between pb-2.5 border-b border-[#26344B]">
+                  <div className="flex items-center gap-2">
+                    <FileCode className="w-4 h-4 text-blue-400 shrink-0" />
+                    <h3 className="font-heading text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
                       Audit Activity Feed
                     </h3>
                   </div>
-                  <span className="text-xs text-slate-400 font-sans">Live Sync</span>
+                  <span className="text-[11px] text-slate-400 font-sans">Live Sync</span>
                 </div>
 
                 {/* Timeline */}
-                <div className="relative pl-7 space-y-5 text-sm before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#26344B]">
+                <div className="relative pl-6 space-y-4 text-xs sm:text-[13px] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#26344B]">
                   {/* Item 1 */}
                   <div className="relative">
-                    <span className="absolute -left-7 top-1 w-3.5 h-3.5 rounded-full bg-[#2563EB] ring-4 ring-[#111C30]" />
+                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#2563EB] ring-4 ring-[#111C30]" />
                     <div className="font-sans font-semibold text-white leading-snug">
                       AST code verification passed for Commit a1e9482
                     </div>
-                    <div className="text-xs text-slate-400 font-sans tabular-nums mt-1">10m ago &bull; 94.2% confidence</div>
+                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">10m ago &bull; 94.2% confidence</div>
                   </div>
 
                   {/* Item 2 */}
                   <div className="relative">
-                    <span className="absolute -left-7 top-1 w-3.5 h-3.5 rounded-full bg-slate-500 ring-4 ring-[#111C30]" />
+                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-slate-500 ring-4 ring-[#111C30]" />
                     <div className="font-sans font-semibold text-white leading-snug">
                       Sandbox Invoice #INV-2026-0843 drafted ($5,000)
                     </div>
-                    <div className="text-xs text-slate-400 font-sans tabular-nums mt-1">1h ago &bull; Meridian Labs</div>
+                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">1h ago &bull; Meridian Labs</div>
                   </div>
 
                   {/* Item 3 */}
                   <div className="relative">
-                    <span className="absolute -left-7 top-1 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-4 ring-[#111C30]" />
+                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-emerald-400 ring-4 ring-[#111C30]" />
                     <div className="font-sans font-semibold text-white leading-snug">
                       Marcus Vance approved Milestone 2 deliverables
                     </div>
-                    <div className="text-xs text-slate-400 font-sans tabular-nums mt-1">3h ago &bull; Human Sign-off</div>
+                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">3h ago &bull; Human Sign-off</div>
                   </div>
 
                   {/* Item 4 */}
                   <div className="relative">
-                    <span className="absolute -left-7 top-1 w-3.5 h-3.5 rounded-full bg-blue-500 ring-4 ring-[#111C30]" />
+                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-[#111C30]" />
                     <div className="font-sans font-semibold text-white leading-snug">
                       PayPal Webhook verified PAYMENT.INVOICE.PAID ($4,500)
                     </div>
-                    <div className="text-xs text-slate-400 font-sans tabular-nums mt-1">1d ago &bull; TXN-DEMO-948124</div>
+                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">1d ago &bull; TXN-DEMO-948124</div>
                   </div>
                 </div>
               </div>

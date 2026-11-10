@@ -80,7 +80,7 @@ export const Drawer: React.FC<DrawerProps> = ({
         >
           {/* Header */}
           {(title || description) && (
-            <div className="px-6 py-4.5 border-b border-slate-200/70 dark:border-white/10 flex items-start justify-between shrink-0 bg-transparent">
+            <div className="px-6 py-4 border-b border-slate-200/70 dark:border-white/10 flex items-start justify-between shrink-0 bg-transparent">
               <div className="space-y-1 pr-4 min-w-0">
                 {title && (
                   typeof title === 'string' ? (

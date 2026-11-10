@@ -423,7 +423,7 @@ export const PaymentsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 3: PAGE HEADER */}
-        <header className="h-18 sm:h-20 px-4 sm:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
+        <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#0A101D] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
@@ -432,39 +432,39 @@ export const PaymentsPage: React.FC = () => {
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
+              <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
                 Invoices
               </h1>
-              <p className="font-sans text-sm text-slate-400 mt-1 hidden sm:block">
+              <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
                 Manage milestone-based invoices and track client payments.
               </p>
             </div>
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Settings Icon */}
             <button
               onClick={() => navigate('/settings')}
-              className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl transition-colors"
+              className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl transition-colors"
               title="Settings"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4" />
             </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2.5 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
+                className="p-2 text-slate-300 hover:text-white hover:bg-[#152238] rounded-xl relative transition-colors"
                 title="Notifications"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0A101D]" />
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-4 z-50 space-y-2.5 text-xs sm:text-sm">
+                <div className="absolute right-0 mt-2 w-80 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-4 z-50 space-y-2.5 text-xs">
                   <div className="flex items-center justify-between border-b border-[#26344B] pb-2 font-bold text-white">
                     <span>Invoicing Notifications</span>
                     <button
@@ -492,7 +492,7 @@ export const PaymentsPage: React.FC = () => {
               <img
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
                 alt="Alex Morgan"
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500/40"
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/40"
               />
               <ChevronDown className="w-4 h-4 text-slate-400" />
             </div>
@@ -507,16 +507,16 @@ export const PaymentsPage: React.FC = () => {
                 }
                 setIsCreateInvoiceModalOpen(true);
               }}
-              className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors"
+              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors whitespace-nowrap shrink-0"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>Create Invoice</span>
             </button>
           </div>
         </header>
 
         {/* Scrollable Dashboard Workspace */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* PHASE 4: SEARCH & FILTER TOOLBAR */}
           <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-3.5">
@@ -622,73 +622,73 @@ export const PaymentsPage: React.FC = () => {
             <span className="font-heading text-xs font-bold text-slate-400 uppercase tracking-wider block">
               3. FINANCIAL SUMMARY
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Card 1: Total Invoiced */}
-              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-                  <DollarSign className="w-6 h-6" />
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <DollarSign className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="font-sans text-xs text-slate-400 block font-medium">Total Invoiced</span>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
+                  <div className="text-xl sm:text-2xl font-extrabold text-white font-sans tabular-nums tracking-tight truncate">
                     ${summaryMetrics.totalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>
 
               {/* Card 2: Paid Invoices */}
-              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                    <DollarSign className="w-6 h-6" />
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                    <DollarSign className="w-5 h-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="font-sans text-xs text-slate-400 block font-medium">Paid Invoices</span>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
+                    <div className="text-xl sm:text-2xl font-extrabold text-white font-sans tabular-nums tracking-tight truncate">
                       ${summaryMetrics.paidInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-emerald-400 font-semibold font-sans bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-500/30">
-                  <TrendingUp className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold font-sans bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-500/30 shrink-0">
+                  <TrendingUp className="w-3 h-3" />
                   <span>Trend</span>
                 </div>
               </div>
 
               {/* Card 3: Pending Invoices */}
-              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-                    <FileText className="w-6 h-6" />
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                    <FileText className="w-5 h-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="font-sans text-xs text-slate-400 block font-medium">Pending Invoices</span>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
+                    <div className="text-xl sm:text-2xl font-extrabold text-white font-sans tabular-nums tracking-tight truncate">
                       ${summaryMetrics.pendingInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-blue-400 font-semibold font-sans bg-blue-950/40 px-2 py-1 rounded-lg border border-blue-500/30">
-                  <TrendingUp className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1 text-[11px] text-blue-400 font-semibold font-sans bg-blue-950/40 px-2 py-0.5 rounded-lg border border-blue-500/30 shrink-0">
+                  <TrendingUp className="w-3 h-3" />
                   <span>Trend</span>
                 </div>
               </div>
 
               {/* Card 4: Overdue Invoices */}
-              <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
-                    <AlertTriangle className="w-6 h-6" />
+              <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                    <AlertTriangle className="w-5 h-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="font-sans text-xs text-slate-400 block font-medium">Overdue Invoices</span>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-white font-sans tabular-nums tracking-tight">
+                    <div className="text-xl sm:text-2xl font-extrabold text-white font-sans tabular-nums tracking-tight truncate">
                       ${summaryMetrics.overdueInvoices.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-rose-400 font-semibold bg-rose-950/40 px-2 py-1 rounded-lg border border-rose-500/30">
-                  <TrendingDown className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1 text-[11px] text-rose-400 font-semibold bg-rose-950/40 px-2 py-0.5 rounded-lg border border-rose-500/30 shrink-0">
+                  <TrendingDown className="w-3 h-3" />
                   <span>Trend</span>
                 </div>
               </div>

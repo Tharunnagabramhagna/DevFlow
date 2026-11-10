@@ -321,26 +321,26 @@ export const MilestonesPage: React.FC = () => {
         )}
 
         {/* SCROLLABLE MILESTONES BODY */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-8 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* PHASE 2: PAGE HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <button
                   onClick={openMobileSidebar}
-                  className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D]"
+                  className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D]"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">Milestones</h1>
+                <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">Milestones</h1>
               </div>
-              <p className="text-sm sm:text-base text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-400">
                 Track deliverables, evaluate progress and manage milestone approvals.
               </p>
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex items-center gap-3 self-start sm:self-auto">
+            <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
               <button
                 onClick={() => {
                   if (isGuest) {
@@ -350,16 +350,16 @@ export const MilestonesPage: React.FC = () => {
                   }
                   setIsNewModalOpen(true);
                 }}
-                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
+                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 shrink-0" />
                 <span>Create Milestone</span>
               </button>
 
               <div className="relative">
                 <button
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-3 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] transition-colors relative"
+                  className="p-2.5 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] transition-colors relative"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4" />
@@ -463,56 +463,56 @@ export const MilestonesPage: React.FC = () => {
           </div>
 
           {/* PHASE 4: KPI SUMMARY CARDS */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Card 1: Total Milestones */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Total Milestones</span>
-                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
+                <span className="font-sans text-xs text-slate-400 font-semibold">Total Milestones</span>
+                <div className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white mt-1">
                   {totalMilestonesCount}
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-slate-400">
-                <Flag className="w-5 h-5" />
+              <div className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B] text-slate-400">
+                <Flag className="w-4 h-4" />
               </div>
             </div>
 
             {/* Card 2: Completed */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Completed</span>
-                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
+                <span className="font-sans text-xs text-slate-400 font-semibold">Completed</span>
+                <div className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white mt-1">
                   {completedCount}
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-emerald-400">
-                <CheckCircle2 className="w-5 h-5" />
+              <div className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B] text-emerald-400">
+                <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
 
             {/* Card 3: In Progress */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">In Progress</span>
-                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
+                <span className="font-sans text-xs text-slate-400 font-semibold">In Progress</span>
+                <div className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white mt-1">
                   {String(inProgressCount).padStart(2, '0')}
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-blue-400">
-                <Clock className="w-5 h-5" />
+              <div className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B] text-blue-400">
+                <Clock className="w-4 h-4" />
               </div>
             </div>
 
             {/* Card 4: Awaiting Review */}
-            <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex items-center justify-between">
               <div>
-                <span className="font-sans text-xs sm:text-[13px] text-slate-400 font-semibold tracking-wide">Awaiting Review</span>
-                <div className="text-3xl sm:text-4xl font-black font-sans tabular-nums text-white mt-1.5">
+                <span className="font-sans text-xs text-slate-400 font-semibold">Awaiting Review</span>
+                <div className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white mt-1">
                   {String(awaitingReviewCount).padStart(2, '0')}
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B] text-amber-400">
-                <MessageSquare className="w-5 h-5" />
+              <div className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B] text-amber-400">
+                <MessageSquare className="w-4 h-4" />
               </div>
             </div>
           </div>

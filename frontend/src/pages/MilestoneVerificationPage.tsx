@@ -327,9 +327,9 @@ export const MilestoneVerificationPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PHASE 1: PAGE HEADER & MILESTONE SELECTOR */}
-        <header className="px-4 sm:px-8 pt-6 pb-5 border-b border-[#26344B] bg-[#0A101D] shrink-0 space-y-4">
+        <header className="px-4 sm:px-6 lg:px-8 pt-4 pb-4 border-b border-[#26344B] bg-[#0A101D] shrink-0 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
+            <div className="flex items-center gap-3">
               <button
                 onClick={openMobileSidebar}
                 className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-[#152238] rounded-xl"
@@ -337,10 +337,10 @@ export const MilestoneVerificationPage: React.FC = () => {
                 <Menu className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-none">
+                <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
                   Milestone Verification
                 </h1>
-                <p className="font-sans text-sm sm:text-base text-slate-400 mt-1.5">
+                <p className="font-sans text-xs text-slate-400 mt-1">
                   Review AI-generated evidence assessments and milestone requirements.
                 </p>
               </div>
@@ -349,105 +349,105 @@ export const MilestoneVerificationPage: React.FC = () => {
             {/* Quick Link to AI Agents page if user wants pipeline view */}
             <button
               onClick={() => navigate('/verification')}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-[#111C30] hover:bg-[#152238] border border-[#26344B] text-xs sm:text-sm text-blue-400 font-semibold transition-colors"
+              className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#111C30] hover:bg-[#152238] border border-[#26344B] text-xs text-blue-400 font-semibold transition-colors whitespace-nowrap shrink-0"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3.5 h-3.5" />
               <span>AI Agents Pipeline</span>
             </button>
           </div>
 
           {/* Milestone Selector Section */}
-          <div className="space-y-2 pt-1">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="space-y-1.5 pt-0.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
               Milestone Selector
             </span>
-            <div className="flex flex-wrap items-center gap-3.5">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Project Dropdown */}
-              <div className="relative min-w-[220px]">
+              <div className="relative min-w-[200px]">
                 <select
                   value={selectedProject}
                   onChange={(e) => {
                     setSelectedProject(e.target.value);
                     showToast('Project Selected', `Loaded verification scope for ${e.target.value}.`, 'info');
                   }}
-                  className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-4 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
+                  className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-3.5 py-2 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
                 >
                   <option value="Project Alpha v1.2">Project Alpha v1.2</option>
                   <option value="Apollo Portal">Apollo Portal</option>
                   <option value="Project Nova">Project Nova</option>
                   <option value="Aether Platform">Aether Platform</option>
                 </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Sprint Dropdown */}
-              <div className="relative min-w-[240px]">
+              <div className="relative min-w-[220px]">
                 <select
                   value={selectedSprint}
                   onChange={(e) => {
                     setSelectedSprint(e.target.value);
                     showToast('Sprint Selected', `Telemetry synchronized for ${e.target.value}.`, 'info');
                   }}
-                  className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-4 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
+                  className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-3.5 py-2 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
                 >
                   <option value="Sprint 8 - Backend API">Sprint 8 - Backend API</option>
                   <option value="Sprint 7 - Auth Gateway">Sprint 7 - Auth Gateway</option>
                   <option value="Sprint 9 - PayPal Settlements">Sprint 9 - PayPal Settlements</option>
                   <option value="Sprint 10 - Enterprise Audit">Sprint 10 - Enterprise Audit</option>
                 </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           </div>
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-7 space-y-7 max-w-[1780px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* PHASE 2: VERIFICATION SUMMARY CARD */}
-          <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6">
-            <div className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+          <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 sm:p-5">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
               Verification Summary
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-5 items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 items-center">
               {/* 1. Requirements Evaluated */}
-              <div className="space-y-1.5">
-                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Requirements Evaluated</span>
-                <div className="text-3xl font-bold text-white font-mono">
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 block font-medium">Requirements Evaluated</span>
+                <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
                   {metrics.requirementsEvaluated}
                 </div>
               </div>
 
               {/* 2. Supported Requirements */}
-              <div className="space-y-1.5">
-                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Supported Requirements</span>
-                <div className="flex items-center gap-2.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-400" />
-                  <span className="text-3xl font-bold text-white font-mono">
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 block font-medium">Supported Requirements</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                  <span className="text-2xl sm:text-3xl font-bold text-white font-mono">
                     {metrics.supportedRequirements}
                   </span>
                 </div>
               </div>
 
               {/* 3. Partially Supported */}
-              <div className="space-y-1.5">
-                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Partially Supported</span>
-                <div className="flex items-center gap-2.5">
-                  <span className="w-3 h-3 rounded-full bg-amber-400" />
-                  <span className="text-3xl font-bold text-white font-mono">
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 block font-medium">Partially Supported</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                  <span className="text-2xl sm:text-3xl font-bold text-white font-mono">
                     {metrics.partiallySupported}
                   </span>
                 </div>
               </div>
 
               {/* 4. Missing Evidence */}
-              <div className="space-y-1.5">
-                <span className="text-xs sm:text-[13px] text-slate-400 block font-medium">Missing Evidence</span>
-                <div className="flex items-center gap-2.5">
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 block font-medium">Missing Evidence</span>
+                <div className="flex items-center gap-2">
                   <div className="w-3.5 h-3.5 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center text-[9px] font-bold text-amber-400">
                     !
                   </div>
-                  <span className="text-3xl font-bold text-white font-mono">
+                  <span className="text-2xl sm:text-3xl font-bold text-white font-mono">
                     {metrics.missingEvidence}
                   </span>
                 </div>

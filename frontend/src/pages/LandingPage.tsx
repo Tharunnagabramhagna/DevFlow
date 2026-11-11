@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DevFlowLogo, BrandHeroBanner, ThemeToggle } from '@/components/common';
+import { DevFlowLogo, BrandHeroBanner, ThemeToggle, AmbientBackground } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -60,9 +60,12 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#080D1B] text-[#0F172A] dark:text-[#F1F5F9] font-sans selection:bg-[#0070BA] selection:text-white overflow-x-hidden antialiased">
+    <div className="min-h-screen bg-slate-50/70 dark:bg-[#060B16] text-[#0F172A] dark:text-[#F1F5F9] font-sans selection:bg-[#0070BA] selection:text-white overflow-x-hidden antialiased relative">
+      {/* Decorative ambient gradient lighting */}
+      <AmbientBackground />
+
       {/* 1. Header Navigation */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#080D1B]/85 backdrop-blur-md border-b border-slate-200 dark:border-[#1E293B]">
+      <header className="sticky top-0 z-50 bg-white/75 dark:bg-[#080D1B]/75 backdrop-blur-2xl border-b border-slate-200/70 dark:border-white/10 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
           <div
@@ -116,7 +119,7 @@ export const LandingPage: React.FC = () => {
               Sign Up
             </button>
             <button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/get-started')}
               className="text-xs font-semibold bg-[#0070BA] hover:bg-[#005ea6] text-white px-4 py-2 rounded-full transition-all shadow-md shadow-[#0070BA]/25 hover:shadow-[#0070BA]/40"
             >
               Get Started
@@ -180,7 +183,7 @@ export const LandingPage: React.FC = () => {
                 Sign Up
               </button>
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/get-started')}
                 className="w-full text-center py-2 text-xs font-semibold text-white bg-[#0070BA] rounded-lg"
               >
                 Get Started
@@ -220,14 +223,14 @@ export const LandingPage: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
-                  onClick={() => navigate('/signup')}
-                  className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-lg shadow-[#0070BA]/30 hover:shadow-[#0070BA]/50 flex items-center gap-2"
+                  onClick={() => navigate('/get-started')}
+                  className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-lg shadow-[#0070BA]/30 hover:shadow-[#0070BA]/50 flex items-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   Get Started
                 </button>
                 <button
                   onClick={() => scrollToSection('how-it-works')}
-                  className="bg-white hover:bg-slate-100 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-300 dark:border-[#1E293B] hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-xs"
+                  className="bg-white hover:bg-slate-100 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-300 dark:border-[#1E293B] hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-xs cursor-pointer whitespace-nowrap"
                 >
                   Explore How It Works
                 </button>
@@ -237,9 +240,9 @@ export const LandingPage: React.FC = () => {
             {/* Right Column: Hero Dashboard Mockup + Overlapping Payment Status */}
             <div className="lg:col-span-7 relative">
               {/* Outer Dashboard Mockup Shell */}
-              <div className="bg-slate-100/90 dark:bg-[#0B1222] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+              <div className="bg-white/70 dark:bg-[#0B1222]/70 backdrop-blur-2xl border border-white/80 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-glass-elevated dark:shadow-dark-glass-elevated relative overflow-hidden">
                 {/* Window Chrome Header */}
-                <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-[#1E293B] text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/70 dark:border-white/10 text-[11px] text-slate-500 dark:text-slate-400">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
@@ -255,7 +258,7 @@ export const LandingPage: React.FC = () => {
                 {/* Inner Mockup Layout: Mini Sidebar + Main Viewport */}
                 <div className="grid grid-cols-12 gap-3 pt-3.5">
                   {/* Mini Sidebar */}
-                  <div className="col-span-3 border-r border-slate-200 dark:border-[#1E293B] pr-3 space-y-1 text-[11px]">
+                  <div className="col-span-3 border-r border-slate-200/70 dark:border-white/10 pr-3 space-y-1 text-[11px]">
                     <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-white mb-3">
                       <DevFlowLogo variant="icon" size="xs" />
                       <span>DevFlow</span>
@@ -288,7 +291,7 @@ export const LandingPage: React.FC = () => {
                   <div className="col-span-9 space-y-3 pl-1">
                     {/* Top Row: Milestone Tracking + Mini Stat */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div className="sm:col-span-2 p-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] space-y-2">
+                      <div className="sm:col-span-2 p-2.5 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 space-y-2">
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="font-semibold text-slate-900 dark:text-white">Milestone Tracking</span>
                           <span className="text-emerald-700 dark:text-emerald-400 font-mono text-[10px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/40">
@@ -315,7 +318,7 @@ export const LandingPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="p-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] flex flex-col justify-between">
+                      <div className="p-2.5 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 flex flex-col justify-between">
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Expected Volume</span>
                         <div>
                           <div className="text-lg font-bold font-mono text-slate-900 dark:text-white">$18,500.00</div>
@@ -325,7 +328,7 @@ export const LandingPage: React.FC = () => {
                     </div>
 
                     {/* Commit Stream Snippet */}
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] text-[11px] space-y-1.5 font-mono">
+                    <div className="p-2.5 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 text-[11px] space-y-1.5 font-mono">
                       <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                         <span className="flex items-center gap-1.5">
                           <GitHubIcon className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
@@ -333,7 +336,7 @@ export const LandingPage: React.FC = () => {
                         </span>
                         <span className="text-blue-600 dark:text-blue-400">main</span>
                       </div>
-                      <div className="text-[10px] text-slate-700 dark:text-slate-300 truncate bg-slate-50 dark:bg-[#080D1B] p-1.5 rounded border border-slate-200 dark:border-[#1E293B]">
+                      <div className="text-[10px] text-slate-700 dark:text-slate-300 truncate bg-slate-50/80 dark:bg-[#080D1B]/80 p-1.5 rounded border border-slate-200/60 dark:border-white/10">
                         commit <span className="text-amber-600 dark:text-amber-400">a1e9482</span> &bull; feat(payments): implement PayPal webhook verification and signature check
                       </div>
                     </div>
@@ -342,7 +345,7 @@ export const LandingPage: React.FC = () => {
               </div>
 
               {/* Overlapping Floating "Payment Status" Panel (Matches Reference) */}
-              <div className="sm:absolute sm:-bottom-6 sm:-right-4 mt-4 sm:mt-0 bg-white/95 dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-4 shadow-2xl space-y-3 w-full sm:w-72 backdrop-blur-md">
+              <div className="sm:absolute sm:-bottom-6 sm:-right-4 mt-4 sm:mt-0 bg-white/85 dark:bg-[#0F172A]/85 border border-white/80 dark:border-white/15 rounded-2xl p-4 shadow-glass-elevated dark:shadow-dark-glass-elevated space-y-3 w-full sm:w-72 backdrop-blur-2xl">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-[#1E293B] pb-2">
                   <div className="flex items-center gap-1.5">
                     <span>Payment Status</span>
@@ -384,17 +387,17 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 3. PROBLEM AND SOLUTION SECTION */}
-      <section className="py-20 bg-[#060A15] border-t border-b border-[#1E293B]/60">
+      <section className="py-20 bg-slate-900/10 dark:bg-black/20 backdrop-blur-xl border-t border-b border-slate-200/60 dark:border-white/10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Section Heading */}
           <div className="text-center space-y-3">
-            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/50 px-3 py-1 rounded-full backdrop-blur-md">
               PROBLEM &amp; SOLUTION
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               The manual process is broken.
             </h2>
-            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
               Traditional milestone verification wastes developer hours and delays payments.
               DevFlow turns evidence into instant settlement.
             </p>
@@ -406,57 +409,57 @@ export const LandingPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1">
                 <div className="w-2 h-2 rounded-full bg-rose-500" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   The Manual Process
                 </h3>
               </div>
 
               {/* Card 1: Manual Milestone Tracking */}
-              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-rose-900/50 transition-colors space-y-2.5">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-rose-400/50 dark:hover:border-rose-900/50 transition-all shadow-glass dark:shadow-dark-glass space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-bold text-sm">
-                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+                    <AlertTriangle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
                     <span>Manual Milestone Tracking</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-950/50 text-rose-400 border border-rose-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 px-2 py-0.5 rounded-full">
                     Broken
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Milestones, metrics and progress left unverified in scattered emails, spreadsheets,
                   and unverified chat messages.
                 </p>
               </div>
 
               {/* Card 2: Client Approval Delays */}
-              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-rose-900/50 transition-colors space-y-2.5">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-rose-400/50 dark:hover:border-rose-900/50 transition-all shadow-glass dark:shadow-dark-glass space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-bold text-sm">
-                    <Clock className="w-4 h-4 text-rose-400" />
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+                    <Clock className="w-4 h-4 text-rose-500 dark:text-rose-400" />
                     <span>Client Approvals</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-950/50 text-rose-400 border border-rose-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 px-2 py-0.5 rounded-full">
                     Delayed
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Payment delayed for weeks while waiting for manual review cycles, disputed
                   criteria, and unclear commit verification.
                 </p>
               </div>
 
               {/* Card 3: Payment Administration */}
-              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-rose-900/50 transition-colors space-y-2.5">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-rose-400/50 dark:hover:border-rose-900/50 transition-all shadow-glass dark:shadow-dark-glass space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-bold text-sm">
-                    <CreditCard className="w-4 h-4 text-rose-400" />
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+                    <CreditCard className="w-4 h-4 text-rose-500 dark:text-rose-400" />
                     <span>Payment Administration</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-950/50 text-rose-400 border border-rose-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 px-2 py-0.5 rounded-full">
                     Friction
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Manual invoice drafting, bank wire delays, and zero visibility into webhook
                   cryptographic confirmation.
                 </p>
@@ -466,58 +469,58 @@ export const LandingPage: React.FC = () => {
             {/* Right: The DevFlow Way (Green Accents) */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1">
-                <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   The DevFlow Way
                 </h3>
               </div>
 
               {/* Card 1: Evidence Collection */}
-              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-800/50 transition-colors space-y-2.5">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-400/50 dark:hover:border-emerald-800/50 transition-all shadow-glass dark:shadow-dark-glass space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-bold text-sm">
-                    <GitBranch className="w-4 h-4 text-emerald-400" />
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+                    <GitBranch className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Evidence Collection</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">
                     Smart
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Cryptographic git commits, PR diffs, and test suites tied directly to requirement
                   acceptance criteria automatically.
                 </p>
               </div>
 
               {/* Card 2: Transparent Approvals */}
-              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-800/50 transition-colors space-y-2.5">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-400/50 dark:hover:border-emerald-800/50 transition-all shadow-glass dark:shadow-dark-glass space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-bold text-sm">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Transparent Approvals</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">
                     Verified
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Explainable AI AST scoring provides clients with indisputable proof-of-work
                   citations for rapid, confident sign-off.
                 </p>
               </div>
 
               {/* Card 3: Automated Payment Workflows */}
-              <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-800/50 transition-colors space-y-2.5">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-400/50 dark:hover:border-emerald-800/50 transition-all shadow-glass dark:shadow-dark-glass space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
                     <PayPalIcon className="w-4 h-4" />
                     <span>Automated Workflows</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">
                     Instant
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Automated PayPal sandbox invoice generation upon approved milestone delivery with
                   cryptographic webhook receipts.
                 </p>
@@ -532,13 +535,13 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Section Heading */}
           <div className="text-center space-y-3">
-            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/50 px-3 py-1 rounded-full backdrop-blur-md">
               HOW IT WORKS
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               From commit to payment in four connected steps.
             </h2>
-            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
               DevFlow bridges developer workflow directly into client milestone sign-off and PayPal settlement.
             </p>
           </div>
@@ -546,72 +549,72 @@ export const LandingPage: React.FC = () => {
           {/* 4 Connected Step Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative">
             {/* Step 1: Connect GitHub */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 relative group">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-blue-400/60 dark:hover:border-blue-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-blue-400 transition-colors">
+                <span className="text-3xl font-black font-mono text-slate-400 dark:text-slate-600 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   01
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-[#1E293B] flex items-center justify-center text-white">
-                  <GitHubIcon className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-[#1E293B] flex items-center justify-center text-slate-900 dark:text-white shadow-xs">
+                  <GitHubIcon className="w-5 h-5 text-slate-900 dark:text-white" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white">Connect GitHub</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Connect GitHub</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   DevFlow listens to monitored repository branches, cryptographic commit SHAs, and pull requests.
                 </p>
               </div>
             </div>
 
             {/* Step 2: Analyze with AI */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-purple-500/50 transition-all space-y-4 relative group">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-purple-400/60 dark:hover:border-purple-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-purple-400 transition-colors">
+                <span className="text-3xl font-black font-mono text-slate-400 dark:text-slate-600 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                   02
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-purple-950/50 border border-purple-800/50 flex items-center justify-center text-purple-400">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/50 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-xs">
                   <Wand2 className="w-5 h-5" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white">Analyse with AI</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Analyse with AI</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   AST syntax analysis scores code diffs deterministically against milestone acceptance criteria.
                 </p>
               </div>
             </div>
 
             {/* Step 3: Approve Milestones */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-emerald-500/50 transition-all space-y-4 relative group">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-400/60 dark:hover:border-emerald-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-emerald-400 transition-colors">
+                <span className="text-3xl font-black font-mono text-slate-400 dark:text-slate-600 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   03
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs">
                   <CheckCheck className="w-5 h-5" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white">Approve Milestones</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Approve Milestones</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Clients inspect clear evidence citations with human-in-the-loop review authority.
                 </p>
               </div>
             </div>
 
             {/* Step 4: Get Paid */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-[#0070BA]/50 transition-all space-y-4 relative group">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-[#0070BA]/60 dark:hover:border-[#0070BA]/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black font-mono text-slate-600 group-hover:text-[#0070BA] transition-colors">
+                <span className="text-3xl font-black font-mono text-slate-400 dark:text-slate-600 group-hover:text-[#0070BA] transition-colors">
                   04
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-blue-950/50 border border-blue-800/50 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center shadow-xs">
                   <PayPalIcon className="w-5 h-5" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white">Get Paid</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Get Paid</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Instant invoice dispatch via PayPal Invoicing REST API v2 with verified webhook receipt.
                 </p>
               </div>
@@ -621,17 +624,17 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 5. CORE FEATURES SECTION */}
-      <section id="features" className="py-20 bg-[#060A15] border-t border-b border-[#1E293B]/60">
+      <section id="features" className="py-20 bg-slate-900/10 dark:bg-black/20 backdrop-blur-xl border-t border-b border-slate-200/60 dark:border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Section Heading */}
           <div className="text-center space-y-3">
-            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/50 px-3 py-1 rounded-full backdrop-blur-md">
               CORE FEATURES
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Engineered for autonomous engineering delivery.
             </h2>
-            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
               Purpose-built tools for freelancers, dev teams, and enterprises seeking transparent proof-of-work.
             </p>
           </div>
@@ -639,113 +642,113 @@ export const LandingPage: React.FC = () => {
           {/* 6 Feature Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Feature 1: AI Agent Intelligence */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
-              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center text-blue-400">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-blue-400/60 dark:hover:border-blue-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-xs">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                   AI Agent Intelligence
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   AST syntax analysis and pattern matching evaluate code directly against milestone criteria with 0-100% confidence scores.
                 </p>
               </div>
               {/* Mini UI Preview */}
-              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono text-slate-400 space-y-1">
-                <div className="flex justify-between text-blue-400">
+              <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1B]/80 border border-slate-200/60 dark:border-white/10 text-[10px] font-mono text-slate-600 dark:text-slate-400 space-y-1">
+                <div className="flex justify-between text-blue-600 dark:text-blue-400">
                   <span>Confidence Gauge</span>
-                  <span className="text-emerald-400 font-bold">94.2%</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">94.2%</span>
                 </div>
-                <div className="w-full h-1 bg-[#1E293B] rounded-full overflow-hidden">
+                <div className="w-full h-1 bg-slate-200 dark:bg-[#1E293B] rounded-full overflow-hidden">
                   <div className="w-[94%] h-full bg-blue-500 rounded-full" />
                 </div>
               </div>
             </div>
 
             {/* Feature 2: GitHub Evidence Integration */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 border border-[#1E293B] flex items-center justify-center text-white">
-                <GitBranch className="w-5 h-5 text-purple-400" />
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-purple-400/60 dark:hover:border-blue-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-slate-900 border border-purple-200 dark:border-[#1E293B] flex items-center justify-center text-purple-600 dark:text-white shadow-xs">
+                <GitBranch className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
                   GitHub Evidence Integration
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Inspect diffs, line additions/deletions, and PR approvals linked directly to requirement IDs.
                 </p>
               </div>
               {/* Mini UI Preview */}
-              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono space-y-1">
-                <div className="text-emerald-400 truncate">+1,240 lines added (docker-compose.yml)</div>
+              <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1B]/80 border border-slate-200/60 dark:border-white/10 text-[10px] font-mono space-y-1">
+                <div className="text-emerald-600 dark:text-emerald-400 truncate">+1,240 lines added (docker-compose.yml)</div>
                 <div className="text-slate-500">SHA 54813f0 verified via webhook</div>
               </div>
             </div>
 
             {/* Feature 3: Smart Milestone Tracking */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
-              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center text-blue-400">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-blue-400/60 dark:hover:border-blue-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-xs">
                 <Layers className="w-5 h-5" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                   Smart Milestone Tracking
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Interactive deliverable states from draft, to evidence submission, to verified client payout.
                 </p>
               </div>
               {/* Mini UI Preview */}
-              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] flex items-center justify-between text-slate-300">
+              <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1B]/80 border border-slate-200/60 dark:border-white/10 text-[10px] flex items-center justify-between text-slate-700 dark:text-slate-300">
                 <span>Phase 1 Architecture</span>
-                <span className="text-emerald-400 font-mono font-bold">COMPLETED</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">COMPLETED</span>
               </div>
             </div>
 
             {/* Feature 4: Human Approval */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
-              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-400/60 dark:hover:border-blue-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs">
                 <Users className="w-5 h-5" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                   Human Approval
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   AI acts as an objective validator, but clients always retain the final sign-off authority before any payment is dispatched.
                 </p>
               </div>
               {/* Mini UI Preview */}
-              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] flex items-center justify-between text-slate-300">
+              <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1B]/80 border border-slate-200/60 dark:border-white/10 text-[10px] flex items-center justify-between text-slate-700 dark:text-slate-300">
                 <span>Client Gatekeeper</span>
-                <span className="text-blue-400 font-semibold">Marcus Vance (Meridian Labs) &bull; Approved</span>
+                <span className="text-blue-600 dark:text-blue-400 font-semibold">Marcus Vance (Meridian Labs) &bull; Approved</span>
               </div>
             </div>
 
             {/* Feature 5: PayPal Invoicing */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
-              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-blue-400/60 dark:hover:border-blue-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center shadow-xs">
                 <PayPalIcon className="w-5 h-5" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                   PayPal Invoicing
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Auto-generates itemized invoices via PayPal Invoicing REST API v2 with line items, tax routing, and due dates.
                 </p>
               </div>
               {/* Mini UI Preview */}
-              <div className="p-2.5 rounded-xl bg-[#080D1B] border border-[#1E293B] text-[10px] font-mono flex items-center justify-between">
-                <span className="text-slate-400">INV-DEVFLOW-003</span>
-                <span className="text-emerald-400 font-bold">$3,200.00 USD</span>
+              <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-[#080D1B]/80 border border-slate-200/60 dark:border-white/10 text-[10px] font-mono flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">INV-DEVFLOW-003</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">$3,200.00 USD</span>
               </div>
             </div>
 
             {/* Feature 6: Payment Verification */}
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] hover:border-blue-500/50 transition-all space-y-4 group">
-              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-400/60 dark:hover:border-blue-500/50 transition-all shadow-glass dark:shadow-dark-glass space-y-4 group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div className="space-y-1.5">
@@ -771,7 +774,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           {/* Section Heading */}
           <div className="text-center space-y-3">
-            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/50 px-3 py-1 rounded-full">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/50 px-3 py-1 rounded-full backdrop-blur-md">
               PRODUCT PREVIEW
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -783,9 +786,9 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Large Realistic Enterprise Dashboard Composition */}
-          <div className="bg-slate-100/90 dark:bg-[#0B1222] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-4 sm:p-6 shadow-2xl relative space-y-5">
+          <div className="bg-white/70 dark:bg-[#0B1222]/70 backdrop-blur-2xl border border-white/80 dark:border-white/10 rounded-2xl p-4 sm:p-6 shadow-glass-elevated dark:shadow-dark-glass-elevated relative space-y-5">
             {/* Window Bar */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[#1E293B]">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/70 dark:border-white/10">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-rose-500/80" />
                 <div className="w-3 h-3 rounded-full bg-amber-500/80" />
@@ -801,7 +804,7 @@ export const LandingPage: React.FC = () => {
             {/* Dashboard Inner Screen */}
             <div className="grid grid-cols-12 gap-5">
               {/* Left Mini Nav */}
-              <div className="col-span-12 lg:col-span-3 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-[#1E293B] pb-4 lg:pb-0 lg:pr-5 space-y-4">
+              <div className="col-span-12 lg:col-span-3 border-b lg:border-b-0 lg:border-r border-slate-200/70 dark:border-white/10 pb-4 lg:pb-0 lg:pr-5 space-y-4">
                 <div className="flex items-center gap-2.5">
                   <DevFlowLogo variant="icon" size="sm" />
                   <div>
@@ -811,7 +814,7 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1 text-xs font-medium">
-                  <div className="p-2 rounded-xl bg-blue-100/70 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50/80 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800/40 text-blue-700 dark:text-blue-400 flex items-center gap-2">
                     <LayoutDashboard className="w-4 h-4" />
                     <span>Command Center</span>
                   </div>
@@ -838,22 +841,22 @@ export const LandingPage: React.FC = () => {
               <div className="col-span-12 lg:col-span-9 space-y-4">
                 {/* Metric Cards Banner */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                  <div className="p-3.5 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-xs">
                     <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">Settled Paid</div>
                     <div className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">$7,600.00</div>
                     <div className="text-[10px] text-slate-500">2 settled invoices</div>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                  <div className="p-3.5 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-xs">
                     <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">Pending Review</div>
                     <div className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">$3,200.00</div>
                     <div className="text-[10px] text-slate-500">Awaiting client sign-off</div>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                  <div className="p-3.5 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-xs">
                     <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">AI Pass Rate</div>
                     <div className="text-lg font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">94.2%</div>
                     <div className="text-[10px] text-slate-500">AST syntax evaluation</div>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B]">
+                  <div className="p-3.5 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-xs">
                     <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">Active Scope</div>
                     <div className="text-lg font-bold font-mono text-slate-900 dark:text-white mt-1">4 Deliverables</div>
                     <div className="text-[10px] text-slate-500">northstar-studio/payment-gateway</div>
@@ -863,7 +866,7 @@ export const LandingPage: React.FC = () => {
                 {/* Split Evidence + Invoice Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {/* GitHub Evidence Analysis Box */}
-                  <div className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] space-y-3">
+                  <div className="p-4 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                         <GitBranch className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -876,14 +879,14 @@ export const LandingPage: React.FC = () => {
                     <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">
                       feat(payments): implement PayPal webhook verification and signature check
                     </p>
-                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#080D1B] border border-slate-200 dark:border-[#1E293B] text-[10px] font-mono space-y-1">
+                    <div className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-[#080D1B]/80 border border-slate-200/60 dark:border-white/10 text-[10px] font-mono space-y-1">
                       <div className="text-emerald-600 dark:text-emerald-400">+182 lines &bull; webhook.service.ts</div>
                       <div className="text-blue-600 dark:text-blue-400">+ AST validation satisfied req_02_paypal</div>
                     </div>
                   </div>
 
                   {/* PayPal Webhook Invoice Settlement Box */}
-                  <div className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#1E293B] space-y-3">
+                  <div className="p-4 rounded-xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md border border-slate-200/80 dark:border-white/10 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                         <PayPalIcon className="w-4 h-4" />
@@ -897,7 +900,7 @@ export const LandingPage: React.FC = () => {
                       <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">INV-DEVFLOW-003</span>
                       <span className="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400">$3,200.00 USD</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#080D1B] border border-slate-200 dark:border-[#1E293B] text-[10px] font-mono text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                    <div className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-[#080D1B]/80 border border-slate-200/60 dark:border-white/10 text-[10px] font-mono text-slate-600 dark:text-slate-400 flex items-center justify-between">
                       <span>Webhook WH-78M9 verified</span>
                       <span className="text-slate-700 dark:text-slate-300">Instant Settlement</span>
                     </div>
@@ -910,71 +913,71 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 7. TRUST AND SECURITY SECTION */}
-      <section id="trust" className="py-20 bg-[#060A15] border-t border-b border-[#1E293B]/60">
+      <section id="trust" className="py-20 bg-slate-900/10 dark:bg-black/20 backdrop-blur-xl border-t border-b border-slate-200/60 dark:border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Section Heading */}
           <div className="text-center space-y-3">
-            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-400 uppercase bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/50 px-3 py-1 rounded-full backdrop-blur-md">
               TRUST AND SECURITY
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Enterprise guarantees for developers and clients.
             </h2>
-            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
               DevFlow combines deterministic code proofs with PayPal financial safeguards.
             </p>
           </div>
 
           {/* 3 Trust Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center text-blue-400">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-glass dark:shadow-dark-glass space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-xs">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-base font-bold text-white">Evidence-Based AI</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Evidence-Based AI</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Deterministic AST pattern matching and explainable citations link every evaluation to verifiable git commit SHAs. No black-box claims.
                 </p>
               </div>
               <div className="pt-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 bg-blue-950/50 border border-blue-800/40 px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/40 px-2.5 py-1 rounded-full">
                   <Check className="w-3 h-3" />
                   <span>Explainable Citations</span>
                 </span>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-glass dark:shadow-dark-glass space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-base font-bold text-white">Human-in-the-Loop Approval</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Human-in-the-Loop Approval</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   AI functions strictly as an objective intelligence copilot. Clients retain complete authority and final sign-off before invoice disbursement.
                 </p>
               </div>
               <div className="pt-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-1 rounded-full">
                   <Lock className="w-3 h-3" />
                   <span>Client Gatekeeper</span>
                 </span>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#1E293B] space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/50 flex items-center justify-center">
+            <div className="p-6 rounded-2xl bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-glass dark:shadow-dark-glass space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center shadow-xs">
                 <PayPalIcon className="w-5 h-5" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-base font-bold text-white">Verified PayPal Integration</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Verified PayPal Integration</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Built on PayPal Invoicing REST API v2 with cryptographic webhook signatures to confirm transparent, dispute-free settlements.
                 </p>
               </div>
               <div className="pt-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 bg-blue-950/50 border border-blue-800/40 px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/40 px-2.5 py-1 rounded-full">
                   <Check className="w-3 h-3" />
                   <span>Cryptographic Webhooks</span>
                 </span>
@@ -987,7 +990,7 @@ export const LandingPage: React.FC = () => {
       {/* 8. FINAL CTA */}
       <section className="py-20 relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative p-10 sm:p-16 rounded-3xl bg-gradient-to-b from-white to-slate-100 dark:from-[#0F172A] dark:to-[#0A0F1D] border border-slate-200 dark:border-[#1E293B] text-center space-y-6 overflow-hidden shadow-2xl">
+          <div className="relative p-10 sm:p-16 rounded-3xl bg-gradient-to-b from-white/90 to-slate-100/80 dark:from-[#0F172A]/85 dark:to-[#0A0F1D]/85 backdrop-blur-2xl border border-white/80 dark:border-white/15 text-center space-y-6 overflow-hidden shadow-glass-elevated dark:shadow-dark-glass-elevated">
             {/* Ambient Cyan/Blue Glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-blue-600/10 dark:bg-blue-600/15 blur-3xl rounded-full pointer-events-none" />
 
@@ -1015,8 +1018,8 @@ export const LandingPage: React.FC = () => {
 
             <div className="relative z-10 pt-2">
               <button
-                onClick={() => navigate('/signup')}
-                className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-sm sm:text-base font-semibold px-8 py-3.5 rounded-full transition-all shadow-xl shadow-[#0070BA]/35 hover:shadow-[#0070BA]/55 inline-flex items-center gap-2"
+                onClick={() => navigate('/get-started')}
+                className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-sm sm:text-base font-semibold px-8 py-3.5 rounded-full transition-all shadow-xl shadow-[#0070BA]/35 hover:shadow-[#0070BA]/55 inline-flex items-center gap-2 cursor-pointer"
               >
                 <span>Start with DevFlow</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1027,7 +1030,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 9. FOOTER */}
-      <footer className="border-t border-slate-200 dark:border-[#1E293B] bg-white dark:bg-[#050811] text-slate-600 dark:text-slate-400 text-xs py-12">
+      <footer className="border-t border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-[#050811]/70 backdrop-blur-xl text-slate-600 dark:text-slate-400 text-xs py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             {/* Brand Column */}

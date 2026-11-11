@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { getAuthenticatedRole } from '../../middleware/auth';
+import { assertVerifiedUser } from '../../middleware/auth';
 import { paymentsService } from './payments.service';
 
 export class PaymentsController {
   async createInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const payment = await paymentsService.createInvoice(req.user!.id, req.body);
+      const user = assertVerifiedUser(req);
+      const payment = await paymentsService.createInvoice(user.id, req.body, user.role);
       res.status(201).json(payment);
     } catch (err) {
       next(err);
@@ -14,10 +15,12 @@ export class PaymentsController {
 
   async cancelInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const user = assertVerifiedUser(req);
       const payment = await paymentsService.cancelInvoice(
-        req.user!.id,
+        user.id,
         req.params.id,
-        req.body?.reason
+        req.body?.reason,
+        user.role
       );
       res.status(200).json(payment);
     } catch (err) {
@@ -27,10 +30,10 @@ export class PaymentsController {
 
   async createRefund(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const role = getAuthenticatedRole(req.user);
+      const user = assertVerifiedUser(req);
       const result = await paymentsService.createRefund(
-        req.user!.id,
-        role,
+        user.id,
+        user.role,
         req.params.id,
         req.body
       );
@@ -42,10 +45,10 @@ export class PaymentsController {
 
   async getPaymentById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const role = getAuthenticatedRole(req.user);
+      const user = assertVerifiedUser(req);
       const payment = await paymentsService.getPaymentById(
-        req.user!.id,
-        role,
+        user.id,
+        user.role,
         req.params.id
       );
       res.status(200).json(payment);
@@ -56,11 +59,11 @@ export class PaymentsController {
 
   async getProjectPayments(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const role = getAuthenticatedRole(req.user);
-      const projectId = req.params.projectId || (req.query.projectId as string);
+      const user = assertVerifiedUser(req);
+      const projectId = req.params.projectId || (req.query.projectId as string | undefined);
       const result = await paymentsService.getProjectPayments(
-        req.user!.id,
-        role,
+        user.id,
+        user.role,
         projectId,
         req.query as any
       );

@@ -304,18 +304,18 @@ export const ProjectsPage: React.FC = () => {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#080D18]">
         {/* SCROLLABLE PROJECTS BODY */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-7 py-5 space-y-6">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
           {/* 1. PAGE HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2.5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={openMobileSidebar}
-                  className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#101A2D]"
+                  className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D]"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Projects</h1>
+                <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">Projects</h1>
               </div>
               <p className="text-xs sm:text-sm text-slate-400">
                 Manage your development projects, milestones and client relationships.
@@ -323,7 +323,7 @@ export const ProjectsPage: React.FC = () => {
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
               <button
                 onClick={() => {
                   if (isGuest) {
@@ -332,39 +332,39 @@ export const ProjectsPage: React.FC = () => {
                   }
                   setIsCreateModalOpen(true);
                 }}
-                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-md shadow-blue-600/30 flex items-center gap-1.5 transition-all"
+                className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 shrink-0" />
                 <span>New Project</span>
               </button>
 
               <div className="relative">
                 <button
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-2.5 text-slate-400 hover:text-white rounded-lg bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors relative"
+                  className="p-2.5 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors relative"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#111C30]" />
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#111C30]" />
                 </button>
 
                 {/* Notifications Popover */}
                 {notificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-72 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl p-3 z-50 text-xs space-y-2">
-                    <div className="font-bold text-white flex justify-between items-center pb-2 border-b border-[#26344B]">
-                      <span>Project Alerts</span>
-                      <span className="text-[10px] text-blue-400 cursor-pointer" onClick={() => setNotificationsOpen(false)}>
+                  <div className="absolute right-0 mt-2 w-80 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-4 z-50 text-xs space-y-3">
+                    <div className="font-bold text-white flex justify-between items-center pb-2.5 border-b border-[#26344B]">
+                      <span className="text-sm">Project Alerts</span>
+                      <span className="text-xs text-blue-400 cursor-pointer hover:underline" onClick={() => setNotificationsOpen(false)}>
                         Close
                       </span>
                     </div>
-                    <div className="space-y-2">
-                      <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
-                        <div className="font-semibold text-white">Payment Gateway Integration</div>
-                        <div className="text-[11px] text-slate-400">Milestone 3 passed AI AST analysis (94.2%)</div>
+                    <div className="space-y-2.5">
+                      <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B]">
+                        <div className="font-semibold text-white text-xs sm:text-sm">Payment Gateway Integration</div>
+                        <div className="text-xs text-slate-400 mt-0.5">Milestone 3 passed AI AST analysis (94.2%)</div>
                       </div>
-                      <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
-                        <div className="font-semibold text-white">Analytics Dashboard</div>
-                        <div className="text-[11px] text-slate-400">Settlement of $4,500.00 confirmed via PayPal Webhook</div>
+                      <div className="p-3 rounded-xl bg-[#080D18] border border-[#26344B]">
+                        <div className="font-semibold text-white text-xs sm:text-sm">Analytics Dashboard</div>
+                        <div className="text-xs text-slate-400 mt-0.5">Settlement of $4,500.00 confirmed via PayPal Webhook</div>
                       </div>
                     </div>
                   </div>
@@ -373,7 +373,7 @@ export const ProjectsPage: React.FC = () => {
 
               <button
                 onClick={() => document.getElementById('project-search-input')?.focus()}
-                className="p-2.5 text-slate-400 hover:text-white rounded-lg bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors"
+                className="p-2.5 text-slate-400 hover:text-white rounded-xl bg-[#111C30] border border-[#26344B] hover:border-slate-500 transition-colors"
                 title="Search Focus"
               >
                 <Search className="w-4 h-4" />
@@ -385,13 +385,13 @@ export const ProjectsPage: React.FC = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Card 1: Total Projects */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-              <span className="text-xs text-slate-400 font-medium">Total Projects</span>
-              <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-sans text-xs text-slate-400 font-semibold">Total Projects</span>
+              <div className="mt-2.5 flex items-baseline justify-between">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-black font-mono text-white">
+                  <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
                     {String(projects.length || 12).padStart(2, '0')}
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono">+2 this month</span>
+                  <span className="text-xs text-slate-500 font-sans tabular-nums">+2 this month</span>
                 </div>
                 {/* Green Trend Sparkline */}
                 <svg className="w-14 h-6 text-emerald-400 shrink-0" viewBox="0 0 50 20" fill="none">
@@ -403,11 +403,11 @@ export const ProjectsPage: React.FC = () => {
             {/* Card 2: Active Projects */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-medium">Active Projects</span>
+                <span className="font-sans text-xs text-slate-400 font-semibold">Active Projects</span>
                 <span className="w-2 h-2 rounded-full bg-blue-500" />
               </div>
-              <div className="mt-2 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-white">
+              <div className="mt-2.5 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
                   {String(activeCount || 8).padStart(2, '0')}
                 </span>
                 {/* Blue Trend Sparkline */}
@@ -420,11 +420,11 @@ export const ProjectsPage: React.FC = () => {
             {/* Card 3: Completed Projects */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-slate-400 font-medium">Completed Projects</span>
+                <span className="font-sans text-xs text-slate-400 font-semibold">Completed Projects</span>
                 <Check className="w-3.5 h-3.5 text-slate-400" />
               </div>
-              <div className="mt-2 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-white">
+              <div className="mt-2.5 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
                   {String(completedCount || 3).padStart(2, '0')}
                 </span>
                 {/* Cyan Trend Sparkline */}
@@ -436,9 +436,9 @@ export const ProjectsPage: React.FC = () => {
 
             {/* Card 4: On Hold */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-              <span className="text-xs text-slate-400 font-medium">On Hold</span>
-              <div className="mt-2 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-slate-500">
+              <span className="font-sans text-xs text-slate-400 font-semibold">On Hold</span>
+              <div className="mt-2.5 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-slate-500">
                   {String(onHoldCount || 1).padStart(2, '0')}
                 </span>
                 {/* Muted Sparkline */}
@@ -450,27 +450,27 @@ export const ProjectsPage: React.FC = () => {
           </div>
 
           {/* 3. SEARCH AND FILTER TOOLBAR */}
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 p-2.5 rounded-xl bg-[#111C30] border border-[#26344B]">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 p-3 rounded-xl bg-[#111C30] border border-[#26344B]">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 id="project-search-input"
                 type="text"
                 placeholder="Search projects..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#080D18] text-xs text-white placeholder-slate-500 pl-9 pr-4 py-2 rounded-lg border border-[#26344B] focus:outline-none focus:border-[#2563EB]"
+                className="w-full bg-[#080D18] text-xs sm:text-sm text-white placeholder-slate-500 pl-10 pr-4 py-2.5 rounded-xl border border-[#26344B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
             {/* Dropdown Filters */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm">
               {/* Status Dropdown */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
+                className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
               >
                 <option value="all">Status: All</option>
                 <option value="active">Status: Active</option>
@@ -482,7 +482,7 @@ export const ProjectsPage: React.FC = () => {
               <select
                 value={clientFilter}
                 onChange={(e) => setClientFilter(e.target.value)}
-                className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB] max-w-[140px] truncate"
+                className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB] max-w-[150px] truncate"
               >
                 <option value="all">Client: All</option>
                 {clientOptions.map((client) => (
@@ -496,7 +496,7 @@ export const ProjectsPage: React.FC = () => {
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
-                className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
+                className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
               >
                 <option value="deadline_asc">Sort by deadline</option>
                 <option value="budget_desc">Sort by budget</option>
@@ -504,29 +504,29 @@ export const ProjectsPage: React.FC = () => {
               </select>
 
               {/* Grid / List Toggle */}
-              <div className="flex items-center gap-0.5 bg-[#080D18] p-1 rounded-lg border border-[#26344B]">
+              <div className="flex items-center gap-1 bg-[#080D18] p-1.5 rounded-xl border border-[#26344B]">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+                  className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors ${
                     viewMode === 'grid'
                       ? 'bg-[#1B2A47] text-white'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   title="Grid view"
                 >
-                  <Grid className="w-3.5 h-3.5" />
+                  <Grid className="w-4 h-4" />
                   <span className="hidden sm:inline">Grid</span>
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+                  className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors ${
                     viewMode === 'list'
                       ? 'bg-[#1B2A47] text-white'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   title="List view"
                 >
-                  <List className="w-3.5 h-3.5" />
+                  <List className="w-4 h-4" />
                   <span className="hidden sm:inline">List</span>
                 </button>
               </div>
@@ -547,7 +547,7 @@ export const ProjectsPage: React.FC = () => {
                 </div>
               ) : viewMode === 'grid' ? (
                 /* GRID VIEW: 3-column responsive layout */
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                   {filteredAndSortedProjects.map((proj) => {
                     const percent = proj.progressPercent || 50;
 
@@ -558,28 +558,28 @@ export const ProjectsPage: React.FC = () => {
                           setSelectedProject(proj);
                           setIsDrawerOpen(true);
                         }}
-                        className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] hover:border-blue-500/50 hover:bg-[#132038] transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+                        className="p-5 sm:p-6 rounded-2xl bg-[#111C30] border border-[#26344B] hover:border-blue-500/50 hover:bg-[#132038] transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
                       >
                         {/* HEADER */}
-                        <div className="space-y-1">
-                          <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                        <div className="space-y-1.5">
+                          <h3 className="font-heading text-base font-bold text-white group-hover:text-blue-300 transition-colors">
                             {proj.name}
                           </h3>
-                          <div className="text-xs text-slate-400 font-medium">
+                          <div className="font-sans text-xs sm:text-sm text-slate-400 font-medium">
                             {proj.clientName}
                           </div>
-                          <p className="text-xs text-slate-400 line-clamp-2 pt-1 leading-relaxed">
+                          <p className="font-sans text-xs sm:text-sm text-slate-400 line-clamp-2 pt-1 leading-relaxed">
                             {proj.description}
                           </p>
                         </div>
 
                         {/* PROGRESS */}
-                        <div className="space-y-1.5 pt-1">
-                          <div className="flex justify-between items-center text-xs font-mono">
-                            <span className="text-slate-400 text-[11px]">Progress</span>
+                        <div className="space-y-2 pt-1">
+                          <div className="flex justify-between items-center text-xs sm:text-sm font-sans tabular-nums">
+                            <span className="text-slate-400">Progress</span>
                             <span className="text-white font-bold">{percent}%</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-[#1A263D] overflow-hidden">
+                          <div className="w-full h-2 rounded-full bg-[#1A263D] overflow-hidden">
                             <div
                               className="h-full bg-[#2563EB] rounded-full transition-all duration-500"
                               style={{ width: `${percent}%` }}
@@ -588,47 +588,47 @@ export const ProjectsPage: React.FC = () => {
                         </div>
 
                         {/* MILESTONE DETAILS */}
-                        <div className="pt-2 border-t border-[#26344B]/70 space-y-1 text-xs">
+                        <div className="pt-2.5 border-t border-[#26344B]/70 space-y-1.5 text-xs sm:text-[13px] font-sans">
                           <div className="flex justify-between items-center">
                             <span className="text-slate-400">Milestones:</span>
-                            <span className="font-mono text-white font-semibold">
+                            <span className="font-sans tabular-nums text-white font-semibold">
                               {proj.completedMilestonesCount}/{proj.milestonesCount}
                             </span>
                           </div>
-                          <div className="text-slate-300 text-[11px] font-mono truncate">
+                          <div className="text-slate-300 truncate">
                             Current: {proj.currentMilestoneTitle || 'API Verification'}
                           </div>
-                          <div className="text-[11px] text-slate-400 font-mono">
+                          <div className="text-slate-400 tabular-nums">
                             Deadline: {proj.deadline || 'Dec 12, 2026'}
                           </div>
                         </div>
 
                         {/* GITHUB SECTION */}
-                        <div className="pt-2 border-t border-[#26344B]/70 flex items-center justify-between text-xs font-mono">
-                          <div className="flex items-center gap-1.5 text-slate-300">
-                            <GitHubIcon className="w-3.5 h-3.5" />
-                            <span className="truncate max-w-[120px]">{proj.connectedRepoName}</span>
+                        <div className="pt-2.5 border-t border-[#26344B]/70 flex items-center justify-between text-xs sm:text-[13px] font-sans">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <GitHubIcon className="w-4 h-4" />
+                            <span className="truncate max-w-[130px] font-medium font-mono text-xs">{proj.connectedRepoName}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-[11px] text-emerald-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
                             <span>Connected</span>
                           </div>
                         </div>
 
                         {/* PAYMENT SECTION */}
-                        <div className="pt-2 border-t border-[#26344B]/70 space-y-1.5">
-                          <div className="flex justify-between items-center text-xs">
-                            <div className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
+                        <div className="pt-2.5 border-t border-[#26344B]/70 space-y-2">
+                          <div className="flex justify-between items-center text-xs sm:text-[13px]">
+                            <div className="text-slate-400 flex items-center gap-1.5 font-sans tabular-nums">
                               <span>Payment:</span>
                               <span className="text-white font-bold">
-                                ${proj.paidAmount?.toLocaleString() || '12,400'} / ${proj.totalBudget.toLocaleString()} paid
+                                ${proj.paidAmount?.toLocaleString() || '12,400'} / ${proj.totalBudget.toLocaleString()}
                               </span>
                             </div>
                             {/* Payment Status Badge */}
-                            <div className="flex items-center gap-1">
-                              <PayPalIcon className="w-3 h-3" />
+                            <div className="flex items-center gap-1.5">
+                              <PayPalIcon className="w-3.5 h-3.5" />
                               <span
-                                className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                                className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
                                   proj.paymentStatus === 'Review'
                                     ? 'bg-amber-950/70 text-amber-400 border-amber-800/60'
                                     : 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60'
@@ -639,7 +639,7 @@ export const ProjectsPage: React.FC = () => {
                             </div>
                           </div>
                           {/* Mini payment progress bar */}
-                          <div className="w-full h-1 rounded-full bg-[#1A263D] overflow-hidden">
+                          <div className="w-full h-1.5 rounded-full bg-[#1A263D] overflow-hidden">
                             <div
                               className="h-full bg-emerald-400 rounded-full"
                               style={{
@@ -657,17 +657,17 @@ export const ProjectsPage: React.FC = () => {
                 </div>
               ) : (
                 /* LIST VIEW: Compact Table */
-                <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] overflow-x-auto">
-                  <table className="w-full text-left text-xs whitespace-nowrap">
+                <div className="p-5 rounded-2xl bg-[#111C30] border border-[#26344B] overflow-x-auto">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
                     <thead>
-                      <tr className="border-b border-[#26344B] text-[11px] text-slate-500 uppercase tracking-wider">
-                        <th className="pb-3 font-semibold">Project Name</th>
-                        <th className="pb-3 font-semibold">Client</th>
-                        <th className="pb-3 font-semibold">Progress</th>
-                        <th className="pb-3 font-semibold">Milestones</th>
-                        <th className="pb-3 font-semibold">Repository</th>
-                        <th className="pb-3 font-semibold">Deadline</th>
-                        <th className="pb-3 font-semibold text-right">Payment</th>
+                      <tr className="border-b border-[#26344B] text-xs text-slate-400 uppercase tracking-wider">
+                        <th className="pb-3.5 font-semibold">Project Name</th>
+                        <th className="pb-3.5 font-semibold">Client</th>
+                        <th className="pb-3.5 font-semibold">Progress</th>
+                        <th className="pb-3.5 font-semibold">Milestones</th>
+                        <th className="pb-3.5 font-semibold">Repository</th>
+                        <th className="pb-3.5 font-semibold">Deadline</th>
+                        <th className="pb-3.5 font-semibold text-right">Payment</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/50">
@@ -680,30 +680,30 @@ export const ProjectsPage: React.FC = () => {
                           }}
                           className="hover:bg-[#15233D] transition-colors cursor-pointer"
                         >
-                          <td className="py-3 font-bold text-white">{proj.name}</td>
-                          <td className="py-3 text-slate-400">{proj.clientName}</td>
-                          <td className="py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 bg-[#1A263D] h-1.5 rounded-full overflow-hidden">
+                          <td className="py-4 font-bold text-white">{proj.name}</td>
+                          <td className="py-4 text-slate-300">{proj.clientName}</td>
+                          <td className="py-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-24 bg-[#1A263D] h-2 rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-[#2563EB] rounded-full"
                                   style={{ width: `${proj.progressPercent || 50}%` }}
                                 />
                               </div>
-                              <span className="font-mono text-[11px] text-slate-300">
+                              <span className="font-mono text-xs text-slate-300">
                                 {proj.progressPercent || 50}%
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 font-mono text-slate-300">
+                          <td className="py-4 font-mono text-slate-300">
                             {proj.completedMilestonesCount}/{proj.milestonesCount}
                           </td>
-                          <td className="py-3 font-mono text-slate-400 flex items-center gap-1.5">
-                            <GitHubIcon className="w-3.5 h-3.5" />
+                          <td className="py-4 font-mono text-slate-400 flex items-center gap-2">
+                            <GitHubIcon className="w-4 h-4" />
                             <span>{proj.connectedRepoName}</span>
                           </td>
-                          <td className="py-3 font-mono text-slate-400">{proj.deadline}</td>
-                          <td className="py-3 text-right">
+                          <td className="py-4 font-mono text-slate-400">{proj.deadline}</td>
+                          <td className="py-4 text-right">
                             <span className="font-mono font-bold text-emerald-400">
                               ${proj.totalBudget.toLocaleString()}
                             </span>
@@ -717,66 +717,66 @@ export const ProjectsPage: React.FC = () => {
             </div>
 
             {/* Right Sidebar Panel (lg:col-span-4 or 3) */}
-            <div className="lg:col-span-4 xl:col-span-3 space-y-4">
+            <div className="lg:col-span-4 xl:col-span-3 space-y-5">
               {/* 5. RECENT PROJECT ACTIVITY CARD */}
-              <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              <div className="p-5 sm:p-6 rounded-2xl bg-[#111C30] border border-[#26344B] space-y-5">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
                   Recent Project Activity
                 </h3>
 
-                <div className="space-y-3.5 text-xs">
+                <div className="space-y-4 text-xs sm:text-sm">
                   {/* Item 1: GitHub Push */}
                   <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-full bg-[#080D18] border border-[#26344B] flex items-center justify-center shrink-0 text-white mt-0.5">
-                      <GitHubIcon className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-full bg-[#080D18] border border-[#26344B] flex items-center justify-center shrink-0 text-white mt-0.5">
+                      <GitHubIcon className="w-4 h-4" />
                     </div>
                     <div className="space-y-0.5">
                       <div className="font-bold text-white">GitHub push by jdoe</div>
-                      <p className="text-[11px] text-slate-400 font-mono">
+                      <p className="text-xs text-slate-400 font-mono">
                         4 commits to nebula-gateway
                       </p>
-                      <span className="text-[10px] text-slate-500 font-mono">10m ago</span>
+                      <span className="text-[11px] text-slate-500 font-mono">10m ago</span>
                     </div>
                   </div>
 
                   {/* Item 2: Milestone Approved */}
                   <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-full bg-emerald-950/70 border border-emerald-800/50 flex items-center justify-center shrink-0 text-emerald-400 mt-0.5">
-                      <Check className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-full bg-emerald-950/70 border border-emerald-800/50 flex items-center justify-center shrink-0 text-emerald-400 mt-0.5">
+                      <Check className="w-4 h-4" />
                     </div>
                     <div className="space-y-0.5">
                       <div className="font-bold text-white">Milestone 3</div>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-xs text-slate-400">
                         Approved by AI Agent &amp; client
                       </p>
-                      <span className="text-[10px] text-slate-500 font-mono">1h ago</span>
+                      <span className="text-[11px] text-slate-500 font-mono">1h ago</span>
                     </div>
                   </div>
 
                   {/* Item 3: Invoice Paid */}
                   <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-full bg-blue-950/70 border border-blue-800/50 flex items-center justify-center shrink-0 text-blue-400 mt-0.5">
-                      <PayPalIcon className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-full bg-blue-950/70 border border-blue-800/50 flex items-center justify-center shrink-0 text-blue-400 mt-0.5">
+                      <PayPalIcon className="w-4 h-4" />
                     </div>
                     <div className="space-y-0.5">
                       <div className="font-bold text-white">Invoice #1042</div>
-                      <p className="text-[11px] text-slate-400 font-mono">
+                      <p className="text-xs text-slate-400 font-mono">
                         Paid ($4,500) via PayPal
                       </p>
-                      <span className="text-[10px] text-slate-500 font-mono">3h ago</span>
+                      <span className="text-[11px] text-slate-500 font-mono">3h ago</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* 6. CREATE PROJECT QUICK ACTION (Dashed Border Card) */}
-              <div className="p-6 rounded-xl bg-[#080D18] border-2 border-dashed border-[#26344B] text-center space-y-3.5 hover:border-blue-500/50 transition-colors">
-                <div className="w-10 h-10 rounded-lg border border-[#26344B] flex items-center justify-center mx-auto text-blue-400">
-                  <Plus className="w-5 h-5" />
+              <div className="p-6 sm:p-7 rounded-2xl bg-[#080D18] border-2 border-dashed border-[#26344B] text-center space-y-4 hover:border-blue-500/50 transition-colors">
+                <div className="w-12 h-12 rounded-xl border border-[#26344B] flex items-center justify-center mx-auto text-blue-400">
+                  <Plus className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-white">Create New Project</h4>
-                  <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                  <h4 className="text-base font-bold text-white">Create New Project</h4>
+                  <p className="text-xs sm:text-sm text-slate-400 max-w-xs mx-auto">
                     Add custom workflow and quick-start button.
                   </p>
                 </div>
@@ -788,7 +788,7 @@ export const ProjectsPage: React.FC = () => {
                     }
                     setIsCreateModalOpen(true);
                   }}
-                  className="w-full bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs py-2.5 rounded-lg shadow-md shadow-blue-600/30 transition-all flex items-center justify-center gap-1.5"
+                  className="w-full bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm py-3 rounded-xl shadow-md shadow-blue-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add custom workflow</span>
@@ -801,7 +801,7 @@ export const ProjectsPage: React.FC = () => {
       {/* PROJECT DETAIL SLIDE-OVER DRAWER */}
       {isDrawerOpen && selectedProject && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-[#101A2D] border-l border-[#26344B] h-full flex flex-col justify-between shadow-2xl p-6 overflow-y-auto space-y-6">
+          <div className="w-full max-w-lg bg-[#101A2D] border-l border-[#26344B] h-full flex flex-col justify-between shadow-2xl p-7 overflow-y-auto space-y-6">
             <div className="space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
                 <div className="flex items-center gap-2">
@@ -887,16 +887,16 @@ export const ProjectsPage: React.FC = () => {
             <div className="pt-4 border-t border-[#26344B] flex items-center justify-between gap-3">
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="w-1/2 py-2 text-xs font-semibold text-slate-300 bg-[#080D18] border border-[#26344B] rounded-lg hover:text-white"
+                className="w-1/2 py-2.5 text-sm font-semibold text-slate-300 bg-[#080D18] border border-[#26344B] rounded-xl hover:text-white"
               >
                 Close Drawer
               </button>
               <button
                 onClick={() => navigate('/milestones')}
-                className="w-1/2 py-2 text-xs font-semibold text-white bg-[#2563EB] hover:bg-blue-600 rounded-lg flex items-center justify-center gap-1.5"
+                className="w-1/2 py-2.5 text-sm font-semibold text-white bg-[#2563EB] hover:bg-blue-600 rounded-xl flex items-center justify-center gap-2"
               >
                 <span>Milestones</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -906,96 +906,96 @@ export const ProjectsPage: React.FC = () => {
       {/* CREATE NEW PROJECT MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="bg-[#111C30] border border-[#26344B] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[#26344B]">
-              <h3 className="text-base font-bold text-white">Create New Project</h3>
+          <div className="bg-[#111C30] border border-[#26344B] rounded-2xl w-full max-w-lg p-7 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#26344B]">
+              <h3 className="text-lg font-bold text-white">Create New Project</h3>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateProject} className="space-y-3.5 text-xs">
+            <form onSubmit={handleCreateProject} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Project Name *</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Project Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Nebula API Gateway"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Client Name / Org *</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Client Name / Org *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Aether Labs"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Client Invoicing Email</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Client Invoicing Email</label>
                 <input
                   type="email"
                   placeholder="billing@aetherlabs.io"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">GitHub Repository (owner/repo)</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">GitHub Repository (owner/repo)</label>
                 <input
                   type="text"
                   value={githubRepo}
                   onChange={(e) => setGithubRepo(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Total Deliverable Budget (USD)</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Total Deliverable Budget (USD)</label>
                 <input
                   type="number"
                   value={totalBudget}
                   onChange={(e) => setTotalBudget(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Project Description</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Project Description</label>
                 <textarea
                   rows={2}
                   placeholder="High-throughput API gateway with automated rate limiting..."
                   value={projectDesc}
                   onChange={(e) => setProjectDesc(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-lg p-2.5 text-white focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl p-3 text-white text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#26344B]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#26344B]">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-[#080D18] border border-[#26344B] text-slate-300 hover:text-white"
+                  className="px-5 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] text-slate-300 hover:text-white text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/30 transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-sm shadow-md shadow-blue-600/30 transition-all cursor-pointer"
                 >
                   {isSubmitting ? 'Creating...' : 'Create Project'}
                 </button>

@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, requireNonGuest } from '../../middleware/auth';
 import { notificationsController } from './notifications.controller';
 
 const router = Router();
+router.use(authenticate, requireNonGuest);
 
 router.get(
   '/',

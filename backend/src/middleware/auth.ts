@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Role } from '@prisma/client';
 import { env } from '../config/env';
-import { ForbiddenError } from '../utils/errors';
+import { ForbiddenError, UnauthorizedError } from '../utils/errors';
 
 export interface JwtPayload {
   sub: string;
@@ -18,6 +18,28 @@ export interface AuthenticatedUser {
   email: string;
   role: Role | 'GUEST';
   isGuest?: boolean;
+}
+
+export interface VerifiedAccountUser {
+  id: string;
+  email: string;
+  role: Role;
+}
+
+export function isNonGuestUser(user: AuthenticatedUser | undefined): user is VerifiedAccountUser {
+  return Boolean(user && !user.isGuest && user.role !== 'GUEST');
+}
+
+export function assertVerifiedUser(req: Request): VerifiedAccountUser {
+  if (!req.user) {
+    throw new UnauthorizedError('Authentication required.');
+  }
+  const role = getAuthenticatedRole(req.user);
+  return {
+    id: req.user.id,
+    email: req.user.email,
+    role,
+  };
 }
 
 declare global {
@@ -49,12 +71,13 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    const isGuest = Boolean(decoded.isGuest || decoded.role === 'GUEST');
 
     req.user = {
       id: decoded.sub,
       email: decoded.email,
       role: decoded.role,
-      isGuest: Boolean(decoded.isGuest || decoded.role === 'GUEST'),
+      isGuest,
     };
 
     next();
@@ -85,11 +108,12 @@ export const optionalAuthenticate = (req: Request, _res: Response, next: NextFun
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    const isGuest = Boolean(decoded.isGuest || decoded.role === 'GUEST');
     req.user = {
       id: decoded.sub,
       email: decoded.email,
       role: decoded.role,
-      isGuest: Boolean(decoded.isGuest || decoded.role === 'GUEST'),
+      isGuest,
     };
   } catch {
     // Ignore invalid tokens on optional auth
@@ -146,7 +170,7 @@ export const requireRole = (allowedRoles: (Role | 'GUEST')[]) => {
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (req.user.role === 'GUEST' || !allowedRoles.includes(req.user.role)) {
       res.status(403).json({
         error: {
           code: 'FORBIDDEN',

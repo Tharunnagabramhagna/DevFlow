@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, LogIn, UserPlus, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from './Button';
 
 export interface GuestGuardModalProps {
@@ -17,8 +18,22 @@ export const GuestGuardModal: React.FC<GuestGuardModalProps> = ({
   message = 'Guest Mode: Please sign in or create an account to use this feature.',
 }) => {
   const navigate = useNavigate();
+  const { effectiveRole } = useAuth();
 
   if (!isOpen) return null;
+
+  const roleSignupPath =
+    effectiveRole === 'DEVELOPER'
+      ? '/signup/developer'
+      : effectiveRole === 'CLIENT'
+        ? '/signup/client'
+        : '/signup';
+  const roleLoginPath =
+    effectiveRole === 'DEVELOPER'
+      ? '/login/developer'
+      : effectiveRole === 'CLIENT'
+        ? '/login/client'
+        : '/login';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
@@ -74,7 +89,7 @@ export const GuestGuardModal: React.FC<GuestGuardModalProps> = ({
               className="w-full justify-center gap-2 py-2.5 text-sm font-semibold shadow-md"
               onClick={() => {
                 onClose();
-                navigate('/signup');
+                navigate(roleSignupPath);
               }}
             >
               <UserPlus className="w-4 h-4" />
@@ -86,7 +101,7 @@ export const GuestGuardModal: React.FC<GuestGuardModalProps> = ({
               className="w-full justify-center gap-2 py-2.5 text-sm font-semibold"
               onClick={() => {
                 onClose();
-                navigate('/login');
+                navigate(roleLoginPath);
               }}
             >
               <LogIn className="w-4 h-4" />

@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProjectMemberRole } from '@prisma/client';
-import { getAuthenticatedRole } from '../../middleware/auth';
 import { projectsService } from './projects.service';
 import { activityService } from '../../services/activity.service';
 import { ForbiddenError } from '../../utils/errors';
+import { assertVerifiedUser } from '../../middleware/auth';
 
 export class ProjectsController {
   async createProject(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -17,8 +17,8 @@ export class ProjectsController {
 
   async getProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const role = getAuthenticatedRole(req.user);
-      const result = await projectsService.getProjects(req.user!.id, role, req.query as any);
+      const user = assertVerifiedUser(req);
+      const result = await projectsService.getProjects(user.id, user.role, req.query as any);
       const urlHasPagination = req.url.includes('page=') || req.url.includes('limit=') || req.url.includes('envelope=true');
       if (urlHasPagination) {
         res.status(200).json(result);
@@ -32,8 +32,8 @@ export class ProjectsController {
 
   async getProjectById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const role = getAuthenticatedRole(req.user);
-      const project = await projectsService.getProjectById(req.user!.id, role, req.params.id);
+      const user = assertVerifiedUser(req);
+      const project = await projectsService.getProjectById(user.id, user.role, req.params.id);
       res.status(200).json(project);
     } catch (err) {
       next(err);

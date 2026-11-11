@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { getAuthenticatedRole } from '../../middleware/auth';
+import { assertVerifiedUser } from '../../middleware/auth';
 import { milestonesService } from './milestones.service';
 
 export class MilestonesController {
@@ -25,8 +25,8 @@ export class MilestonesController {
 
   async getUserMilestones(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const role = getAuthenticatedRole(req.user);
-      const milestones = await milestonesService.getUserMilestones(req.user!.id, role, req.query as any);
+      const user = assertVerifiedUser(req);
+      const milestones = await milestonesService.getUserMilestones(user.id, user.role, req.query as any);
       res.status(200).json(milestones);
     } catch (err) {
       next(err);
@@ -62,7 +62,8 @@ export class MilestonesController {
 
   async submitMilestone(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const milestone = await milestonesService.submitMilestone(req.user!.id, req.params.id);
+      const user = assertVerifiedUser(req);
+      const milestone = await milestonesService.submitMilestone(user.id, req.params.id, user.role);
       res.status(200).json(milestone);
     } catch (err) {
       next(err);
@@ -71,7 +72,8 @@ export class MilestonesController {
 
   async reviewMilestone(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await milestonesService.reviewMilestone(req.user!.id, req.params.id, req.body);
+      const user = assertVerifiedUser(req);
+      const result = await milestonesService.reviewMilestone(user.id, req.params.id, req.body, user.role);
       res.status(200).json(result);
     } catch (err) {
       next(err);

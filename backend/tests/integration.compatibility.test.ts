@@ -58,8 +58,44 @@ describe('Phase 6: Frontend Integration & Telemetry Compatibility Suite', () => 
     vi.clearAllMocks();
   });
 
+  const guestToken = jwt.sign(
+    { sub: 'guest-user-1', email: 'guest@devflow.local', role: 'GUEST', isGuest: true },
+    env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+
   describe('GET /api/telemetry', () => {
-    it('returns high-level developer telemetry metrics matching frontend schema', async () => {
+    it('rejects unauthenticated requests with 401 UNAUTHORIZED', async () => {
+      const res = await request(app).get('/api/telemetry');
+      expect(res.status).toBe(401);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('rejects guest JWTs with 403 GUEST_RESTRICTED', async () => {
+      const res = await request(app)
+        .get('/api/telemetry')
+        .set('Authorization', `Bearer ${guestToken}`);
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('GUEST_RESTRICTED');
+    });
+
+    it('rejects cross-project telemetry query when user lacks membership', async () => {
+      (prisma.project.findUnique as any).mockResolvedValue({
+        id: 'proj-other',
+        createdById: 'other-owner',
+        clientId: 'other-client',
+        leadDeveloperId: 'other-dev',
+        members: [],
+      });
+
+      const res = await request(app)
+        .get('/api/telemetry?projectId=proj-other')
+        .set('Authorization', `Bearer ${clientToken}`);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns high-level telemetry metrics scoped to authenticated user projects', async () => {
       (prisma.payment.aggregate as any)
         .mockResolvedValueOnce({ _sum: { settledAmount: 15400 } }) // Paid
         .mockResolvedValueOnce({ _sum: { snapshotAmount: 3200 } }); // Pending
@@ -71,7 +107,9 @@ describe('Phase 6: Frontend Integration & Telemetry Compatibility Suite', () => 
 
       (prisma.project.count as any).mockResolvedValue(4);
 
-      const res = await request(app).get('/api/telemetry');
+      const res = await request(app)
+        .get('/api/telemetry')
+        .set('Authorization', `Bearer ${clientToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.totalRevenuePaid).toBe(15400);
@@ -80,10 +118,57 @@ describe('Phase 6: Frontend Integration & Telemetry Compatibility Suite', () => 
       expect(res.body.aiVerificationPassRate).toBe(90); // 18 / 20 = 90%
       expect(res.body.totalProjects).toBe(4);
       expect(res.body.currency).toBe('USD');
+      expect(prisma.project.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              { createdById: 'user-client-1' },
+              { clientId: 'user-client-1' },
+              { leadDeveloperId: 'user-client-1' },
+            ]),
+          }),
+        })
+      );
     });
   });
 
   describe('GET /api/github/commits and GET /api/github/pulls', () => {
+    it('rejects unauthenticated and guest access to GitHub evidence endpoints', async () => {
+      const unauthCommits = await request(app).get('/api/github/commits');
+      expect(unauthCommits.status).toBe(401);
+
+      const unauthPulls = await request(app).get('/api/github/pulls');
+      expect(unauthPulls.status).toBe(401);
+
+      const guestCommits = await request(app)
+        .get('/api/github/commits')
+        .set('Authorization', `Bearer ${guestToken}`);
+      expect(guestCommits.status).toBe(403);
+      expect(guestCommits.body.error.code).toBe('GUEST_RESTRICTED');
+
+      const guestPulls = await request(app)
+        .get('/api/github/pulls')
+        .set('Authorization', `Bearer ${guestToken}`);
+      expect(guestPulls.status).toBe(403);
+      expect(guestPulls.body.error.code).toBe('GUEST_RESTRICTED');
+    });
+
+    it('rejects cross-project GitHub evidence requests for non-members', async () => {
+      (prisma.project.findUnique as any).mockResolvedValue({
+        id: 'proj-secret',
+        createdById: 'other-owner',
+        clientId: null,
+        leadDeveloperId: null,
+        members: [],
+      });
+
+      const res = await request(app)
+        .get('/api/github/commits?projectId=proj-secret')
+        .set('Authorization', `Bearer ${clientToken}`);
+
+      expect(res.status).toBe(403);
+    });
+
     it('returns evidence commits formatted for frontend GitHubCommitEvidence', async () => {
       (prisma.evidence.findMany as any).mockResolvedValue([
         {
@@ -99,13 +184,26 @@ describe('Phase 6: Frontend Integration & Telemetry Compatibility Suite', () => 
         },
       ]);
 
-      const res = await request(app).get('/api/github/commits');
+      const res = await request(app)
+        .get('/api/github/commits')
+        .set('Authorization', `Bearer ${clientToken}`);
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body[0].sha).toBe('abc123def456789012345678901234567890abcd');
       expect(res.body[0].author).toBe('Alice Developer');
       expect(res.body[0].linkedRequirementId).toBe('ms-1');
+      expect(prisma.evidence.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            milestone: expect.objectContaining({
+              project: expect.objectContaining({
+                OR: expect.arrayContaining([{ clientId: 'user-client-1' }]),
+              }),
+            }),
+          }),
+        })
+      );
     });
 
     it('returns evidence pull requests formatted for frontend GitHubPullRequestEvidence', async () => {
@@ -121,7 +219,9 @@ describe('Phase 6: Frontend Integration & Telemetry Compatibility Suite', () => 
         },
       ]);
 
-      const res = await request(app).get('/api/github/pulls');
+      const res = await request(app)
+        .get('/api/github/pulls')
+        .set('Authorization', `Bearer ${clientToken}`);
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);

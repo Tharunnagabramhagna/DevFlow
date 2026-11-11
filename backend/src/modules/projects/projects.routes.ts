@@ -13,6 +13,7 @@ import {
 } from './projects.schema';
 
 const router = Router();
+router.use(authenticate, requireNonGuest);
 
 // Project Collection CRUD
 router.post(

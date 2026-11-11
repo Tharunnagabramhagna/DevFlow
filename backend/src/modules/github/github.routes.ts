@@ -1,16 +1,63 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../../config/database';
-import { EvidenceType } from '@prisma/client';
+import { EvidenceType, Role } from '@prisma/client';
+import { authenticate, requireNonGuest, assertVerifiedUser, VerifiedAccountUser } from '../../middleware/auth';
+import { ForbiddenError, NotFoundError } from '../../utils/errors';
 
 export const githubRouter = Router();
 
-// GET /api/github/commits — Return recent GitHub commit evidence
-githubRouter.get('/commits', async (_req: Request, res: Response, next: NextFunction) => {
+async function buildEvidenceProjectScope(req: Request, user: VerifiedAccountUser) {
+  const requestedProjectId =
+    typeof req.query.projectId === 'string' && req.query.projectId.trim().length > 0
+      ? req.query.projectId.trim()
+      : undefined;
+
+  if (requestedProjectId && user.role !== Role.ADMIN) {
+    const project = await prisma.project.findUnique({
+      where: { id: requestedProjectId },
+      include: { members: { where: { userId: user.id } } },
+    });
+    if (!project) {
+      throw new NotFoundError(`Project with ID ${requestedProjectId} not found`);
+    }
+    const hasAccess =
+      project.createdById === user.id ||
+      project.clientId === user.id ||
+      project.leadDeveloperId === user.id ||
+      project.members.length > 0;
+    if (!hasAccess) {
+      throw new ForbiddenError('Access denied. You do not have permission to view GitHub evidence for this project.');
+    }
+  }
+
+  if (user.role === Role.ADMIN) {
+    return requestedProjectId ? { project: { id: requestedProjectId, isArchived: false } } : undefined;
+  }
+
+  return {
+    project: {
+      ...(requestedProjectId ? { id: requestedProjectId } : {}),
+      isArchived: false,
+      OR: [
+        { createdById: user.id },
+        { clientId: user.id },
+        { leadDeveloperId: user.id },
+        { members: { some: { userId: user.id } } },
+      ],
+    },
+  };
+}
+
+// GET /api/github/commits — Return recent GitHub commit evidence scoped to authenticated member projects
+githubRouter.get('/commits', authenticate, requireNonGuest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const user = assertVerifiedUser(req);
+    const milestoneScope = await buildEvidenceProjectScope(req, user);
     const commitEvidences = await prisma.evidence.findMany({
       where: {
         type: EvidenceType.GITHUB_COMMIT,
         isDeleted: false,
+        ...(milestoneScope ? { milestone: milestoneScope } : {}),
       },
       orderBy: { createdAt: 'desc' },
       take: 20,
@@ -41,12 +88,15 @@ githubRouter.get('/commits', async (_req: Request, res: Response, next: NextFunc
 });
 
 // GET /api/github/pulls — Return recent GitHub pull request evidence
-githubRouter.get('/pulls', async (_req: Request, res: Response, next: NextFunction) => {
+githubRouter.get('/pulls', authenticate, requireNonGuest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const user = assertVerifiedUser(req);
+    const milestoneScope = await buildEvidenceProjectScope(req, user);
     const prEvidences = await prisma.evidence.findMany({
       where: {
         type: EvidenceType.GITHUB_PR,
         isDeleted: false,
+        ...(milestoneScope ? { milestone: milestoneScope } : {}),
       },
       orderBy: { createdAt: 'desc' },
       take: 20,

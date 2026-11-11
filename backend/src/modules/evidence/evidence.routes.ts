@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { ProjectMemberRole } from '@prisma/client';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, requireNonGuest } from '../../middleware/auth';
 import { requireMilestoneRole, requireEvidenceRole } from '../../middleware/projectAuth';
 import { evidenceUpload } from '../../services/storage.service';
 import { evidenceController } from './evidence.controller';
 
 // Router for /api/evidence
 const evidenceRouter = Router();
+evidenceRouter.use(authenticate, requireNonGuest);
 
 evidenceRouter.get(
   '/:id',
@@ -48,6 +49,7 @@ evidenceRouter.delete(
 
 // Router for /api/milestones/:id/evidence
 const milestoneEvidenceRouter = Router({ mergeParams: true });
+milestoneEvidenceRouter.use(authenticate, requireNonGuest);
 
 milestoneEvidenceRouter.post(
   '/',

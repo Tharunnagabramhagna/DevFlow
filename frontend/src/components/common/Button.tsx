@@ -37,37 +37,37 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium rounded-fintech transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
+      'inline-flex items-center justify-center font-sans font-medium rounded-fintech transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
 
     const variants = {
       primary:
-        'bg-[#25263A] text-white hover:bg-[#1A1B29] focus:ring-[#93C5FD] shadow-card-subtle border border-transparent',
+        'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white focus:ring-blue-400 shadow-md shadow-blue-500/25 border border-white/20',
       secondary:
-        'bg-[#F1F3FA] text-[#25263A] hover:bg-[#E9EAF2] focus:ring-[#93C5FD] border border-[#E9EAF2]',
+        'backdrop-blur-md bg-white/70 dark:bg-white/10 text-slate-800 dark:text-slate-100 hover:bg-white/90 dark:hover:bg-white/15 focus:ring-blue-400 border border-slate-200/80 dark:border-white/10 shadow-xs',
       outline:
-        'bg-white text-[#25263A] hover:bg-[#F7F8FC] hover:border-[#93C5FD] border border-[#E9EAF2] focus:ring-[#93C5FD] shadow-card-subtle',
+        'backdrop-blur-md bg-white/50 dark:bg-white/5 text-slate-800 dark:text-slate-100 hover:bg-white/80 dark:hover:bg-white/10 hover:border-blue-400/60 border border-slate-200/80 dark:border-white/15 focus:ring-blue-400 shadow-xs',
       ghost:
-        'bg-transparent text-[#777B91] hover:bg-[#F1F3FA] hover:text-[#25263A] focus:ring-[#93C5FD]',
+        'bg-transparent text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white focus:ring-blue-400',
       paypal:
-        'bg-[#0070BA] text-white hover:bg-[#003087] focus:ring-[#93C5FD] shadow-card-subtle font-semibold tracking-wide border border-transparent',
+        'bg-gradient-to-r from-[#0070BA] to-[#003087] text-white hover:from-[#0086DE] hover:to-[#0040A8] focus:ring-blue-400 shadow-md shadow-[#0070BA]/25 font-semibold tracking-wide border border-white/20',
       danger:
-        'bg-[#FFF7ED] text-[#C2410C] hover:bg-[#FFEDD5] border border-[#FED7AA] focus:ring-[#FDBA9A] shadow-card-subtle',
+        'backdrop-blur-md bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 hover:bg-rose-500/20 dark:hover:bg-rose-500/30 border border-rose-500/30 focus:ring-rose-400',
       ai:
-        'bg-gradient-to-r from-[#A78BFA] to-[#818CF8] text-white hover:from-[#9061F9] hover:to-[#6366F1] focus:ring-[#A78BFA] shadow-card-subtle',
+        'bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#6366F1] text-white hover:brightness-110 focus:ring-purple-400 shadow-md shadow-purple-500/25 border border-white/20',
       lavender:
-        'bg-[#F5F3FF] text-[#6D28D9] border border-[#DDD6FE] hover:bg-[#EDE9FE] focus:ring-[#A78BFA]',
+        'backdrop-blur-md bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 hover:bg-purple-500/20',
       mint:
-        'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0] hover:bg-[#DCFCE7] focus:ring-[#86DDBB]',
+        'backdrop-blur-md bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20',
       peach:
-        'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] hover:bg-[#FFEDD5] focus:ring-[#FDBA9A]',
+        'backdrop-blur-md bg-orange-500/10 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border border-orange-500/30 hover:bg-orange-500/20',
       powderBlue:
-        'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] hover:bg-[#DBEAFE] focus:ring-[#93C5FD]',
+        'backdrop-blur-md bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20',
     };
 
     const sizes = {
-      sm: 'text-xs px-2.5 py-1.5 gap-1.5',
-      md: 'text-sm px-4 py-2 gap-2',
-      lg: 'text-base px-5 py-2.5 gap-2.5',
+      sm: 'text-xs px-3 py-1.5 gap-1.5 rounded-lg font-medium',
+      md: 'text-xs sm:text-sm px-4 py-2 gap-2 rounded-xl font-semibold',
+      lg: 'text-sm sm:text-base px-5 py-2.5 gap-2 rounded-xl font-bold',
     };
 
     return (

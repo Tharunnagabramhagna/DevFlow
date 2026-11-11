@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction, CookieOptions } from 'express';
 import { env } from '../../config/env';
 import { authService } from './auth.service';
+import { ForbiddenError } from '../../utils/errors';
 
 const getRefreshTokenCookieName = (): string => {
   const isProd = env.NODE_ENV === 'production';
@@ -361,6 +362,14 @@ export class AuthController {
 
   async mockSocialAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (env.NODE_ENV === 'production') {
+        throw new ForbiddenError(
+          'Mock social authentication is disabled in production environments.',
+          undefined,
+          'MOCK_AUTH_DISABLED_IN_PRODUCTION'
+        );
+      }
+
       const { user, accessToken, rawRefreshToken } = await authService.mockSocialAuth({
         provider: req.body.provider,
         email: req.body.email,

@@ -3,18 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DevFlowLogo, ThemeToggle } from '@/components/common';
+import { getNavigationForRole, NavItemConfig } from '@/config/navigation';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  CheckCircle2,
-  Sparkles,
-  FileCode,
-  ShieldCheck,
-  FileText,
-  CreditCard,
-  Bell,
-  Zap,
-  Settings,
   X,
   Menu,
   PanelLeftClose,
@@ -32,7 +22,7 @@ export const Sidebar: React.FC = () => {
     isMobileOpen,
     closeMobileSidebar,
   } = useSidebar();
-  const { user, role, isGuest, logout } = useAuth();
+  const { user, effectiveRole, isClient, isGuest, logout } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,82 +34,67 @@ export const Sidebar: React.FC = () => {
 
   const handleLogout = async () => {
     closeMobileSidebar();
+    const targetLogin =
+      effectiveRole === 'DEVELOPER'
+        ? '/login/developer'
+        : effectiveRole === 'CLIENT'
+          ? '/login/client'
+          : '/login';
     await logout();
-    navigate('/login');
+    navigate(targetLogin, { replace: true });
   };
 
-  const userName = isGuest ? 'Guest Explorer' : user?.name || 'Alex Morgan';
+  const userName = isGuest
+    ? isClient
+      ? 'Client Guest'
+      : 'Developer Guest'
+    : user?.name || (isClient ? 'Client Account' : 'Developer Account');
+
   const initials = isGuest
-    ? 'GE'
+    ? isClient
+      ? 'CG'
+      : 'DG'
     : userName
         .split(' ')
         .filter(Boolean)
         .map((n) => n[0])
         .join('')
         .slice(0, 2)
-        .toUpperCase() || 'AM';
+        .toUpperCase() || (isClient ? 'CL' : 'DV');
 
-  const avatarGradient = isGuest
-    ? 'bg-gradient-to-tr from-teal-500 to-cyan-500'
-    : role === 'CLIENT'
+  const avatarGradient = isClient
     ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-    : 'bg-gradient-to-tr from-purple-600 to-indigo-400';
+    : 'bg-gradient-to-tr from-violet-600 to-indigo-500';
 
-  const isActive = (path: string): boolean => {
-    const current = location.pathname;
-    if (path === '/dashboard') return current === '/dashboard' || current === '/';
-    if (path === '/projects') return current.startsWith('/projects');
-    if (path === '/milestones') return current.startsWith('/milestones') || current === '/milestone-verification';
-    if (path === '/agents') return current === '/agents';
-    if (path === '/evidence') return current.startsWith('/evidence');
-    if (path === '/verification') return current === '/verification';
-    if (path === '/invoices') return current === '/invoices';
-    if (path === '/payments') return current === '/payments';
-    if (path === '/notifications') return current === '/notifications';
-    if (path === '/integrations') return current === '/integrations';
-    if (path === '/settings') return current === '/settings';
-    return current === path;
+  const isActive = (item: NavItemConfig): boolean => {
+    const currentPath = location.pathname;
+    const currentSearch = location.search;
+
+    if (item.matchQuery) {
+      return currentPath === item.matchPath && currentSearch.includes(item.matchQuery);
+    }
+
+    if (item.matchPath === '/milestones') {
+      if (currentPath === '/milestones') {
+        return !currentSearch.includes('view=deliverables');
+      }
+      return false;
+    }
+
+    if (item.matchPath === '/dashboard') {
+      return currentPath === '/dashboard' || currentPath === '/';
+    }
+
+    return currentPath === item.matchPath || currentPath.startsWith(`${item.matchPath}/`);
   };
 
-  const navGroups = [
-    {
-      title: 'WORKSPACE',
-      items: [
-        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-[#2563EB]' },
-        { name: 'Projects', path: '/projects', icon: FolderGit2, iconColor: 'text-[#2563EB]' },
-        { name: 'Milestones', path: '/milestones', icon: CheckCircle2, iconColor: 'text-[#2563EB]' },
-      ],
-    },
-    {
-      title: 'INTELLIGENCE',
-      items: [
-        { name: 'AI Agents', path: '/agents', icon: Sparkles, iconColor: 'text-purple-400' },
-        { name: 'Evidence', path: '/evidence', icon: FileCode, iconColor: 'text-slate-400' },
-        { name: 'Verification', path: '/verification', icon: ShieldCheck, iconColor: 'text-emerald-400' },
-      ],
-    },
-    {
-      title: 'FINANCE',
-      items: [
-        { name: 'Invoices', path: '/invoices', icon: FileText, iconColor: 'text-slate-400' },
-        { name: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-blue-400' },
-      ],
-    },
-    {
-      title: 'SYSTEM',
-      items: [
-        { name: 'Notifications', path: '/notifications', icon: Bell, iconColor: 'text-slate-400' },
-        { name: 'Integrations', path: '/integrations', icon: Zap, iconColor: 'text-slate-400' },
-        { name: 'Settings', path: '/settings', icon: Settings, iconColor: 'text-slate-400' },
-      ],
-    },
-  ];
+  const navGroups = getNavigationForRole(effectiveRole);
 
   return (
     <aside
-      className={`fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#101A2D] border-r border-slate-200 dark:border-[#26344B] flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
+      className={`fixed lg:static inset-y-0 left-0 z-50 bg-white/80 dark:bg-[#0A101F]/80 backdrop-blur-2xl border-r border-slate-200/70 dark:border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.4)] flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
         isMobileOpen
-          ? 'translate-x-0 w-60'
+          ? 'translate-x-0 w-64'
           : '-translate-x-full lg:translate-x-0'
       } ${
         isSidebarCollapsed
@@ -127,65 +102,65 @@ export const Sidebar: React.FC = () => {
           : 'lg:w-60'
       }`}
     >
-      <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
+      <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
         {/* Top Branding Section & Global Collapse/Expand Toggle */}
-        <div className="flex items-center justify-between px-1 mb-2">
+        <div className="flex items-center justify-between px-1 mb-1">
           {/* Desktop Collapsed View: Centered Expand Button inside remaining rail */}
           <div className={`w-full ${isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'} flex-col items-center justify-center gap-2`}>
             <button
               onClick={toggleSidebar}
-              className="items-center justify-center w-10 h-10 text-slate-300 hover:text-white rounded-lg hover:bg-[#1B2A47] border border-[#26344B]/70 hover:border-[#2563EB] transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              className="flex items-center justify-center w-9 h-9 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 border border-slate-200/60 dark:border-white/10 hover:border-blue-500/50 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-[#2563EB] shadow-xs backdrop-blur-md cursor-pointer"
               aria-label="Expand sidebar"
               title="Expand sidebar"
             >
-              <PanelLeftOpen className="w-5 h-5 text-slate-300 hover:text-white transition-colors" />
+              <PanelLeftOpen className="w-4 h-4 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors" />
             </button>
-            <ThemeToggle className="w-10 h-10" />
+            <ThemeToggle className="w-9 h-9 rounded-xl" />
           </div>
 
           {/* Expanded View (and always full on Mobile) */}
           <div className={`w-full ${isSidebarCollapsed ? 'flex lg:hidden' : 'flex'} items-center justify-between`}>
             <div
               onClick={() => handleNavigate('/')}
-              className="flex items-center gap-2.5 cursor-pointer group"
+              className="flex items-center gap-2 cursor-pointer group"
               title="Return to Landing Page"
             >
               <DevFlowLogo variant="horizontal" theme="auto" size="sm" />
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               {/* Global Theme Toggle */}
               <ThemeToggle className="p-1.5" />
 
               {/* Desktop Global Sidebar Collapse Toggle */}
               <button
                 onClick={toggleSidebar}
-                className="hidden lg:flex items-center justify-center p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1B2A47] border border-transparent hover:border-[#26344B] transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                className="hidden lg:flex items-center justify-center p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100/70 dark:hover:bg-white/10 border border-transparent hover:border-slate-200/60 dark:hover:border-white/10 transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
                 aria-label="Collapse sidebar"
                 title="Collapse sidebar"
               >
-                <PanelLeftClose className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                <PanelLeftClose className="w-4 h-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" />
               </button>
 
               {/* Mobile Close Button */}
               <button
                 onClick={closeMobileSidebar}
-                className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E] transition-colors"
+                className="lg:hidden p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 aria-label="Close navigation"
                 title="Close menu"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Navigation Groups */}
-        <div className="space-y-6 text-xs">
+        <div className="space-y-4 text-xs sm:text-[13px] font-sans">
           {navGroups.map((group) => (
             <div key={group.title} className="space-y-1">
               <div
-                className={`px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500 ${
+                className={`px-3 text-[10px] font-sans font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500 ${
                   isSidebarCollapsed ? 'block lg:hidden' : 'block'
                 }`}
               >
@@ -193,27 +168,32 @@ export const Sidebar: React.FC = () => {
               </div>
 
               {group.items.map((item) => {
-                const active = isActive(item.path);
+                const active = isActive(item);
                 const Icon = item.icon;
+                const activeClasses = isClient
+                  ? 'bg-gradient-to-r from-blue-500/15 via-blue-500/10 to-indigo-500/10 dark:from-blue-600/25 dark:via-blue-600/20 dark:to-indigo-600/15 text-blue-700 dark:text-blue-300 font-semibold border border-blue-500/30 dark:border-blue-400/30 shadow-xs backdrop-blur-md'
+                  : 'bg-gradient-to-r from-violet-500/15 via-violet-500/10 to-indigo-500/10 dark:from-violet-600/25 dark:via-violet-600/20 dark:to-indigo-600/15 text-violet-700 dark:text-violet-300 font-semibold border border-violet-500/30 dark:border-violet-400/30 shadow-xs backdrop-blur-md';
 
                 return (
                   <button
-                    key={item.name}
+                    key={item.id}
                     onClick={() => handleNavigate(item.path)}
                     className={`w-full flex items-center ${
                       isSidebarCollapsed
                         ? 'gap-2.5 px-3 py-2 lg:justify-center lg:px-0 lg:py-2.5'
                         : 'gap-2.5 px-3 py-2'
-                    } rounded-lg transition-colors ${
+                    } rounded-lg font-sans text-[13px] transition-all duration-200 cursor-pointer ${
                       active
-                        ? 'bg-[#1B2A47] text-white font-semibold shadow-xs'
-                        : 'text-slate-400 hover:text-white hover:bg-[#152238]'
+                        ? activeClasses
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 dark:hover:bg-white/5 border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 font-medium'
                     }`}
-                    title={item.name}
+                    title={item.description || item.name}
                   >
                     <Icon
-                      className={`w-4 h-4 shrink-0 ${
-                        active ? item.iconColor : 'text-slate-400'
+                      className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                        active
+                          ? `${item.iconColor} scale-105 drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]`
+                          : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'
                       }`}
                     />
                     <span className={isSidebarCollapsed ? 'inline lg:hidden' : 'inline'}>
@@ -228,20 +208,20 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* User Session Profile & Logout */}
-      <div className="border-t border-slate-200 dark:border-[#26344B] p-2.5 shrink-0 bg-slate-50 dark:bg-[#0C1424]/60">
+      <div className="border-t border-slate-200/60 dark:border-white/10 p-2.5 shrink-0 bg-slate-50/60 dark:bg-[#0C1424]/40 backdrop-blur-md">
         {isSidebarCollapsed ? (
           <div className="hidden lg:flex flex-col items-center gap-2">
             <div
-              className={`w-9 h-9 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
-              title={`${userName} (${isGuest ? 'Guest Mode' : role === 'CLIENT' ? 'Client' : 'Developer'})`}
+              className={`w-8 h-8 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
+              title={`${userName} (${isGuest ? 'DEMO MODE' : isClient ? 'Client' : 'Developer'})`}
             >
               {initials}
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors focus:outline-none"
-              title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
-              aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors focus:outline-none cursor-pointer"
+              title={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
+              aria-label={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -256,39 +236,38 @@ export const Sidebar: React.FC = () => {
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate leading-tight">
+              <div className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">
                 {userName}
               </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                {isGuest ? (
+              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                {isGuest && (
                   <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/60 font-mono">
                     <Eye className="w-2.5 h-2.5" />
-                    <span>GUEST MODE</span>
-                  </span>
-                ) : (
-                  <span
-                    className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
-                      role === 'CLIENT'
-                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
-                        : 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
-                    }`}
-                  >
-                    {role === 'CLIENT' ? (
-                      <BriefcaseBusiness className="w-2.5 h-2.5" />
-                    ) : (
-                      <Code2 className="w-2.5 h-2.5" />
-                    )}
-                    <span>{role === 'CLIENT' ? 'Client' : 'Developer'}</span>
+                    <span>DEMO MODE</span>
                   </span>
                 )}
+                <span
+                  className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
+                    isClient
+                      ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
+                      : 'bg-violet-50 dark:bg-violet-950/80 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/60'
+                  }`}
+                >
+                  {isClient ? (
+                    <BriefcaseBusiness className="w-2.5 h-2.5" />
+                  ) : (
+                    <Code2 className="w-2.5 h-2.5" />
+                  )}
+                  <span>{isClient ? 'Client' : 'Developer'}</span>
+                </span>
               </div>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors shrink-0 focus:outline-none"
-            title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
-            aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors shrink-0 focus:outline-none cursor-pointer"
+            title={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
+            aria-label={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -297,7 +276,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Sidebar Footer Info */}
       <div
-        className={`p-3 border-t border-slate-200 dark:border-[#26344B] text-[10px] text-slate-500 items-center justify-between shrink-0 ${
+        className={`px-3 py-2 border-t border-slate-200/60 dark:border-white/10 text-[10px] text-slate-500 items-center justify-between shrink-0 ${
           isSidebarCollapsed ? 'flex lg:hidden' : 'flex'
         }`}
       >
@@ -306,7 +285,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <div
-        className={`p-3 border-t border-slate-200 dark:border-[#26344B] text-[10px] text-slate-500 items-center justify-center shrink-0 ${
+        className={`p-3 border-t border-slate-200/60 dark:border-white/10 text-[10px] text-slate-500 items-center justify-center shrink-0 ${
           isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'
         }`}
         title="DevFlow Sandbox v2.4 (Demo)"

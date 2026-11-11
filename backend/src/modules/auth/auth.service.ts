@@ -28,6 +28,8 @@ export interface SanitizedUser {
   avatarUrl: string | null;
   bio: string | null;
   isGuest?: boolean;
+  guestPersona?: 'CLIENT' | 'DEVELOPER' | null;
+  organization?: string;
   createdAt: Date;
 }
 
@@ -109,17 +111,40 @@ export class AuthService {
 
   /**
    * Generates a guest demonstration session with limited permissions and a signed JWT.
+   * Supports role-based guest persona ('CLIENT' | 'DEVELOPER') with realistic identities.
    */
-  async createGuestSession(): Promise<{ user: SanitizedUser; accessToken: string }> {
+  async createGuestSession(persona?: 'CLIENT' | 'DEVELOPER'): Promise<{ user: SanitizedUser; accessToken: string }> {
+    const isClient = persona === 'CLIENT';
+    const isDeveloper = persona === 'DEVELOPER';
     const guestId = `guest_${generateSecureToken(12)}`;
+
+    let name = 'Guest Explorer';
+    let email = 'guest@devflow.demo';
+    let organization = 'DevFlow Sandbox Demo';
+    let bio = 'Exploring DevFlow features in demonstration mode.';
+
+    if (isClient) {
+      name = 'Marcus Vance';
+      email = 'client.guest@devflow.demo';
+      organization = 'Meridian Labs (Demo Client)';
+      bio = "Exploring DevFlow features from a Client perspective in demonstration mode.";
+    } else if (isDeveloper) {
+      name = 'Alex Morgan';
+      email = 'developer.guest@devflow.demo';
+      organization = 'Northstar Studio (Demo Developer)';
+      bio = "Exploring DevFlow features from a Developer perspective in demonstration mode.";
+    }
+
     const guestUser: SanitizedUser = {
       id: guestId,
-      email: 'guest@devflow.demo',
-      name: 'Guest Explorer',
+      email,
+      name,
       role: 'GUEST',
       avatarUrl: null,
-      bio: 'Exploring DevFlow features in demonstration mode.',
+      bio,
       isGuest: true,
+      guestPersona: persona || null,
+      organization,
       createdAt: new Date(),
     };
 
@@ -129,6 +154,7 @@ export class AuthService {
         email: guestUser.email,
         role: 'GUEST',
         isGuest: true,
+        guestPersona: guestUser.guestPersona,
       },
       env.JWT_SECRET,
       { expiresIn: '24h' }

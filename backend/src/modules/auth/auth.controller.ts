@@ -46,9 +46,10 @@ export class AuthController {
     }
   }
 
-  async guestLogin(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  async guestLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { user, accessToken } = await authService.createGuestSession();
+      const persona = req.body?.persona === 'CLIENT' ? 'CLIENT' : req.body?.persona === 'DEVELOPER' ? 'DEVELOPER' : undefined;
+      const { user, accessToken } = await authService.createGuestSession(persona);
       res.status(200).json({ user, accessToken });
     } catch (err) {
       next(err);

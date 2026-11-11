@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { DevFlowLogo, ThemeToggle, SocialAuthButtons, AmbientBackground } from '@/components/common';
+import { Button } from '@/components/design/Button';
 import { RoleAccountCards } from '@/components/auth/RoleAccountCards';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, EffectiveRole } from '@/types';
@@ -204,14 +205,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
             <div className="space-y-6">
               {/* Header with Role Indicator & Back Button */}
               <div>
-                <button
+                <Button
                   type="button"
                   onClick={handleBackToRoleSelection}
                   className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-3"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Change Role</span>
-                </button>
+                </Button>
 
                 <div className="flex items-center justify-between">
                   <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Welcome back</h1>
@@ -286,14 +287,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                     <label className="text-slate-700 dark:text-slate-300 font-semibold uppercase text-[10px] tracking-wider">
                       Password *
                     </label>
-                    <button
+                    <Button
                       type="button"
                       onClick={handleForgotPassword}
                       disabled={forgotPasswordLoading}
                       className="text-[11px] text-[#2563EB] hover:text-blue-600 dark:hover:text-blue-400 font-medium underline underline-offset-2"
                     >
                       {forgotPasswordLoading ? 'Dispatching...' : 'Forgot password?'}
-                    </button>
+                    </Button>
                   </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -306,14 +307,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                       className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
                       autoComplete="current-password"
                     />
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -331,10 +332,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                 </div>
 
                 {/* Submit Button */}
-                <button
+                <Button
                   type="submit"
                   disabled={loading || guestLoading}
-                  className="w-full py-2.5 px-4 rounded-lg bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-xs transition-all shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 mt-2 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg disabled:opacity-50 text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -344,7 +345,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                   ) : (
                     <span>Sign in as {selectedRole === 'CLIENT' ? 'Client' : 'Developer'}</span>
                   )}
-                </button>
+                </Button>
               </form>
 
               {/* Subtle Divider + Secondary Continue as Guest */}
@@ -357,7 +358,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                   <div className="flex-grow border-t border-slate-200 dark:border-[#26344B]/80" />
                 </div>
 
-                <button
+                <Button
                   type="button"
                   onClick={handleContinueAsGuest}
                   disabled={loading || guestLoading}
@@ -377,7 +378,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                       <ArrowRight className="w-3.5 h-3.5 opacity-70" />
                     </>
                   )}
-                </button>
+                </Button>
                 <p className="text-[11px] text-center text-slate-500 dark:text-slate-400">
                   Read-only demo experience — mutations, approvals and payments are disabled.
                 </p>

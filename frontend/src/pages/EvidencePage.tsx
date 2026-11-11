@@ -796,8 +796,7 @@ export const EvidencePage: React.FC = () => {
                   className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="All">Contributor: All</option>
-                  <option value="Alex Morgan">Alex Morgan</option>
-                  <option value="Contributor">Contributor</option>
+                  <option value="Contributor">Primary Contributor</option>
                 </select>
               </div>
 

@@ -170,6 +170,7 @@ describe('Phase 2: HTTP Route Scaffolding & Input Validation', () => {
       id: 'user-uuid-1',
       email: 'alice@example.com',
       role: 'FREELANCER',
+      isGuest: false,
     });
   });
 

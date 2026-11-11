@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { assertVerifiedUser } from '../../middleware/auth';
 import { evidenceService } from './evidence.service';
 import { SubmitEvidenceSchema } from './evidence.schema';
 
@@ -44,9 +45,10 @@ export class EvidenceController {
 
   async downloadEvidenceFile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const user = assertVerifiedUser(req);
       const { stream, fileName, mimeType, fileSize } = await evidenceService.downloadEvidenceFile(
-        req.user!.id,
-        req.user!.role,
+        user.id,
+        user.role,
         req.params.id
       );
 
@@ -66,9 +68,10 @@ export class EvidenceController {
 
   async deleteEvidence(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const user = assertVerifiedUser(req);
       const result = await evidenceService.deleteEvidence(
-        req.user!.id,
-        req.user!.role,
+        user.id,
+        user.role,
         req.params.id
       );
       res.status(200).json(result);

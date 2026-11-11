@@ -172,7 +172,9 @@ export class ProjectsService {
     if (role !== Role.ADMIN) {
       const isMember = project.members.some((m) => m.userId === userId);
       const isCreator = project.createdById === userId;
-      if (!isMember && !isCreator) {
+      const isClient = project.clientId === userId;
+      const isLeadDeveloper = project.leadDeveloperId === userId;
+      if (!isMember && !isCreator && !isClient && !isLeadDeveloper) {
         throw new ForbiddenError('Access denied. You are not a member of this project');
       }
     }

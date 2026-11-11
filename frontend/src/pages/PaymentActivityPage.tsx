@@ -57,12 +57,34 @@ const MONTHLY_TREND: MonthlyDataPoint[] = [
 
 export const PaymentActivityPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isClient } = useAuth();
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
+  const { user, isGuest, isClient } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(true);
+
+  const actorDisplayName = isGuest
+    ? isClient
+      ? 'Client Guest'
+      : 'Developer Guest'
+    : user?.name || (isClient ? 'Client Account' : 'Developer Account');
+  const actorSubtitle = isGuest
+    ? 'DEMO MODE'
+    : isClient
+      ? 'Client Account'
+      : 'Developer Account';
+  const actorInitials = isGuest
+    ? isClient
+      ? 'CG'
+      : 'DG'
+    : actorDisplayName
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || (isClient ? 'CL' : 'DV');
 
   // Data Loading & API Sync
   const [, setMilestones] = useState<Milestone[]>([]);
@@ -303,10 +325,10 @@ export const PaymentActivityPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
-                  {isClient ? 'Payments & Settlements' : 'Payments & Payouts'}
+                  {isClient ? 'Payment Activity & Settlements' : 'Payments & Payouts'}
                 </h1>
                 <span className="text-[10px] font-sans font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full whitespace-nowrap">
-                  SANDBOX TELEMETRY
+                  {isGuest ? 'DEMO MODE' : 'SANDBOX TELEMETRY'}
                 </span>
               </div>
             </div>
@@ -362,12 +384,18 @@ export const PaymentActivityPage: React.FC = () => {
               onClick={() => navigate('/settings')}
               className="flex items-center gap-2 pl-2.5 border-l border-[#26344B] cursor-pointer hover:opacity-90 transition-opacity"
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-sm">
-                AM
+              <div
+                className={`w-8 h-8 rounded-xl text-white flex items-center justify-center font-bold text-xs ring-1 ring-[#26344B] shadow-sm ${
+                  isClient
+                    ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+                    : 'bg-gradient-to-tr from-violet-600 to-indigo-500'
+                }`}
+              >
+                {actorInitials}
               </div>
               <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-semibold text-white leading-tight">Alex Morgan</span>
-                <span className="text-[10px] text-slate-400">Project Administrator</span>
+                <span className="text-xs font-semibold text-white leading-tight">{actorDisplayName}</span>
+                <span className="text-[10px] text-slate-400">{actorSubtitle}</span>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>

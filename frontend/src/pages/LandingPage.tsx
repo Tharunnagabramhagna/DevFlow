@@ -119,7 +119,7 @@ export const LandingPage: React.FC = () => {
               Sign Up
             </button>
             <button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/get-started')}
               className="text-xs font-semibold bg-[#0070BA] hover:bg-[#005ea6] text-white px-4 py-2 rounded-full transition-all shadow-md shadow-[#0070BA]/25 hover:shadow-[#0070BA]/40"
             >
               Get Started
@@ -183,7 +183,7 @@ export const LandingPage: React.FC = () => {
                 Sign Up
               </button>
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/get-started')}
                 className="w-full text-center py-2 text-xs font-semibold text-white bg-[#0070BA] rounded-lg"
               >
                 Get Started
@@ -223,7 +223,7 @@ export const LandingPage: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
-                  onClick={() => navigate('/signup')}
+                  onClick={() => navigate('/get-started')}
                   className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-all shadow-lg shadow-[#0070BA]/30 hover:shadow-[#0070BA]/50 flex items-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   Get Started
@@ -1018,7 +1018,7 @@ export const LandingPage: React.FC = () => {
 
             <div className="relative z-10 pt-2">
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/get-started')}
                 className="bg-[#0070BA] hover:bg-[#005ea6] text-white text-sm sm:text-base font-semibold px-8 py-3.5 rounded-full transition-all shadow-xl shadow-[#0070BA]/35 hover:shadow-[#0070BA]/55 inline-flex items-center gap-2 cursor-pointer"
               >
                 <span>Start with DevFlow</span>

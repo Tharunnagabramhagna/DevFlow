@@ -18,6 +18,8 @@ import {
   FileText,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { GuestGuardModal } from '@/components/common';
 import { Project, Milestone } from '@/types';
 
 // Circular Progress Gauge Component
@@ -89,7 +91,10 @@ export const MilestoneVerificationPage: React.FC = () => {
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
+  const { user, isGuest, isClient, logout } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+  const [guardActionTitle, setGuardActionTitle] = useState('Milestone Approval');
 
   // Milestone Selector States
   const [selectedProject, setSelectedProject] = useState('Project Alpha v1.2');
@@ -245,6 +250,16 @@ export const MilestoneVerificationPage: React.FC = () => {
 
   // Review Action Handlers
   const handleApproveForClientReview = async () => {
+    if (isGuest) {
+      setApproveModalOpen(false);
+      setGuardActionTitle('Approve Deliverable');
+      setIsGuestGuardOpen(true);
+      return;
+    }
+    if (!isClient) {
+      showToast('Client Action Only', 'Only client accounts can approve deliverables.', 'error');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const targetMilestone = milestones[0];
@@ -270,6 +285,12 @@ export const MilestoneVerificationPage: React.FC = () => {
   };
 
   const handleRequestAdditionalEvidence = async () => {
+    if (isGuest) {
+      setRequestEvidenceModalOpen(false);
+      setGuardActionTitle('Request Additional Evidence');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     if (!evidenceFeedback.trim()) return;
     setIsSubmitting(true);
     try {
@@ -297,6 +318,12 @@ export const MilestoneVerificationPage: React.FC = () => {
   };
 
   const handleMarkNeedingFurtherReview = async () => {
+    if (isGuest) {
+      setFurtherReviewModalOpen(false);
+      setGuardActionTitle('Flag for Secondary Audit');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     setIsSubmitting(true);
     try {
       setReviewState('further_review');
@@ -988,29 +1015,41 @@ export const MilestoneVerificationPage: React.FC = () => {
       {userMenuOpen && (
         <div className="fixed bottom-16 left-4 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150">
           <div className="font-bold text-white border-b border-[#26344B] pb-2">
-            Alex Morgan
-            <div className="text-[10px] text-slate-400 font-normal">Project Administrator &bull; Northstar Studio</div>
+            {isGuest ? 'Client Guest' : user?.name || 'Client Account'}
+            <div className="text-[10px] text-slate-400 font-normal">
+              {isGuest ? 'DEMO MODE \u2022 Client Review Preview' : user?.organization || 'Client Workspace'}
+            </div>
           </div>
+          {!isGuest && (
+            <button
+              onClick={() => {
+                setUserMenuOpen(false);
+                navigate('/settings');
+              }}
+              className="w-full text-left py-1 text-slate-300 hover:text-white"
+            >
+              Account Preferences
+            </button>
+          )}
           <button
-            onClick={() => {
+            onClick={async () => {
               setUserMenuOpen(false);
-              navigate('/settings');
-            }}
-            className="w-full text-left py-1 text-slate-300 hover:text-white"
-          >
-            Account Preferences
-          </button>
-          <button
-            onClick={() => {
-              setUserMenuOpen(false);
-              navigate('/');
+              await logout();
+              navigate('/login/client', { replace: true });
             }}
             className="w-full text-left py-1 text-rose-400 hover:text-rose-300"
           >
-            Sign Out
+            {isGuest ? 'Exit Demo Mode' : 'Sign Out'}
           </button>
         </div>
       )}
+
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle={guardActionTitle}
+        message="Approving milestones and requesting deliverable changes are disabled in Guest Demo Mode."
+      />
     </div>
   );
 };

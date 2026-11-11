@@ -234,7 +234,7 @@ html.light [class*="bg-[#0A101D]"] {
 }
 
 /* 3. Headers & Top Bars (Frosted Glass) */
-html.light header,
+html.light header[class*="bg-"]:not(.bg-transparent),
 html.light header.bg-\[\#080D18\]\/90,
 html.light header.bg-\[\#080D1B\]\/85,
 html.light header.bg-\[\#0A101D\],
@@ -247,7 +247,7 @@ html.light [class*="header"][class*="bg-"] {
   color: #0F172A !important;
 }
 
-html.dark header,
+html.dark header[class*="bg-"]:not(.bg-transparent),
 html.dark [class*="header"][class*="bg-"] {
   background-color: rgba(9, 14, 29, 0.82) !important;
   backdrop-filter: blur(16px) !important;

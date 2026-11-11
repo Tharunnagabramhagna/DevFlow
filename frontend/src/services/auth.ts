@@ -1,47 +1,36 @@
 import { AuthSession, AuthUser, UserRole } from '@/types';
+import {
+  clearDevOfflineVault,
+  devOfflineLogin,
+  devOfflineMockSocialAuth,
+  devOfflineRegister,
+  isOfflineAuthSimulationEnabled,
+} from './devOfflineAuth';
 
 const BASE_URL = '/api/auth';
-const CLIENT_VAULT_KEY = 'devflow_auth_client_vault';
 
-interface VaultUser {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  passwordHashHex: string;
-  organization?: string;
-  createdAt: string;
-}
-
-/**
- * Computes a standard SHA-256 hash using the native browser SubtleCrypto API.
- * Passwords are NEVER stored in plaintext or localStorage.
- */
-async function hashPasswordSha256(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-function getVaultUsers(): VaultUser[] {
-  try {
-    const raw = localStorage.getItem(CLIENT_VAULT_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [];
-}
-
-function saveVaultUser(vaultUser: VaultUser): void {
-  try {
-    const users = getVaultUsers().filter((u) => u.email.toLowerCase() !== vaultUser.email.toLowerCase());
-    users.push(vaultUser);
-    localStorage.setItem(CLIENT_VAULT_KEY, JSON.stringify(users));
-  } catch {}
+if (!isOfflineAuthSimulationEnabled()) {
+  clearDevOfflineVault();
 }
 
 export const authService = {
+  /**
+   * Validates an existing Bearer token against `/api/auth/me`.
+   * Returns `valid: false` if the server explicitly rejects the session (401/403).
+   */
+  async verifyServerSession(accessToken: string): Promise<{ valid: boolean; unreachable?: boolean }> {
+    try {
+      const res = await fetch(`${BASE_URL}/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(3000),
+      });
+      if (res.ok) return { valid: true };
+      if (res.status === 401 || res.status === 403) return { valid: false };
+      return { valid: true, unreachable: true };
+    } catch {
+      return { valid: true, unreachable: true };
+    }
+  },
   /**
    * Registers a new user. Calls the backend `/api/auth/register` endpoint.
    * If the backend is unavailable, gracefully falls back to secure cryptographic storage.
@@ -84,47 +73,29 @@ export const authService = {
         return { user, accessToken: json.accessToken };
       } else {
         const errJson = await res.json().catch(() => ({}));
-        if (res.status === 409 || errJson.error?.includes('already exists') || errJson.message?.includes('already exists')) {
+        if (res.status === 409 || errJson.error?.includes?.('already exists') || errJson.message?.includes?.('already exists')) {
           throw new Error('A user with this email address already exists. Please log in.');
         }
         if (errJson.message) {
           throw new Error(errJson.message);
+        }
+        if (errJson.error?.message) {
+          throw new Error(errJson.error.message);
+        }
+        if (res.status >= 500) {
+          throw new Error('Failed to fetch backend');
         }
       }
     } catch (err: any) {
       if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout')) {
         throw err;
       }
-      // If backend network request failed/timed out, perform client-side cryptographic registration
-      const existing = getVaultUsers().find((u) => u.email.toLowerCase() === data.email.toLowerCase());
-      if (existing) {
-        throw new Error('A user with this email address already exists. Please log in.');
+      if (isOfflineAuthSimulationEnabled()) {
+        return devOfflineRegister(data);
       }
-
-      const passwordHashHex = await hashPasswordSha256(data.password);
-      const vaultUser: VaultUser = {
-        id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        email: data.email.toLowerCase().trim(),
-        name: data.name.trim(),
-        role: data.role,
-        passwordHashHex,
-        organization: data.organization,
-        createdAt: new Date().toISOString(),
-      };
-      saveVaultUser(vaultUser);
-
-      const user: AuthUser = {
-        id: vaultUser.id,
-        email: vaultUser.email,
-        name: vaultUser.name,
-        role: vaultUser.role,
-        organization: vaultUser.organization,
-        createdAt: vaultUser.createdAt,
-      };
-      return {
-        user,
-        accessToken: `simulated_token_${vaultUser.id}`,
-      };
+      throw new Error(
+        'Authentication server is unreachable. Real account registration requires the backend server.'
+      );
     }
 
     throw new Error('Registration failed. Please try again.');
@@ -181,52 +152,35 @@ export const authService = {
         if (errJson.message) {
           throw new Error(errJson.message);
         }
+        if (errJson.error?.message) {
+          throw new Error(errJson.error.message);
+        }
+        if (res.status >= 500) {
+          throw new Error('Failed to fetch backend');
+        }
       }
     } catch (err: any) {
       if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout')) {
         throw err;
       }
 
-      // Backend connection failed — check cryptographic client vault
-      const vaultUser = getVaultUsers().find((u) => u.email.toLowerCase() === emailLower);
-      if (!vaultUser) {
-        throw new Error('Invalid email or password.');
+      if (isOfflineAuthSimulationEnabled()) {
+        return devOfflineLogin(credentials);
       }
-
-      const inputHash = await hashPasswordSha256(credentials.password);
-      if (inputHash !== vaultUser.passwordHashHex) {
-        throw new Error('Invalid email or password.');
-      }
-
-      // Enforce role validation
-      if (vaultUser.role !== credentials.selectedRole) {
-        const expectedLabel = vaultUser.role === 'CLIENT' ? 'Client' : 'Developer';
-        throw new Error(
-          `Role mismatch: This account is registered as a ${expectedLabel}. Please select the ${expectedLabel} role option to log in.`
-        );
-      }
-
-      const user: AuthUser = {
-        id: vaultUser.id,
-        email: vaultUser.email,
-        name: vaultUser.name,
-        role: vaultUser.role,
-        organization: vaultUser.organization,
-        createdAt: vaultUser.createdAt,
-      };
-      return {
-        user,
-        accessToken: `simulated_token_${vaultUser.id}`,
-      };
+      throw new Error(
+        'Authentication server is unreachable. Real account sign-in requires the backend server.'
+      );
     }
 
     throw new Error('Login failed. Please check your credentials and try again.');
   },
 
   /**
-   * Logs out the user via `/api/auth/logout`.
+   * Logs out an authenticated user via `/api/auth/logout`.
+   * Guest demo sessions are purely ephemeral and require no server revocation.
    */
-  async logout(): Promise<void> {
+  async logout(isGuestSession = false): Promise<void> {
+    if (isGuestSession) return;
     try {
       await fetch(`${BASE_URL}/logout`, {
         method: 'POST',
@@ -391,6 +345,12 @@ export const authService = {
         if (errJson.message) {
           throw new Error(errJson.message);
         }
+        if (errJson.error?.message) {
+          throw new Error(errJson.error.message);
+        }
+        if (res.status >= 500) {
+          throw new Error('Failed to fetch backend');
+        }
       }
     } catch (err: any) {
       if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout')) {
@@ -398,97 +358,41 @@ export const authService = {
       }
     }
 
-    // Client-side vault fallback if backend is offline
-    const emailLower = params.email.toLowerCase().trim();
-    const vaultUser = getVaultUsers().find((u) => u.email.toLowerCase() === emailLower);
-
-    if (vaultUser) {
-      if (vaultUser.role !== params.role) {
-        const expectedLabel = vaultUser.role === 'CLIENT' ? 'Client' : 'Developer';
-        throw new Error(
-          `Role mismatch: This account is registered as a ${expectedLabel}. Please select the ${expectedLabel} role option to log in.`
-        );
-      }
-      return {
-        user: {
-          id: vaultUser.id,
-          email: vaultUser.email,
-          name: vaultUser.name,
-          role: vaultUser.role,
-          createdAt: vaultUser.createdAt,
-        },
-        accessToken: `simulated_token_${vaultUser.id}`,
-      };
+    if (isOfflineAuthSimulationEnabled()) {
+      return devOfflineMockSocialAuth({
+        email: params.email,
+        name: params.name,
+        role: params.role,
+      });
     }
 
-    const newVaultUser: VaultUser = {
-      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      email: emailLower,
-      name: params.name.trim(),
-      role: params.role,
-      passwordHashHex: await hashPasswordSha256('oauth_sandbox_session'),
-      createdAt: new Date().toISOString(),
-    };
-    saveVaultUser(newVaultUser);
-
-    return {
-      user: {
-        id: newVaultUser.id,
-        email: newVaultUser.email,
-        name: newVaultUser.name,
-        role: newVaultUser.role,
-        createdAt: newVaultUser.createdAt,
-      },
-      accessToken: `simulated_token_${newVaultUser.id}`,
-    };
+    throw new Error(
+      'Authentication server is unreachable. Sandbox OAuth requires a running development backend.'
+    );
   },
 
   /**
-   * Generates or retrieves an ephemeral Guest / Demo session.
-   * Calls `/api/auth/guest` if backend is available, or creates a client-side guest session.
-   * Supports specific guest personas ('CLIENT' | 'DEVELOPER') with realistic identities.
+   * Generates an ephemeral Guest / Demo session without creating any permanent account
+   * or calling registration APIs.
+   * Preserves the selected persona ('CLIENT' | 'DEVELOPER') without exposing personal info.
    */
   async continueAsGuest(guestPersona?: 'CLIENT' | 'DEVELOPER'): Promise<AuthSession> {
-    const isClient = guestPersona === 'CLIENT';
+    const persona: 'CLIENT' | 'DEVELOPER' = guestPersona === 'CLIENT' ? 'CLIENT' : 'DEVELOPER';
+    const isClient = persona === 'CLIENT';
+
     const guestUser: AuthUser = {
       id: isClient ? `guest_client_${Date.now()}` : `guest_dev_${Date.now()}`,
-      email: isClient ? 'client.guest@devflow.demo' : 'developer.guest@devflow.demo',
-      name: isClient ? 'Marcus Vance' : 'Alex Morgan',
+      email: isClient ? 'client.demo@devflow.demo' : 'developer.demo@devflow.demo',
+      name: isClient ? 'Client Guest' : 'Developer Guest',
       role: 'GUEST',
       isGuest: true,
-      guestPersona: guestPersona || (isClient ? 'CLIENT' : 'DEVELOPER'),
-      organization: isClient ? 'Meridian Labs (Demo Client)' : 'Northstar Studio (Demo Developer)',
+      guestPersona: persona,
+      organization: isClient ? 'Demo Client Workspace' : 'Demo Developer Workspace',
       bio: isClient
-        ? 'Exploring DevFlow features from a Client perspective in demonstration mode.'
-        : 'Exploring DevFlow features from a Developer perspective in demonstration mode.',
+        ? 'Exploring DevFlow features from a Client perspective in Demo Mode.'
+        : 'Exploring DevFlow features from a Developer perspective in Demo Mode.',
       createdAt: new Date().toISOString(),
     };
-
-    try {
-      const res = await fetch(`${BASE_URL}/guest`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona: guestPersona }),
-        signal: AbortSignal.timeout(2000),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        return {
-          user: {
-            ...guestUser,
-            id: json.user.id || guestUser.id,
-            email: json.user.email || guestUser.email,
-            name: json.user.name || guestUser.name,
-            avatarUrl: json.user.avatarUrl,
-            createdAt: json.user.createdAt || guestUser.createdAt,
-          },
-          accessToken: json.accessToken || `guest_demo_token_${Date.now()}`,
-        };
-      }
-    } catch {
-      // Fallback to client-side session below
-    }
 
     return {
       user: guestUser,

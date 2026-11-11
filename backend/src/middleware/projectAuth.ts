@@ -15,6 +15,23 @@ declare global {
   }
 }
 
+function hasImplicitProjectRole(
+  project: { createdById?: string; clientId?: string | null; leadDeveloperId?: string | null },
+  userId: string,
+  allowedRoles: ProjectMemberRole[]
+): boolean {
+  if (project.createdById === userId && allowedRoles.includes(ProjectMemberRole.OWNER)) {
+    return true;
+  }
+  if (project.clientId === userId && allowedRoles.includes(ProjectMemberRole.CLIENT)) {
+    return true;
+  }
+  if (project.leadDeveloperId === userId && allowedRoles.includes(ProjectMemberRole.LEAD_DEVELOPER)) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Project-level RBAC guard validating that the authenticated user possesses an allowed project role.
  * - Global ADMIN role bypasses project membership checks.
@@ -26,6 +43,14 @@ export const requireProjectRole = (allowedRoles: ProjectMemberRole[]) => {
     try {
       if (!req.user) {
         throw new UnauthorizedError('Authentication required to access project resources');
+      }
+
+      if (req.user.role === 'GUEST' || req.user.isGuest) {
+        throw new ForbiddenError(
+          'Guest Mode: Please sign in or create an account to use this feature.',
+          undefined,
+          'GUEST_RESTRICTED'
+        );
       }
 
       // Global ADMIN bypass
@@ -48,8 +73,8 @@ export const requireProjectRole = (allowedRoles: ProjectMemberRole[]) => {
 
       req.project = project;
 
-      // Project creator is considered OWNER
-      if (project.createdById === req.user.id && allowedRoles.includes(ProjectMemberRole.OWNER)) {
+      // Project creator/assigned client/lead developer hold implicit roles when permitted
+      if (hasImplicitProjectRole(project, req.user.id, allowedRoles)) {
         return next();
       }
 
@@ -88,6 +113,14 @@ export const requireMilestoneRole = (allowedRoles: ProjectMemberRole[]) => {
         throw new UnauthorizedError('Authentication required to access milestone');
       }
 
+      if (req.user.role === 'GUEST' || req.user.isGuest) {
+        throw new ForbiddenError(
+          'Guest Mode: Please sign in or create an account to use this feature.',
+          undefined,
+          'GUEST_RESTRICTED'
+        );
+      }
+
       const milestoneId = req.params.milestoneId || req.params.id;
       if (!milestoneId) {
         throw new BadRequestError('Milestone identifier is required');
@@ -110,8 +143,8 @@ export const requireMilestoneRole = (allowedRoles: ProjectMemberRole[]) => {
         return next();
       }
 
-      // Project creator is OWNER
-      if (milestone.project.createdById === req.user.id && allowedRoles.includes(ProjectMemberRole.OWNER)) {
+      // Project creator/assigned client/lead developer hold implicit roles when permitted
+      if (hasImplicitProjectRole(milestone.project, req.user.id, allowedRoles)) {
         return next();
       }
 
@@ -150,6 +183,14 @@ export const requireEvidenceRole = (allowedRoles: ProjectMemberRole[]) => {
         throw new UnauthorizedError('Authentication required to access evidence');
       }
 
+      if (req.user.role === 'GUEST' || req.user.isGuest) {
+        throw new ForbiddenError(
+          'Guest Mode: Please sign in or create an account to use this feature.',
+          undefined,
+          'GUEST_RESTRICTED'
+        );
+      }
+
       const evidenceId = req.params.evidenceId || req.params.id;
       if (!evidenceId) {
         throw new BadRequestError('Evidence identifier is required');
@@ -177,8 +218,8 @@ export const requireEvidenceRole = (allowedRoles: ProjectMemberRole[]) => {
         return next();
       }
 
-      // Project creator is OWNER
-      if (evidence.milestone.project.createdById === req.user.id && allowedRoles.includes(ProjectMemberRole.OWNER)) {
+      // Project creator/assigned client/lead developer hold implicit roles when permitted
+      if (hasImplicitProjectRole(evidence.milestone.project, req.user.id, allowedRoles)) {
         return next();
       }
 
@@ -217,6 +258,14 @@ export const requirePaymentRole = (allowedRoles: ProjectMemberRole[]) => {
         throw new UnauthorizedError('Authentication required to access payment');
       }
 
+      if (req.user.role === 'GUEST' || req.user.isGuest) {
+        throw new ForbiddenError(
+          'Guest Mode: Please sign in or create an account to use this feature.',
+          undefined,
+          'GUEST_RESTRICTED'
+        );
+      }
+
       const paymentId = req.params.paymentId || req.params.id;
       if (!paymentId) {
         throw new BadRequestError('Payment identifier is required');
@@ -244,8 +293,8 @@ export const requirePaymentRole = (allowedRoles: ProjectMemberRole[]) => {
         return next();
       }
 
-      // Project creator is OWNER
-      if (payment.milestone.project.createdById === req.user.id && allowedRoles.includes(ProjectMemberRole.OWNER)) {
+      // Project creator/assigned client/lead developer hold implicit roles when permitted
+      if (hasImplicitProjectRole(payment.milestone.project, req.user.id, allowedRoles)) {
         return next();
       }
 

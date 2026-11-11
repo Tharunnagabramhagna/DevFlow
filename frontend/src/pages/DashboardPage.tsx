@@ -845,7 +845,7 @@ export const DashboardPage: React.FC = () => {
       <GuestGuardModal
         isOpen={isGuestGuardOpen}
         onClose={() => setIsGuestGuardOpen(false)}
-        actionTitle="Create Project"
+        actionTitle={isClient ? 'Create Project' : 'Submit Deliverable'}
         message="Guest Mode: Please sign in or create an account to access this functionality."
       />
     </div>

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { ProjectMemberRole } from '@prisma/client';
-import { authenticate } from '../../middleware/auth';
+import { ProjectMemberRole, Role } from '@prisma/client';
+import { authenticate, requireNonGuest, requireRole } from '../../middleware/auth';
 import { requireProjectRole, requireMilestoneRole } from '../../middleware/projectAuth';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { milestonesController } from './milestones.controller';
@@ -13,6 +13,7 @@ import {
 
 // Router for /api/milestones
 const milestonesRouter = Router();
+milestonesRouter.use(authenticate, requireNonGuest);
 
 // List user accessible milestones across projects (frontend compatibility)
 milestonesRouter.get(
@@ -53,6 +54,7 @@ milestonesRouter.delete(
 milestonesRouter.post(
   '/:id/submit',
   authenticate,
+  requireRole([Role.FREELANCER, Role.ADMIN]),
   requireMilestoneRole([
     ProjectMemberRole.OWNER,
     ProjectMemberRole.LEAD_DEVELOPER,
@@ -64,6 +66,7 @@ milestonesRouter.post(
 milestonesRouter.post(
   '/:id/review',
   authenticate,
+  requireRole([Role.CLIENT, Role.ADMIN]),
   requireMilestoneRole([ProjectMemberRole.OWNER, ProjectMemberRole.CLIENT]),
   validateBody(ReviewMilestoneSchema),
   milestonesController.reviewMilestone
@@ -73,6 +76,7 @@ milestonesRouter.post(
 milestonesRouter.post(
   '/:id/approval',
   authenticate,
+  requireRole([Role.CLIENT, Role.ADMIN]),
   requireMilestoneRole([ProjectMemberRole.OWNER, ProjectMemberRole.CLIENT]),
   async (req, res, next) => {
     if (req.body?.status) {
@@ -84,6 +88,7 @@ milestonesRouter.post(
 
 // Router for /api/projects/:projectId/milestones (mounted in app or nested)
 const projectMilestonesRouter = Router({ mergeParams: true });
+projectMilestonesRouter.use(authenticate, requireNonGuest);
 
 projectMilestonesRouter.post(
   '/',

@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { ProjectMemberRole } from '@prisma/client';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, requireNonGuest } from '../../middleware/auth';
 import { requireMilestoneRole, requireProjectRole } from '../../middleware/projectAuth';
 import { aiController } from './ai.controller';
 
 // Router for Milestone AI Intelligence endpoints (/api/milestones/:id/ai)
 const milestoneAIRouter = Router({ mergeParams: true });
+milestoneAIRouter.use(authenticate, requireNonGuest);
 
 milestoneAIRouter.post(
   '/pipeline',
@@ -82,6 +83,7 @@ milestoneAIRouter.get(
 
 // Router for Project AI Intelligence endpoints (/api/projects/:id/ai)
 const projectAIRouter = Router({ mergeParams: true });
+projectAIRouter.use(authenticate, requireNonGuest);
 
 projectAIRouter.post(
   '/monitoring',
@@ -112,6 +114,7 @@ export { milestoneAIRouter, projectAIRouter };
 
 // Frontend compatibility router: /api/ai/verify/:milestoneId
 export const aiCompatibilityRouter = Router();
+aiCompatibilityRouter.use(authenticate, requireNonGuest);
 
 aiCompatibilityRouter.post(
   '/verify/:id',

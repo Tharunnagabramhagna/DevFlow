@@ -61,19 +61,25 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({ initialRole }) => {
     const r = params.get('role');
     if (r === 'CLIENT' || r === 'DEVELOPER') {
       setSelectedRole(r as UserRole);
+    } else if (initialRole) {
+      setSelectedRole(initialRole);
+    } else if (location.pathname === '/signup' || location.pathname === '/register') {
+      setSelectedRole(null);
     }
-  }, [location]);
+  }, [location, initialRole]);
 
   const handleSelectRole = (role: UserRole) => {
     setSelectedRole(role);
     setIsGuestSelectOpen(false);
     setError(null);
+    navigate(role === 'CLIENT' ? '/signup/client' : '/signup/developer');
   };
 
   const handleBackToRoleSelection = () => {
     setSelectedRole(null);
     setIsGuestSelectOpen(false);
     setError(null);
+    navigate('/signup');
   };
 
   const handleContinueAsGuest = async (persona: 'CLIENT' | 'DEVELOPER') => {

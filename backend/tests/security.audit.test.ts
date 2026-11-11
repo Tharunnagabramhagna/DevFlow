@@ -20,6 +20,7 @@ vi.mock('../src/config/database', () => {
     },
     project: {
       findUnique: vi.fn(),
+      update: vi.fn(),
     },
     projectMember: {
       findUnique: vi.fn(),
@@ -39,6 +40,9 @@ vi.mock('../src/config/database', () => {
     },
     payment: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
       update: vi.fn(),
     },
     activityLog: {
@@ -317,6 +321,151 @@ describe('Phase 7: Security Audit & Vulnerability Remediation Suite', () => {
       expect(res.status).toBe(403);
       expect(res.body.error.code).toBe('UNAUTHORIZED_SIMULATION');
       expect(prisma.payment.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Strict Role & Ownership Authorization Hardening', () => {
+    it('PREVENTS IDOR on GET /api/payments and GET /api/payments/:id for unauthorized projects', async () => {
+      const targetProjectId = '22222222-2222-4222-8222-222222222222';
+      (prisma.project.findUnique as any).mockResolvedValue({
+        id: targetProjectId,
+        createdById: 'user-owner',
+        clientId: 'user-owner',
+        leadDeveloperId: null,
+        members: [],
+      });
+
+      const forbiddenProjectRes = await request(app)
+        .get(`/api/payments?projectId=${targetProjectId}`)
+        .set('Authorization', `Bearer ${attackerToken}`);
+
+      expect(forbiddenProjectRes.status).toBe(403);
+
+      (prisma.payment.findUnique as any).mockResolvedValue({
+        id: '33333333-3333-4333-8333-333333333333',
+        milestone: {
+          id: 'ms-private',
+          title: 'Private Milestone',
+          status: 'PAID',
+          projectId: targetProjectId,
+          project: {
+            id: targetProjectId,
+            title: 'Private Project',
+            createdById: 'user-owner',
+            clientId: 'user-owner',
+            leadDeveloperId: 'user-dev-other',
+            members: [],
+          },
+        },
+        captures: [],
+        refunds: [],
+      });
+
+      const forbiddenPaymentRes = await request(app)
+        .get('/api/payments/33333333-3333-4333-8333-333333333333')
+        .set('Authorization', `Bearer ${attackerToken}`);
+      expect(forbiddenPaymentRes.status).toBe(403);
+
+      (prisma.payment.count as any).mockResolvedValue(0);
+      (prisma.payment.findMany as any).mockResolvedValue([]);
+
+      const scopedListRes = await request(app)
+        .get('/api/payments')
+        .set('Authorization', `Bearer ${developerToken}`);
+
+      expect(scopedListRes.status).toBe(200);
+      expect(prisma.payment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            milestone: expect.objectContaining({
+              project: expect.objectContaining({
+                OR: expect.arrayContaining([
+                  { createdById: 'user-dev' },
+                  { clientId: 'user-dev' },
+                  { leadDeveloperId: 'user-dev' },
+                ]),
+              }),
+            }),
+          }),
+        })
+      );
+    });
+
+    it('PREVENTS developer project OWNER from approving milestones or issuing invoices while preserving OWNER settings updates', async () => {
+      const devOwnerId = 'dev-owner-1';
+      const devOwnerToken = generateTestToken(devOwnerId, 'devowner@example.com', Role.FREELANCER);
+
+      (prisma.project.findUnique as any).mockResolvedValue({
+        id: 'proj-dev-owned',
+        title: 'Dev Owned Project',
+        createdById: devOwnerId,
+        clientId: null,
+        leadDeveloperId: devOwnerId,
+      });
+      (prisma.project.update as any).mockResolvedValue({
+        id: 'proj-dev-owned',
+        title: 'Updated Dev Project',
+      });
+
+      // Legitimate OWNER setting update succeeds
+      const updateRes = await request(app)
+        .patch('/api/projects/proj-dev-owned')
+        .set('Authorization', `Bearer ${devOwnerToken}`)
+        .send({ title: 'Updated Dev Project' });
+      expect(updateRes.status).toBe(200);
+
+      // Inappropriate milestone approval by FREELANCER OWNER is blocked (even for another submitter)
+      const reviewRes = await request(app)
+        .post('/api/milestones/ms-dev-owned/review')
+        .set('Authorization', `Bearer ${devOwnerToken}`)
+        .send({ decision: 'APPROVED', comments: 'Self-owner approval bypass' });
+      expect(reviewRes.status).toBe(403);
+
+      // Inappropriate invoice generation by FREELANCER OWNER is blocked
+      const invoiceRes = await request(app)
+        .post('/api/payments/invoices')
+        .set('Authorization', `Bearer ${devOwnerToken}`)
+        .send({ milestoneId: '11111111-1111-4111-8111-111111111111' });
+      expect(invoiceRes.status).toBe(403);
+
+      // Service-level defense: developer role or project leadDeveloper cannot review even directly
+      await expect(
+        milestonesService.reviewMilestone(
+          devOwnerId,
+          'ms-dev-owned',
+          { decision: 'APPROVED', feedback: 'Direct service bypass attempt' },
+          Role.FREELANCER
+        )
+      ).rejects.toThrow('Developers cannot approve or reject milestone deliverables');
+    });
+
+    it('PREVENTS client project OWNER from submitting developer deliverables', async () => {
+      const submitRes = await request(app)
+        .post('/api/milestones/ms-client-owned/submit')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({});
+      expect(submitRes.status).toBe(403);
+    });
+
+    it('REJECTS guest JWTs on private project, milestone, evidence, and payment endpoints', async () => {
+      const guestToken = jwt.sign(
+        { sub: 'guest-id', email: 'guest@devflow.local', role: 'GUEST', isGuest: true },
+        env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+
+      const endpoints = [
+        request(app).get('/api/projects').set('Authorization', `Bearer ${guestToken}`),
+        request(app).get('/api/milestones').set('Authorization', `Bearer ${guestToken}`),
+        request(app).get('/api/payments').set('Authorization', `Bearer ${guestToken}`),
+        request(app).get('/api/evidence/ev-1/download').set('Authorization', `Bearer ${guestToken}`),
+      ];
+
+      const responses = await Promise.all(endpoints);
+      for (const r of responses) {
+        expect(r.status).toBe(403);
+        expect(r.body.error.code).toBe('GUEST_RESTRICTED');
+      }
     });
   });
 });

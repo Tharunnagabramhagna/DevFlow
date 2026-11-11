@@ -1,17 +1,14 @@
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { RoleGuard } from '@/components/layout/RoleGuard';
 import { LandingPage } from '@/pages/LandingPage';
+import { GetStartedPage } from '@/pages/GetStartedPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignUpPage } from '@/pages/SignUpPage';
-import { ClientGuestWelcomePage } from '@/pages/ClientGuestWelcomePage';
-import { DeveloperGuestWelcomePage } from '@/pages/DeveloperGuestWelcomePage';
-import { ClientGuestPage } from '@/pages/ClientGuestPage';
-import { DeveloperGuestPage } from '@/pages/DeveloperGuestPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
@@ -26,6 +23,33 @@ import { IntegrationsPage } from '@/pages/IntegrationsPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
+/**
+ * Legacy /guest/* route adapter: enters Demo Mode for the requested persona
+ * using the unified shared dashboard shell instead of a separate guest page.
+ */
+const GuestEntryRedirect: React.FC<{ persona: 'CLIENT' | 'DEVELOPER' }> = ({ persona }) => {
+  const { continueAsGuest, hasSession, isGuest, effectiveRole } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let active = true;
+    const enterUnifiedGuestDashboard = async () => {
+      if (!hasSession || (isGuest && effectiveRole !== persona)) {
+        await continueAsGuest(persona);
+      }
+      if (active) {
+        navigate('/dashboard', { replace: true });
+      }
+    };
+    enterUnifiedGuestDashboard();
+    return () => {
+      active = false;
+    };
+  }, [persona, continueAsGuest, hasSession, isGuest, effectiveRole, navigate]);
+
+  return null;
+};
+
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
@@ -34,7 +58,7 @@ export const App: React.FC = () => {
           <Routes>
             {/* Public Landing & Authentication Pages */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/get-started" element={<LandingPage />} />
+            <Route path="/get-started" element={<GetStartedPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/login/client" element={<LoginPage initialRole="CLIENT" />} />
             <Route path="/login/developer" element={<LoginPage initialRole="DEVELOPER" />} />
@@ -44,15 +68,15 @@ export const App: React.FC = () => {
             <Route path="/register" element={<SignUpPage />} />
             <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
-            {/* Dedicated Guest Welcome Pages & Dashboard Routes */}
-            <Route path="/guest/client" element={<ClientGuestWelcomePage />} />
-            <Route path="/guest/developer" element={<DeveloperGuestWelcomePage />} />
-            <Route path="/guest/client/dashboard" element={<ClientGuestPage />} />
-            <Route path="/guest/developer/dashboard" element={<DeveloperGuestPage />} />
-            <Route path="/client-guest" element={<Navigate to="/guest/client" replace />} />
-            <Route path="/developer-guest" element={<Navigate to="/guest/developer" replace />} />
+            {/* Legacy Guest Entry Aliases -> Unified Shared Dashboard in Demo Mode */}
+            <Route path="/guest/client" element={<GuestEntryRedirect persona="CLIENT" />} />
+            <Route path="/guest/developer" element={<GuestEntryRedirect persona="DEVELOPER" />} />
+            <Route path="/guest/client/dashboard" element={<GuestEntryRedirect persona="CLIENT" />} />
+            <Route path="/guest/developer/dashboard" element={<GuestEntryRedirect persona="DEVELOPER" />} />
+            <Route path="/client-guest" element={<GuestEntryRedirect persona="CLIENT" />} />
+            <Route path="/developer-guest" element={<GuestEntryRedirect persona="DEVELOPER" />} />
 
-            {/* Guarded Dashboard Workspace Routes */}
+            {/* Guarded Unified Dashboard Workspace Routes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
@@ -78,6 +102,7 @@ export const App: React.FC = () => {
                   }
                 />
 
+                {/* AI Verification & Milestone Acceptance (Both Client & Developer) */}
                 <Route path="/agents" element={<VerificationPage />} />
                 <Route path="/verification" element={<MilestoneVerificationPage />} />
                 <Route path="/milestone-verification" element={<MilestoneVerificationPage />} />

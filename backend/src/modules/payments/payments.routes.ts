@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { ProjectMemberRole, PaymentStatus, MilestoneStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { env } from '../../config/env';
-import { authenticate, requireNonGuest } from '../../middleware/auth';
+import { authenticate, requireNonGuest, requireRole, assertVerifiedUser } from '../../middleware/auth';
 import { requireProjectRole, requirePaymentRole } from '../../middleware/projectAuth';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { ForbiddenError } from '../../utils/errors';
@@ -15,6 +15,7 @@ import {
 } from './payments.schema';
 
 export const paymentsRouter = Router();
+paymentsRouter.use(authenticate, requireNonGuest);
 
 // Create and dispatch an invoice for a completed milestone
 paymentsRouter.post(
@@ -40,20 +41,24 @@ paymentsRouter.get(
   authenticate,
   async (req, res, next) => {
     try {
+      const user = assertVerifiedUser(req);
       const payments = await prisma.payment.findMany({
-        where: {
-          milestone: {
-            project: {
-              isArchived: false,
-              OR: [
-                { createdById: req.user!.id },
-                { clientId: req.user!.id },
-                { leadDeveloperId: req.user!.id },
-                { members: { some: { userId: req.user!.id } } },
-              ],
-            },
-          },
-        },
+        where:
+          user.role === Role.ADMIN
+            ? undefined
+            : {
+                milestone: {
+                  project: {
+                    isArchived: false,
+                    OR: [
+                      { createdById: user.id },
+                      { clientId: user.id },
+                      { leadDeveloperId: user.id },
+                      { members: { some: { userId: user.id } } },
+                    ],
+                  },
+                },
+              },
         include: {
           milestone: {
             include: { project: true },
@@ -87,14 +92,24 @@ paymentsRouter.get(
 paymentsRouter.post(
   '/webhooks/simulate-paid',
   authenticate,
+  requireNonGuest,
   async (req, res, next) => {
     try {
+      const user = assertVerifiedUser(req);
       // 1. Strict production lockout: cannot be activated in production
       if (env.NODE_ENV === 'production') {
         throw new ForbiddenError(
           'Payment simulation endpoint is strictly disabled in production environments',
           undefined,
           'SIMULATION_DISABLED_IN_PRODUCTION'
+        );
+      }
+
+      if (user.role === Role.FREELANCER) {
+        throw new ForbiddenError(
+          'Unauthorized to simulate payments for this project',
+          undefined,
+          'UNAUTHORIZED_SIMULATION'
         );
       }
 
@@ -135,18 +150,19 @@ paymentsRouter.post(
         });
       }
 
-      // 2. Strict authorization: verify caller is project owner, client, or platform admin
-      if (payment.milestone?.project && req.user!.role !== Role.ADMIN) {
+      // 2. Strict authorization: verify caller is project owner, client, or platform admin (and never lead developer)
+      if (payment.milestone?.project && user.role !== Role.ADMIN) {
         const project = payment.milestone.project;
-        const isCreator = project.createdById === req.user!.id;
-        const isClient = project.clientId === req.user!.id;
+        const isCreator = project.createdById === user.id;
+        const isClient = project.clientId === user.id;
+        const isLeadDeveloper = project.leadDeveloperId === user.id;
         const isOwnerOrClientMember = project.members?.some(
           (m) =>
-            m.userId === req.user!.id &&
+            m.userId === user.id &&
             (m.role === ProjectMemberRole.OWNER || m.role === ProjectMemberRole.CLIENT)
         );
 
-        if (!isCreator && !isClient && !isOwnerOrClientMember) {
+        if (isLeadDeveloper || (!isCreator && !isClient && !isOwnerOrClientMember)) {
           throw new ForbiddenError(
             'Unauthorized to simulate payments for this project',
             undefined,
@@ -182,6 +198,7 @@ paymentsRouter.post(
 paymentsRouter.post(
   '/:id/cancel',
   authenticate,
+  requireRole([Role.CLIENT, Role.ADMIN]),
   requirePaymentRole([ProjectMemberRole.OWNER, ProjectMemberRole.CLIENT]),
   validateBody(CancelInvoiceSchema),
   paymentsController.cancelInvoice
@@ -191,6 +208,7 @@ paymentsRouter.post(
 paymentsRouter.post(
   '/:id/refund',
   authenticate,
+  requireRole([Role.CLIENT, Role.ADMIN]),
   requirePaymentRole([ProjectMemberRole.OWNER, ProjectMemberRole.CLIENT]),
   validateBody(CreateRefundSchema),
   paymentsController.createRefund
@@ -220,6 +238,7 @@ paymentsRouter.get(
 
 // Project-nested router: /api/projects/:projectId/payments
 export const projectPaymentsRouter = Router({ mergeParams: true });
+projectPaymentsRouter.use(authenticate, requireNonGuest);
 
 projectPaymentsRouter.get(
   '/',

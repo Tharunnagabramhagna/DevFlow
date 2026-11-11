@@ -274,7 +274,11 @@ export class MilestonesService {
    * Submits a milestone for review.
    * Requires at least 1 non-deleted evidence record.
    */
-  async submitMilestone(actorId: string, milestoneId: string): Promise<Milestone> {
+  async submitMilestone(actorId: string, milestoneId: string, actorRole?: Role): Promise<Milestone> {
+    if (actorRole === Role.CLIENT) {
+      throw new ForbiddenError('Clients cannot submit developer deliverables on behalf of developers.');
+    }
+
     const milestone = await prisma.milestone.findUnique({
       where: { id: milestoneId },
       include: {
@@ -343,8 +347,17 @@ export class MilestonesService {
   async reviewMilestone(
     actorId: string,
     milestoneId: string,
-    input: ReviewMilestoneInput
+    input: ReviewMilestoneInput,
+    actorRole?: Role
   ): Promise<{ milestone: Milestone; approval: any }> {
+    if (actorRole === Role.FREELANCER) {
+      throw new ForbiddenError(
+        'Developers cannot approve or reject milestone deliverables. An authorized client reviewer is required.',
+        undefined,
+        'CLIENT_REVIEWER_REQUIRED'
+      );
+    }
+
     const milestone = await prisma.milestone.findUnique({
       where: { id: milestoneId },
       include: {
@@ -373,6 +386,14 @@ export class MilestonesService {
     if (actorId === milestone.assignedDeveloperId) {
       throw new ForbiddenError(
         'Separation of duties violation: Assigned developer cannot approve their own milestone',
+        undefined,
+        'SELF_APPROVAL_PROHIBITED'
+      );
+    }
+
+    if (milestone.project.leadDeveloperId && actorId === milestone.project.leadDeveloperId) {
+      throw new ForbiddenError(
+        'Separation of duties violation: Project lead developer cannot approve project milestones',
         undefined,
         'SELF_APPROVAL_PROHIBITED'
       );

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { GuestGuardModal } from '@/components/common';
 import {
             Settings,
         Bell,
@@ -50,12 +51,14 @@ const PayPalLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
 
 export const IntegrationsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isClient } = useAuth();
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
+  const { user, isGuest, isClient, logout } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+  const [guardActionTitle, setGuardActionTitle] = useState('Modify Integration');
 
   // Modal States
   const [manageModal, setManageModal] = useState<'github' | 'paypal' | 'ai' | null>(null);
@@ -85,6 +88,12 @@ export const IntegrationsPage: React.FC = () => {
   ], []);
 
   const handleDisconnect = () => {
+    if (isGuest) {
+      setDisconnectItem(null);
+      setGuardActionTitle(`Disconnect ${disconnectItem || 'Integration'}`);
+      setIsGuestGuardOpen(true);
+      return;
+    }
     if (!disconnectItem) return;
     if (disconnectItem === 'PayPal') {
       setPaypalConnected(false);
@@ -603,9 +612,14 @@ export const IntegrationsPage: React.FC = () => {
                   <input
                     type="password"
                     disabled
-                    value="AUJ892X-SANDBOX-PAYPAL-CLIENT-ID-DEVFLOW"
+                    value={isGuest ? 'hidden-in-demo-mode' : 'AUJ892X-SANDBOX-PAYPAL-CLIENT-ID-DEVFLOW'}
                     className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
                   />
+                  {isGuest && (
+                    <p className="text-[10px] text-teal-300 mt-1">
+                      Credentials and private keys are masked in Demo Mode.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-[11px] font-semibold text-slate-300 block mb-1">
@@ -665,6 +679,12 @@ export const IntegrationsPage: React.FC = () => {
               </button>
               <button
                 onClick={() => {
+                  if (isGuest) {
+                    setManageModal(null);
+                    setGuardActionTitle('Update Integration Settings');
+                    setIsGuestGuardOpen(true);
+                    return;
+                  }
                   setManageModal(null);
                   showToast('Configuration Updated', 'Connection settings validated.', 'success');
                 }}
@@ -753,29 +773,41 @@ export const IntegrationsPage: React.FC = () => {
       {userMenuOpen && (
         <div className="fixed top-16 right-6 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150 text-slate-200">
           <div className="font-bold text-white border-b border-[#26344B] pb-2">
-            Alex Morgan
-            <div className="text-[10px] text-slate-400 font-normal">Project Administrator &bull; Northstar Studio</div>
+            {isGuest ? 'Developer Guest' : user?.name || 'Developer Account'}
+            <div className="text-[10px] text-slate-400 font-normal">
+              {isGuest ? 'DEMO MODE \u2022 Integrations Preview' : user?.organization || 'Developer Workspace'}
+            </div>
           </div>
+          {!isGuest && (
+            <button
+              onClick={() => {
+                setUserMenuOpen(false);
+                navigate('/settings');
+              }}
+              className="w-full text-left py-1 text-slate-300 hover:text-white transition-colors"
+            >
+              Integration Preferences
+            </button>
+          )}
           <button
-            onClick={() => {
+            onClick={async () => {
               setUserMenuOpen(false);
-              navigate('/settings');
-            }}
-            className="w-full text-left py-1 text-slate-300 hover:text-white transition-colors"
-          >
-            Billing Preferences
-          </button>
-          <button
-            onClick={() => {
-              setUserMenuOpen(false);
-              navigate('/');
+              await logout();
+              navigate(isClient ? '/login/client' : '/login/developer', { replace: true });
             }}
             className="w-full text-left py-1 text-rose-400 hover:text-rose-300 transition-colors"
           >
-            Sign Out
+            {isGuest ? 'Exit Demo Mode' : 'Sign Out'}
           </button>
         </div>
       )}
+
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle={guardActionTitle}
+        message="Modifying repository integrations, webhooks, or provider credentials is disabled in Guest Demo Mode."
+      />
     </div>
   );
 };

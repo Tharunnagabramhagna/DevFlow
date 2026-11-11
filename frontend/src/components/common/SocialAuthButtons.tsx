@@ -76,7 +76,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
   };
 
   const handleContinueWithSandboxAuth = async () => {
-    if (!setupModalProvider) return;
+    if (!setupModalProvider || !import.meta.env.DEV) return;
     const provider = setupModalProvider;
     setSetupModalProvider(null);
     setConnectingProvider(provider);
@@ -157,13 +157,12 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
       </div>
 
       {/* DIVIDER: OR CONTINUE WITH EMAIL */}
-      <div className="relative my-5 text-center">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200 dark:border-[#26344B]" />
-        </div>
-        <span className="relative px-3 bg-white dark:bg-[#111C30] text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 select-none">
+      <div className="relative flex items-center my-4 py-1">
+        <div className="flex-grow border-t border-slate-200 dark:border-[#26344B]/80" />
+        <span className="shrink mx-3 text-[10px] font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 select-none">
           OR CONTINUE WITH EMAIL
         </span>
+        <div className="flex-grow border-t border-slate-200 dark:border-[#26344B]/80" />
       </div>
 
       {/* SETUP ASSISTANCE MODAL FOR LOCAL ENV */}
@@ -221,18 +220,20 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <button
-                type="button"
-                onClick={handleContinueWithSandboxAuth}
-                className="flex-1 py-2 px-3 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Test as {role === 'CLIENT' ? 'Client' : 'Developer'}</span>
-              </button>
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  onClick={handleContinueWithSandboxAuth}
+                  className="flex-1 py-2 px-3 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Dev Sandbox as {role === 'CLIENT' ? 'Client' : 'Developer'}</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setSetupModalProvider(null)}
-                className="py-2 px-3 rounded-lg border border-slate-200 dark:border-[#26344B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A253A] text-xs font-medium transition-colors"
+                className="flex-1 py-2 px-3 rounded-lg border border-slate-200 dark:border-[#26344B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A253A] text-xs font-medium transition-colors"
               >
                 Use Email Form
               </button>

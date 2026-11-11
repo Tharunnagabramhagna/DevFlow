@@ -1,5 +1,6 @@
 import { app } from './app';
 import { env } from './config/env';
+import { disconnectDatabase } from './config/database';
 import logger from './utils/logger';
 
 const server = app.listen(env.PORT, () => {
@@ -10,9 +11,15 @@ const server = app.listen(env.PORT, () => {
   });
 });
 
-const gracefulShutdown = (signal: string) => {
+const gracefulShutdown = async (signal: string) => {
   logger.info(`Received ${signal}, initiating graceful shutdown...`);
-  server.close(() => {
+  server.close(async () => {
+    try {
+      await disconnectDatabase();
+      logger.info('Database disconnected.');
+    } catch (err) {
+      logger.error('Error disconnecting database during shutdown', { err });
+    }
     logger.info('HTTP server closed, exiting process.');
     process.exit(0);
   });

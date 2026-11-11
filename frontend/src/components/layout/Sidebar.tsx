@@ -31,7 +31,7 @@ export const Sidebar: React.FC = () => {
     isMobileOpen,
     closeMobileSidebar,
   } = useSidebar();
-  const { user, isGuest, isClient, logout } = useAuth();
+  const { user, effectiveRole, isGuest, isClient, logout } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,8 +43,14 @@ export const Sidebar: React.FC = () => {
 
   const handleLogout = async () => {
     closeMobileSidebar();
+    const targetLogin =
+      effectiveRole === 'DEVELOPER'
+        ? '/login/developer'
+        : effectiveRole === 'CLIENT'
+          ? '/login/client'
+          : '/login';
     await logout();
-    navigate('/login');
+    navigate(targetLogin, { replace: true });
   };
 
   const userName = user?.name || (isClient ? 'Marcus Vance' : 'Alex Morgan');

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/cn';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Bell,
   HelpCircle,
@@ -78,6 +79,34 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, isGuest, isClient } = useAuth();
+  const headerDisplayName = isGuest
+    ? isClient
+      ? 'Client Guest'
+      : 'Developer Guest'
+    : user?.name || (isClient ? 'Client Account' : 'Developer Account');
+  const headerRoleLabel = isGuest ? 'DEMO MODE' : isClient ? 'Client' : 'Developer';
+  const headerEmail = isGuest
+    ? isClient
+      ? 'client.demo@devflow.demo'
+      : 'developer.demo@devflow.demo'
+    : user?.email || '';
+  const headerOrg = isGuest
+    ? isClient
+      ? 'Demo Client Workspace'
+      : 'Demo Developer Workspace'
+    : user?.organization || 'DevFlow Workspace';
+  const headerInitials = isGuest
+    ? isClient
+      ? 'CG'
+      : 'DG'
+    : headerDisplayName
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || (isClient ? 'CL' : 'DV');
   const currentMeta = breadcrumbMap[location.pathname] || {
     title: 'DevFlow Workspace',
     subtitle: 'Milestone intelligence and payments',
@@ -345,11 +374,11 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="User profile menu"
             >
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs shadow-card-subtle">
-                AM
+                {headerInitials}
               </div>
               <div className="hidden lg:flex flex-col text-left">
-                <span className="text-xs font-semibold text-[#25263A] leading-tight">Alex Morgan</span>
-                <span className="text-[10px] text-[#777B91]">Project Administrator</span>
+                <span className="text-xs font-semibold text-[#25263A] leading-tight">{headerDisplayName}</span>
+                <span className="text-[10px] text-[#777B91]">{headerRoleLabel}</span>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-[#9D9EAF]" />
             </button>
@@ -357,11 +386,13 @@ export const Header: React.FC<HeaderProps> = ({
             {isProfileOpen && (
               <div className="absolute right-0 mt-2 w-56 backdrop-blur-2xl bg-white/90 dark:bg-[#0E172A]/90 text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-white/60 dark:border-white/15 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3.5 py-2 border-b border-slate-200/70 dark:border-white/10">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Alex Morgan</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">alex.morgan@northstar.studio</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">{headerDisplayName}</p>
+                  {headerEmail && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{headerEmail}</p>
+                  )}
                   <div className="mt-1.5 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#86DDBB]" />
-                    <span className="text-[10px] text-[#15803D] dark:text-emerald-400 font-medium">Northstar Digital Studio</span>
+                    <span className="text-[10px] text-[#15803D] dark:text-emerald-400 font-medium">{headerOrg}</span>
                   </div>
                 </div>
 

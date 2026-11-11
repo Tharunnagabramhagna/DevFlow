@@ -68,11 +68,11 @@ interface AiPreferences {
 }
 
 const DEFAULT_PROFILE: ProfileData = {
-  fullName: 'Alex Morgan',
-  email: 'alex.morgan@northstar.studio',
-  role: 'Project Administrator',
-  organization: 'Northstar Digital Studio',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=faces',
+  fullName: 'DevFlow User',
+  email: 'member@devflow.io',
+  role: 'Workspace Member',
+  organization: 'DevFlow Workspace',
+  avatarUrl: '',
 };
 
 const DEFAULT_NOTIFICATIONS: NotificationToggles = {
@@ -150,9 +150,26 @@ export const SettingsPage: React.FC = () => {
   }, [currentTheme]);
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const { isGuest } = useAuth();
+  const { user, isGuest, isClient, logout } = useAuth();
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
   const [guardActionTitle, setGuardActionTitle] = useState('Change Settings');
+
+  const roleAccountLabel = isClient ? 'Client' : 'Developer';
+  const sessionFallbackProfile: ProfileData = isGuest
+    ? {
+        fullName: isClient ? 'Client Guest' : 'Developer Guest',
+        email: isClient ? 'client.demo@devflow.demo' : 'developer.demo@devflow.demo',
+        role: `${roleAccountLabel} (Demo Mode)`,
+        organization: isClient ? 'Demo Client Workspace' : 'Demo Developer Workspace',
+        avatarUrl: '',
+      }
+    : {
+        fullName: user?.name || `${roleAccountLabel} Account`,
+        email: user?.email || '',
+        role: roleAccountLabel,
+        organization: user?.organization || `${roleAccountLabel} Workspace`,
+        avatarUrl: '',
+      };
 
   // Modals
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -170,25 +187,49 @@ export const SettingsPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // 1. Profile State (Loaded safely from localStorage with backward-compatibility)
+  // 1. Profile State (Isolated cleanly per guest/authenticated session)
   const [profile, setProfile] = useState<ProfileData>(() => {
+    if (isGuest) {
+      return sessionFallbackProfile;
+    }
     try {
       const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         return {
-          fullName: parsed.fullName || parsed.name || DEFAULT_PROFILE.fullName,
-          email: parsed.email || DEFAULT_PROFILE.email,
-          role: parsed.role || DEFAULT_PROFILE.role,
-          organization: parsed.organization || DEFAULT_PROFILE.organization,
-          avatarUrl: DEFAULT_PROFILE.avatarUrl,
+          fullName: user?.name || parsed.fullName || parsed.name || sessionFallbackProfile.fullName,
+          email: user?.email || parsed.email || sessionFallbackProfile.email,
+          role: parsed.role || sessionFallbackProfile.role,
+          organization: user?.organization || parsed.organization || sessionFallbackProfile.organization,
+          avatarUrl: parsed.avatarUrl || '',
         };
       }
     } catch {
       // safe fallback
     }
-    return DEFAULT_PROFILE;
+    return sessionFallbackProfile;
   });
+
+  // Sync profile if role/guest/user session switches
+  useEffect(() => {
+    if (isGuest) {
+      setProfile({
+        fullName: isClient ? 'Client Guest' : 'Developer Guest',
+        email: isClient ? 'client.demo@devflow.demo' : 'developer.demo@devflow.demo',
+        role: `${isClient ? 'Client' : 'Developer'} (Demo Mode)`,
+        organization: isClient ? 'Demo Client Workspace' : 'Demo Developer Workspace',
+        avatarUrl: '',
+      });
+    } else if (user) {
+      setProfile((prev) => ({
+        ...prev,
+        fullName: user.name || prev.fullName,
+        email: user.email || prev.email,
+        role: isClient ? 'Client' : 'Developer',
+        organization: user.organization || prev.organization,
+      }));
+    }
+  }, [isGuest, isClient, user]);
 
   // 2. Notifications State (Loaded safely with backward-compatibility)
   const [notifications, setNotifications] = useState<NotificationToggles>(() => {
@@ -425,14 +466,30 @@ export const SettingsPage: React.FC = () => {
                       setUserMenuOpen(!userMenuOpen);
                       setNotificationsOpen(false);
                     }}
-                    className="w-10 h-10 rounded-xl ring-2 ring-[#293B55] hover:ring-[#2879E8] transition-all overflow-hidden flex items-center justify-center bg-[#172235]"
+                    className={`w-10 h-10 rounded-xl ring-2 ring-[#293B55] hover:ring-[#2879E8] transition-all overflow-hidden flex items-center justify-center font-bold text-xs text-white ${
+                      isClient
+                        ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+                        : 'bg-gradient-to-tr from-violet-600 to-indigo-500'
+                    }`}
                     title="User Profile"
                   >
-                    <img
-                      src={profile.avatarUrl}
-                      alt={profile.fullName}
-                      className="w-full h-full object-cover"
-                    />
+                    {profile.avatarUrl ? (
+                      <img
+                        src={profile.avatarUrl}
+                        alt={profile.fullName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>
+                        {profile.fullName
+                          .split(' ')
+                          .filter(Boolean)
+                          .map((n) => n[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase() || 'DF'}
+                      </span>
+                    )}
                   </button>
 
                   {/* User Profile Popover */}
@@ -450,22 +507,31 @@ export const SettingsPage: React.FC = () => {
                         className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#20304B] text-[#AAB6C8] hover:text-white transition-colors flex items-center gap-2"
                       >
                         <User className="w-4 h-4" />
-                        Edit Profile
+                        {isGuest ? 'View Profile' : 'Edit Profile'}
                       </button>
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setUserMenuOpen(false);
-                          navigate('/');
+                          await logout();
+                          navigate(isClient ? '/login/client' : '/login/developer', { replace: true });
                         }}
                         className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-rose-500/10 text-rose-400 transition-colors"
                       >
-                        Sign Out
+                        {isGuest ? 'Exit Demo Mode' : 'Sign Out'}
                       </button>
                     </div>
                   )}
                 </div>
               </div>
             </div>
+
+            {isGuest && (
+              <div className="p-3.5 rounded-xl bg-teal-950/50 border border-teal-500/30 text-xs sm:text-sm text-teal-200 flex items-center justify-between gap-3">
+                <span>
+                  <strong className="font-semibold text-teal-300">DEMO MODE (Read-Only Preview):</strong> Account profile, security, and workspace configuration edits are disabled while exploring as {profile.fullName}.
+                </span>
+              </div>
+            )}
 
             {/* SETTINGS NAVIGATION TABS */}
             <div className="flex items-center border-b border-[#293B55] text-xs sm:text-sm font-semibold space-x-7 overflow-x-auto pb-px">
@@ -500,10 +566,10 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 {activeTab === 'Integrations' && (
                   <button
-                    onClick={() => navigate('/integrations')}
+                    onClick={() => navigate(isClient ? '/dashboard' : '/integrations')}
                     className="px-3.5 py-1.5 rounded-lg bg-[#2879E8] hover:bg-blue-600 text-white font-semibold text-xs shrink-0 transition-colors"
                   >
-                    Open Integrations Hub &rarr;
+                    {isClient ? 'Back to Dashboard' : 'Open Integrations Hub \u2192'}
                   </button>
                 )}
               </div>
@@ -535,11 +601,29 @@ export const SettingsPage: React.FC = () => {
                   {/* Avatar + Full Name in horizontal row */}
                   <div className="flex items-center gap-3.5">
                     <div className="relative shrink-0">
-                      <img
-                        src={profile.avatarUrl}
-                        alt={profile.fullName}
-                        className="w-14 h-14 rounded-full object-cover ring-2 ring-[#293B55]"
-                      />
+                      {profile.avatarUrl ? (
+                        <img
+                          src={profile.avatarUrl}
+                          alt={profile.fullName}
+                          className="w-14 h-14 rounded-full object-cover ring-2 ring-[#293B55]"
+                        />
+                      ) : (
+                        <div
+                          className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-base text-white ring-2 ring-[#293B55] ${
+                            isClient
+                              ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+                              : 'bg-gradient-to-tr from-violet-600 to-indigo-500'
+                          }`}
+                        >
+                          {profile.fullName
+                            .split(' ')
+                            .filter(Boolean)
+                            .map((n) => n[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase() || 'DF'}
+                        </div>
+                      )}
                       <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#2879E8] flex items-center justify-center text-white ring-2 ring-[#172235]">
                         <Check className="w-3 h-3" />
                       </span>
@@ -548,9 +632,10 @@ export const SettingsPage: React.FC = () => {
                       <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Full name</label>
                       <input
                         type="text"
+                        disabled={isGuest}
                         value={profile.fullName}
                         onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
                         placeholder="Full Name"
                       />
                     </div>
@@ -561,9 +646,10 @@ export const SettingsPage: React.FC = () => {
                     <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Email</label>
                     <input
                       type="email"
+                      disabled={isGuest}
                       value={profile.email}
                       onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
                       placeholder="Email Address"
                     />
                   </div>
@@ -573,9 +659,10 @@ export const SettingsPage: React.FC = () => {
                     <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Role</label>
                     <input
                       type="text"
+                      disabled={isGuest}
                       value={profile.role}
                       onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
                       placeholder="Role"
                     />
                   </div>
@@ -585,9 +672,10 @@ export const SettingsPage: React.FC = () => {
                     <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Organisation</label>
                     <input
                       type="text"
+                      disabled={isGuest}
                       value={profile.organization}
                       onChange={(e) => setProfile({ ...profile, organization: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
                       placeholder="Organisation"
                     />
                   </div>
@@ -634,7 +722,14 @@ export const SettingsPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-[#F1F5F9] font-medium">Email</span>
                       <button
-                        onClick={() => setNotifications({ ...notifications, email: !notifications.email })}
+                        onClick={() => {
+                          if (isGuest) {
+                            setGuardActionTitle('Notification Preferences');
+                            setIsGuestGuardOpen(true);
+                            return;
+                          }
+                          setNotifications({ ...notifications, email: !notifications.email });
+                        }}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                           notifications.email ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
                         }`}
@@ -653,7 +748,14 @@ export const SettingsPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-[#F1F5F9] font-medium">Milestones</span>
                       <button
-                        onClick={() => setNotifications({ ...notifications, milestones: !notifications.milestones })}
+                        onClick={() => {
+                          if (isGuest) {
+                            setGuardActionTitle('Notification Preferences');
+                            setIsGuestGuardOpen(true);
+                            return;
+                          }
+                          setNotifications({ ...notifications, milestones: !notifications.milestones });
+                        }}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                           notifications.milestones ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
                         }`}
@@ -672,7 +774,14 @@ export const SettingsPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-[#F1F5F9] font-medium">In-app</span>
                       <button
-                        onClick={() => setNotifications({ ...notifications, inApp: !notifications.inApp })}
+                        onClick={() => {
+                          if (isGuest) {
+                            setGuardActionTitle('Notification Preferences');
+                            setIsGuestGuardOpen(true);
+                            return;
+                          }
+                          setNotifications({ ...notifications, inApp: !notifications.inApp });
+                        }}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                           notifications.inApp ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
                         }`}
@@ -834,7 +943,14 @@ export const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                     <button
-                      onClick={() => setTwoFactorModalOpen(true)}
+                      onClick={() => {
+                        if (isGuest) {
+                          setGuardActionTitle('Two-Factor Authentication');
+                          setIsGuestGuardOpen(true);
+                          return;
+                        }
+                        setTwoFactorModalOpen(true);
+                      }}
                       className="px-3.5 py-1.5 rounded-xl bg-[#101A2D] hover:bg-[#1E2E48] border border-[#293B55] text-xs sm:text-sm text-white font-semibold transition-colors"
                     >
                       {twoFactorSimulated ? 'Manage' : 'Enable'}
@@ -842,22 +958,24 @@ export const SettingsPage: React.FC = () => {
                   </div>
 
                   {/* Security Information Links */}
-                  <div className="pt-2.5 border-t border-[#293B55]/70 space-y-2 text-xs sm:text-sm">
-                    <a
-                      href="#/integrations"
-                      className="flex items-center justify-between text-[#2879E8] hover:text-[#60A5FA] transition-colors py-0.5"
-                    >
-                      <span>Security credentials policy</span>
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="#/integrations"
-                      className="flex items-center justify-between text-[#2879E8] hover:text-[#60A5FA] transition-colors py-0.5"
-                    >
-                      <span>Handling & permissions audit</span>
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
+                  {!isClient && (
+                    <div className="pt-2.5 border-t border-[#293B55]/70 space-y-2 text-xs sm:text-sm">
+                      <a
+                        href="#/integrations"
+                        className="flex items-center justify-between text-[#2879E8] hover:text-[#60A5FA] transition-colors py-0.5"
+                      >
+                        <span>Security credentials policy</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                      <a
+                        href="#/integrations"
+                        className="flex items-center justify-between text-[#2879E8] hover:text-[#60A5FA] transition-colors py-0.5"
+                      >
+                        <span>Handling & permissions audit</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 {/* B. IN-APP PREFERENCES CARD */}

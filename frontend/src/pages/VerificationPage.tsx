@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
 import { Milestone, Project } from '@/types';
+import { GuestGuardModal } from '@/components/common';
 
 // Octocat GitHub SVG Icon
 const GitHubIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
@@ -62,6 +63,8 @@ export const VerificationPage: React.FC = () => {
 
   // Navigation & UI States
   const { openMobileSidebar } = useSidebar();
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+  const [guardActionTitle, setGuardActionTitle] = useState('AI Verification Action');
   const [activeTab, setActiveTab] = useState<'recent' | 'projects' | 'agents'>('recent');
   const [selectedAgentModal, setSelectedAgentModal] = useState<string | null>(null);
   const [selectedExecutionDetails, setSelectedExecutionDetails] = useState<AgentExecution | null>(null);
@@ -218,6 +221,11 @@ export const VerificationPage: React.FC = () => {
 
   // Action Handlers
   const handleApproveAndPay = async () => {
+    if (isGuest) {
+      setGuardActionTitle('Approve Milestone & Authorize Settlement');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     setIsSubmittingApproval(true);
     try {
       const targetMilestone = milestones[0];
@@ -235,6 +243,11 @@ export const VerificationPage: React.FC = () => {
 
   const handleRequestChanges = async () => {
     if (!changesFeedback.trim()) return;
+    if (isGuest) {
+      setGuardActionTitle('Request Deliverable Changes');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     setIsSubmittingApproval(true);
     try {
       const targetMilestone = milestones[0];
@@ -1371,6 +1384,14 @@ export const VerificationPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Guest Mode Guard Modal */}
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle={guardActionTitle}
+        message="Submitting verification packets or dispatching milestone changes is disabled in Guest Demo Mode."
+      />
     </div>
   );
 };

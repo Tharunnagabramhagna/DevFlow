@@ -56,19 +56,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
     const r = params.get('role');
     if (r === 'CLIENT' || r === 'DEVELOPER') {
       setSelectedRole(r as UserRole);
+    } else if (initialRole) {
+      setSelectedRole(initialRole);
+    } else if (location.pathname === '/login') {
+      setSelectedRole(null);
     }
-  }, [location]);
+  }, [location, initialRole]);
 
   const handleSelectRole = (role: UserRole) => {
     setSelectedRole(role);
     setIsGuestSelectOpen(false);
     setError(null);
+    navigate(role === 'CLIENT' ? '/login/client' : '/login/developer');
   };
 
   const handleBackToRoleSelection = () => {
     setSelectedRole(null);
     setIsGuestSelectOpen(false);
     setError(null);
+    navigate('/login');
   };
 
   const handleContinueAsGuest = async (persona: 'CLIENT' | 'DEVELOPER') => {

@@ -16,183 +16,124 @@ import {
 } from './mockData';
 
 const BASE_URL = '/api';
+const AUTH_STORAGE_KEY = 'devflow_auth_session';
 
-// In-memory state for interactive client modifications during the session
-let localProjects: Project[] = [...MOCK_PROJECTS];
-let localMilestones: Milestone[] = [...MOCK_MILESTONES];
+function getSessionContext(): { isGuest: boolean; token: string | null } {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return { isGuest: false, token: null };
+    const parsed = JSON.parse(raw);
+    const isGuest = parsed?.user?.role === 'GUEST' || Boolean(parsed?.user?.isGuest);
+    if (isGuest) {
+      return { isGuest: true, token: null };
+    }
+    const token =
+      typeof parsed?.accessToken === 'string' &&
+      !parsed.accessToken.startsWith('simulated_token_') &&
+      !parsed.accessToken.startsWith('guest_demo_token_')
+        ? parsed.accessToken
+        : null;
+    return { isGuest: false, token };
+  } catch {
+    return { isGuest: false, token: null };
+  }
+}
+
+function getAuthHeaders(includeJson = false): HeadersInit {
+  const { token } = getSessionContext();
+  const headers: Record<string, string> = {};
+  if (includeJson) headers['Content-Type'] = 'application/json';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
+function normalizeProject(raw: any): Project {
+  const milestones = Array.isArray(raw.milestones) ? raw.milestones : [];
+  return {
+    id: raw.id,
+    name: raw.name || raw.title || 'Untitled Project',
+    description: raw.description || '',
+    clientName: raw.clientName || raw.client?.name || 'Client Workspace',
+    clientEmail: raw.clientEmail || raw.client?.email || '',
+    githubRepo:
+      raw.githubRepo ||
+      (raw.githubRepoOwner && raw.githubRepoName
+        ? `${raw.githubRepoOwner}/${raw.githubRepoName}`
+        : ''),
+    totalBudget: Number(raw.totalBudget ?? raw.budget ?? 0),
+    currency: raw.currency || 'USD',
+    createdAt: raw.createdAt || new Date().toISOString(),
+    updatedAt: raw.updatedAt || new Date().toISOString(),
+    milestonesCount: raw.milestonesCount ?? raw._count?.milestones ?? milestones.length,
+    completedMilestonesCount:
+      raw.completedMilestonesCount ??
+      milestones.filter((m: any) => m.status === 'APPROVED' || m.status === 'PAID').length,
+  };
+}
+
+function normalizeMilestone(raw: any): Milestone {
+  const statusMap: Record<string, Milestone['status']> = {
+    PENDING: 'in_progress',
+    IN_PROGRESS: 'in_progress',
+    EVIDENCE_SUBMITTED: 'evidence_submitted',
+    APPROVED: 'client_approved',
+    REJECTED: 'rejected',
+    PAID: 'paid',
+  };
+  return {
+    id: raw.id,
+    projectId: raw.projectId,
+    title: raw.title,
+    description: raw.description || '',
+    order: raw.order ?? raw.orderIndex ?? 0,
+    amount: Number(raw.amount ?? raw.paymentAmount ?? 0),
+    currency: raw.currency || 'USD',
+    dueDate: raw.dueDate || new Date().toISOString(),
+    status: statusMap[raw.status] || raw.status || 'in_progress',
+    requirements: Array.isArray(raw.requirements)
+      ? raw.requirements.map((r: any, idx: number) =>
+          typeof r === 'string'
+            ? { id: `req_${idx}`, milestoneId: raw.id, title: r, description: r, satisfied: false }
+            : r
+        )
+      : [],
+    githubBranch: raw.githubBranch,
+    aiReport: raw.aiReport,
+    clientApproval: raw.clientApproval,
+    invoice: raw.invoice,
+    commitsCount: raw.commitsCount ?? raw._count?.evidence ?? 0,
+  };
+}
+
+const EMPTY_TELEMETRY: DeveloperTelemetry = {
+  totalRevenuePaid: 0,
+  pendingInvoicesAmount: 0,
+  activeMilestonesCount: 0,
+  aiVerificationPassRate: 0,
+  totalProjects: 0,
+  currency: 'USD',
+};
+
+// Isolated in-memory demo state exclusively for Guest Mode
+const demoProjects: Project[] = [...MOCK_PROJECTS];
+const demoMilestones: Milestone[] = [...MOCK_MILESTONES];
 
 export const devFlowApi = {
   /**
-   * Fetch high-level developer telemetry metrics
+   * Fetch high-level workspace telemetry metrics
    */
   async getTelemetry(): Promise<{ data: DeveloperTelemetry; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/telemetry`, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Backend service not reachable or endpoint not yet registered
+    const { isGuest, token } = getSessionContext();
+    if (isGuest) {
+      return { data: MOCK_TELEMETRY, isMock: true };
     }
-    return { data: MOCK_TELEMETRY, isMock: true };
-  },
-
-  /**
-   * Fetch all registered projects
-   */
-  async getProjects(): Promise<{ data: Project[]; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/projects`, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
-    }
-    return { data: localProjects, isMock: true };
-  },
-
-  /**
-   * Create a new project
-   */
-  async createProject(
-    projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'milestonesCount' | 'completedMilestonesCount'>
-  ): Promise<{ data: Project; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(projectData),
-        signal: AbortSignal.timeout(2000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
+    if (!token) {
+      return { data: EMPTY_TELEMETRY, isMock: false };
     }
 
-    const newProject: Project = {
-      ...projectData,
-      id: `proj_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      milestonesCount: 0,
-      completedMilestonesCount: 0,
-    };
-    localProjects = [newProject, ...localProjects];
-    return { data: newProject, isMock: true };
-  },
-
-  /**
-   * Create a new milestone
-   */
-  async createMilestone(
-    milestoneData: Omit<Milestone, 'id' | 'commitsCount'>
-  ): Promise<{ data: Milestone; isMock: boolean }> {
     try {
-      const res = await fetch(`${BASE_URL}/milestones`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(milestoneData),
-        signal: AbortSignal.timeout(2000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
-    }
-
-    const newMilestone: Milestone = {
-      ...milestoneData,
-      id: `ms_${Date.now()}`,
-      commitsCount: 0,
-    };
-    localMilestones = [...localMilestones, newMilestone];
-    return { data: newMilestone, isMock: true };
-  },
-
-  /**
-   * Fetch project milestones
-   */
-  async getMilestones(projectId?: string): Promise<{ data: Milestone[]; isMock: boolean }> {
-    try {
-      const url = projectId ? `${BASE_URL}/projects/${projectId}/milestones` : `${BASE_URL}/milestones`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
-    }
-    const filtered = projectId
-      ? localMilestones.filter((m) => m.projectId === projectId)
-      : localMilestones;
-    return { data: filtered, isMock: true };
-  },
-
-  /**
-   * Fetch single milestone by ID
-   */
-  async getMilestoneById(id: string): Promise<{ data: Milestone | undefined; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/milestones/${id}`, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
-    }
-    const found = localMilestones.find((m) => m.id === id);
-    return { data: found, isMock: true };
-  },
-
-  /**
-   * Fetch recent GitHub commits
-   */
-  async getGitHubCommits(): Promise<{ data: GitHubCommitEvidence[]; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/github/commits`, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
-    }
-    return { data: MOCK_COMMITS, isMock: true };
-  },
-
-  /**
-   * Fetch GitHub Pull Requests
-   */
-  async getGitHubPullRequests(): Promise<{ data: GitHubPullRequestEvidence[]; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/github/pulls`, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
-    }
-    return { data: MOCK_PULL_REQUESTS, isMock: true };
-  },
-
-  /**
-   * Trigger AI Verification analysis for a milestone
-   */
-  async runAIVerification(milestoneId: string): Promise<{ data: AIVerificationReport; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/ai/verify/${milestoneId}`, {
-        method: 'POST',
+      const res = await fetch(`${BASE_URL}/telemetry`, {
+        headers: getAuthHeaders(),
         signal: AbortSignal.timeout(2500),
       });
       if (res.ok) {
@@ -200,217 +141,329 @@ export const devFlowApi = {
         return { data, isMock: false };
       }
     } catch {
-      // Fallback simulated execution
+      // Backend service unreachable
     }
-
-    const report: AIVerificationReport = {
-      id: `ai_rep_${Date.now()}`,
-      milestoneId,
-      overallScore: 92,
-      status: 'passed',
-      summary:
-        'Analyzed 4 matching GitHub commits. Code implementation satisfies technical criteria. Test suites pass.',
-      confidence: 92,
-      analyzedAt: new Date().toISOString(),
-      engineVersion: 'DevFlow-AI v0.1.0 (Gemini Pro)',
-      commitsSampled: 4,
-      disclaimer:
-        'AI analysis provides automated pattern matching only. AI confidence is NOT proof of correctness. AI verification is NOT client approval. Human review is required before any payment action.',
-      requirementsAnalysis: [
-        {
-          requirementId: 'req_auto_01',
-          requirementTitle: 'Core Implementation',
-          status: 'satisfied',
-          score: 94,
-          explanation: 'Syntactic matching with commit diff confirmed.',
-          matchedCommits: ['54813f0a9b8c7d6e'],
-          missingEvidence: undefined,
-        },
-      ],
-      recommendations: ['Requires human-in-the-loop client sign-off before invoice generation.'],
-    };
-
-    localMilestones = localMilestones.map((m) =>
-      m.id === milestoneId ? { ...m, status: 'ai_verified', aiReport: report } : m
-    );
-
-    return { data: report, isMock: true };
+    return { data: EMPTY_TELEMETRY, isMock: false };
   },
 
   /**
-   * Submit Client Approval / Feedback
+   * Fetch all registered projects
+   */
+  async getProjects(): Promise<{ data: Project[]; isMock: boolean }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest) {
+      return { data: demoProjects, isMock: true };
+    }
+    if (!token) {
+      return { data: [], isMock: false };
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/projects`, {
+        headers: getAuthHeaders(),
+        signal: AbortSignal.timeout(2500),
+      });
+      if (res.ok) {
+        const raw = await res.json();
+        const list = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
+        return { data: list.map(normalizeProject), isMock: false };
+      }
+    } catch {
+      // Do not replace authenticated user view with demo fixtures
+    }
+    return { data: [], isMock: false };
+  },
+
+  /**
+   * Create a new project (disabled in Guest Mode)
+   */
+  async createProject(
+    projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'milestonesCount' | 'completedMilestonesCount'>
+  ): Promise<{ data: Project; isMock: boolean }> {
+    const { isGuest } = getSessionContext();
+    if (isGuest) {
+      throw new Error('Guest Mode: Creating projects requires signing in to an account.');
+    }
+
+    const res = await fetch(`${BASE_URL}/projects`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({
+        title: projectData.name,
+        description: projectData.description,
+        budget: projectData.totalBudget,
+        currency: projectData.currency,
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { data: normalizeProject(data), isMock: false };
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || 'Failed to create project.');
+  },
+
+  /**
+   * Create a new milestone (disabled in Guest Mode)
+   */
+  async createMilestone(
+    milestoneData: Omit<Milestone, 'id' | 'commitsCount'>
+  ): Promise<{ data: Milestone; isMock: boolean }> {
+    const { isGuest } = getSessionContext();
+    if (isGuest) {
+      throw new Error('Guest Mode: Creating milestones requires signing in to an account.');
+    }
+
+    const res = await fetch(`${BASE_URL}/projects/${milestoneData.projectId}/milestones`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify(milestoneData),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { data: normalizeMilestone(data), isMock: false };
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || 'Failed to create milestone.');
+  },
+
+  /**
+   * Fetch project milestones
+   */
+  async getMilestones(projectId?: string): Promise<{ data: Milestone[]; isMock: boolean }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest) {
+      const filtered = projectId
+        ? demoMilestones.filter((m) => m.projectId === projectId)
+        : demoMilestones;
+      return { data: filtered, isMock: true };
+    }
+    if (!token) {
+      return { data: [], isMock: false };
+    }
+
+    try {
+      const url = projectId ? `${BASE_URL}/projects/${projectId}/milestones` : `${BASE_URL}/milestones`;
+      const res = await fetch(url, {
+        headers: getAuthHeaders(),
+        signal: AbortSignal.timeout(2500),
+      });
+      if (res.ok) {
+        const raw = await res.json();
+        const list = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
+        return { data: list.map(normalizeMilestone), isMock: false };
+      }
+    } catch {
+      // Do not replace authenticated user view with demo fixtures
+    }
+    return { data: [], isMock: false };
+  },
+
+  /**
+   * Fetch single milestone by ID
+   */
+  async getMilestoneById(id: string): Promise<{ data: Milestone | undefined; isMock: boolean }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest) {
+      return { data: demoMilestones.find((m) => m.id === id), isMock: true };
+    }
+    if (!token) {
+      return { data: undefined, isMock: false };
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/milestones/${id}`, {
+        headers: getAuthHeaders(),
+        signal: AbortSignal.timeout(2500),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { data: normalizeMilestone(data), isMock: false };
+      }
+    } catch {
+      // Fallback safely without demo leakage
+    }
+    return { data: undefined, isMock: false };
+  },
+
+  /**
+   * Fetch recent GitHub commits
+   */
+  async getGitHubCommits(): Promise<{ data: GitHubCommitEvidence[]; isMock: boolean }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest) {
+      return { data: MOCK_COMMITS, isMock: true };
+    }
+    if (!token) {
+      return { data: [], isMock: false };
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/github/commits`, {
+        headers: getAuthHeaders(),
+        signal: AbortSignal.timeout(2500),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { data, isMock: false };
+      }
+    } catch {
+      // Do not replace authenticated user view with demo fixtures
+    }
+    return { data: [], isMock: false };
+  },
+
+  /**
+   * Fetch GitHub Pull Requests
+   */
+  async getGitHubPullRequests(): Promise<{ data: GitHubPullRequestEvidence[]; isMock: boolean }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest) {
+      return { data: MOCK_PULL_REQUESTS, isMock: true };
+    }
+    if (!token) {
+      return { data: [], isMock: false };
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/github/pulls`, {
+        headers: getAuthHeaders(),
+        signal: AbortSignal.timeout(2500),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { data, isMock: false };
+      }
+    } catch {
+      // Do not replace authenticated user view with demo fixtures
+    }
+    return { data: [], isMock: false };
+  },
+
+  /**
+   * Trigger AI Verification analysis for a milestone (read-only/restricted in Guest Mode)
+   */
+  async runAIVerification(milestoneId: string): Promise<{ data: AIVerificationReport; isMock: boolean }> {
+    const { isGuest } = getSessionContext();
+    if (isGuest) {
+      throw new Error('Guest Mode: Triggering live AI verification requires signing in.');
+    }
+
+    const res = await fetch(`${BASE_URL}/ai/verify/${milestoneId}`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { data, isMock: false };
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || 'Failed to run AI verification.');
+  },
+
+  /**
+   * Submit Client Approval / Feedback (disabled in Guest Mode)
    */
   async submitClientApproval(
     milestoneId: string,
     status: 'approved' | 'changes_requested',
     feedback?: string
   ): Promise<{ success: boolean; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/milestones/${milestoneId}/approval`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, feedback }),
-        signal: AbortSignal.timeout(2000),
-      });
-      if (res.ok) {
-        return { success: true, isMock: false };
-      }
-    } catch {
-      // Fallback
+    const { isGuest } = getSessionContext();
+    if (isGuest) {
+      throw new Error('Guest Mode: Milestone approval requires signing in as a Client.');
     }
 
-    localMilestones = localMilestones.map((m) => {
-      if (m.id === milestoneId) {
-        return {
-          ...m,
-          status: status === 'approved' ? 'client_approved' : 'evidence_submitted',
-          clientApproval: {
-            id: `appr_${Date.now()}`,
-            milestoneId,
-            approvedBy: 'Client Representative',
-            approvedAt: status === 'approved' ? new Date().toISOString() : undefined,
-            status,
-            feedback,
-          },
-        };
-      }
-      return m;
+    const res = await fetch(`${BASE_URL}/milestones/${milestoneId}/approval`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ status, feedback }),
+      signal: AbortSignal.timeout(3000),
     });
-
-    return { success: true, isMock: true };
+    if (res.ok) {
+      return { success: true, isMock: false };
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || 'Failed to submit milestone approval.');
   },
 
   /**
    * Get all invoices across milestones
    */
   async getInvoices(): Promise<{ data: { milestone: Milestone; invoice: PayPalInvoice }[]; isMock: boolean }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest) {
+      const invoices = demoMilestones
+        .filter((m) => m.invoice)
+        .map((m) => ({ milestone: m, invoice: m.invoice! }));
+      return { data: invoices, isMock: true };
+    }
+    if (!token) {
+      return { data: [], isMock: false };
+    }
+
     try {
       const res = await fetch(`${BASE_URL}/payments/invoices`, {
-        signal: AbortSignal.timeout(2000),
+        headers: getAuthHeaders(),
+        signal: AbortSignal.timeout(2500),
       });
       if (res.ok) {
         const data = await res.json();
         return { data, isMock: false };
       }
     } catch {
-      // Fallback
+      // Do not replace authenticated user view with demo fixtures
     }
 
-    const invoices = localMilestones
-      .filter((m) => m.invoice)
-      .map((m) => ({ milestone: m, invoice: m.invoice! }));
-
-    return { data: invoices, isMock: true };
+    return { data: [], isMock: false };
   },
 
   /**
-   * Generate PayPal Invoice for approved milestone
+   * Generate PayPal Invoice for approved milestone (disabled in Guest Mode)
    */
   async generatePayPalInvoice(milestoneId: string): Promise<{ data: PayPalInvoice; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/payments/invoices/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ milestoneId }),
-        signal: AbortSignal.timeout(2000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
+    const { isGuest } = getSessionContext();
+    if (isGuest) {
+      throw new Error('Guest Mode: Generating PayPal invoices requires signing in.');
     }
 
-    const milestone = localMilestones.find((m) => m.id === milestoneId);
-    const invoice: PayPalInvoice = {
-      id: `inv_${Date.now()}`,
-      invoiceNumber: `INV-2026-084${localMilestones.length + 1}`,
-      milestoneId,
-      projectId: milestone?.projectId || 'proj_devflow_01',
-      recipientEmail: 'marcus@meridianlabs.io',
-      recipientName: 'Marcus Vance',
-      amount: milestone?.amount || 2500.0,
-      currency: 'USD',
-      status: 'SENT', // Invoice sent, not paid yet!
-      paypalInvoiceId: `INV2-DEMO-${Math.random().toString(36).substring(2, 6).toUpperCase()}-SANDBOX`,
-      createdAt: new Date().toISOString(),
-      sentAt: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 14 * 86400000).toISOString(),
-      subtotal: milestone?.amount || 2500.0,
-      tax: 0,
-      notes: `Invoice generated for deliverable: ${milestone?.title || 'Milestone deliverable'} (Demo Mode)`,
-      items: [
-        {
-          id: `item_${Date.now()}`,
-          description: milestone?.title || 'Milestone Deliverable Execution',
-          quantity: 1,
-          unitPrice: milestone?.amount || 2500.0,
-          total: milestone?.amount || 2500.0,
-        },
-      ],
-      timeline: [
-        {
-          event: 'INVOICE_CREATED',
-          timestamp: new Date().toISOString(),
-          description: 'Invoice drafted via PayPal Invoicing REST simulation',
-          actor: 'DevFlow Invoicing Engine',
-        },
-        {
-          event: 'INVOICE_SENT',
-          timestamp: new Date().toISOString(),
-          description: 'Dispatched to marcus@meridianlabs.io (Sandbox)',
-          actor: 'PayPal Gateway',
-        },
-      ],
-    };
-
-    localMilestones = localMilestones.map((m) =>
-      m.id === milestoneId ? { ...m, status: 'invoiced', invoice } : m
-    );
-
-    return { data: invoice, isMock: true };
+    const res = await fetch(`${BASE_URL}/payments/invoices/generate`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ milestoneId }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { data, isMock: false };
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || 'Failed to generate PayPal invoice.');
   },
 
   /**
-   * Record verified PayPal Webhook payment event
+   * Record verified PayPal Webhook payment event (disabled in Guest Mode)
    */
   async recordPayPalPaymentEvent(invoiceId: string): Promise<{ data: PayPalInvoice; isMock: boolean }> {
-    try {
-      const res = await fetch(`${BASE_URL}/payments/webhooks/simulate-paid`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoiceId }),
-        signal: AbortSignal.timeout(2000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { data, isMock: false };
-      }
-    } catch {
-      // Fallback
+    const { isGuest } = getSessionContext();
+    if (isGuest) {
+      throw new Error('Guest Mode: Payment execution is disabled in Demo Mode.');
     }
 
-    let updatedInvoice: PayPalInvoice | undefined;
-
-    localMilestones = localMilestones.map((m) => {
-      if (m.invoice && (m.invoice.id === invoiceId || m.invoice.paypalInvoiceId === invoiceId)) {
-        updatedInvoice = {
-          ...m.invoice,
-          status: 'PAID',
-          paidAt: new Date().toISOString(),
-          paypalWebhookEventId: `WH-${Math.random().toString(36).substring(2, 10).toUpperCase()}-VERIFIED`,
-          paymentMethod: 'PayPal Instant Settlement',
-        };
-        return { ...m, status: 'paid', invoice: updatedInvoice };
-      }
-      return m;
+    const res = await fetch(`${BASE_URL}/payments/webhooks/simulate-paid`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ invoiceId }),
+      signal: AbortSignal.timeout(5000),
     });
-
-    if (!updatedInvoice) {
-      throw new Error(`Invoice with ID ${invoiceId} not found.`);
+    if (res.ok) {
+      const data = await res.json();
+      return { data, isMock: false };
     }
-
-    return { data: updatedInvoice, isMock: true };
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || 'Failed to record payment event.');
   },
 };

@@ -64,9 +64,32 @@ export class PayPalService {
 
   /**
    * Returns true if valid PayPal credentials are configured.
+   * Rejects undefined, empty strings, whitespace-only values, and template/example placeholders.
    */
   isConfigured(): boolean {
-    return Boolean(this.clientId && this.clientSecret);
+    const id = this.clientId?.trim();
+    const secret = this.clientSecret?.trim();
+
+    if (!id || !secret) {
+      return false;
+    }
+
+    const isPlaceholder = (val: string): boolean => {
+      const lower = val.toLowerCase();
+      return (
+        lower.startsWith('your_paypal_') ||
+        lower.startsWith('your_') ||
+        lower.includes('placeholder') ||
+        lower === 'example' ||
+        lower.includes('example_')
+      );
+    };
+
+    if (isPlaceholder(id) || isPlaceholder(secret)) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

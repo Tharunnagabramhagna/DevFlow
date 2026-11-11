@@ -120,7 +120,7 @@ const REFERENCE_PROJECTS: DisplayProject[] = [
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
   const { openMobileSidebar } = useSidebar();
-  const { isGuest } = useAuth();
+  const { isGuest, isClient } = useAuth();
   const [projects, setProjects] = useState<DisplayProject[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
@@ -315,10 +315,14 @@ export const ProjectsPage: React.FC = () => {
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">Projects</h1>
+                <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                  {isClient ? 'My Projects' : 'Projects'}
+                </h1>
               </div>
               <p className="text-xs sm:text-sm text-slate-400">
-                Manage your development projects, milestones and client relationships.
+                {isClient
+                  ? 'Manage and monitor your contracted projects, milestone deliverables and assigned developers.'
+                  : 'Manage your assigned development projects, repository connections and milestone progress.'}
               </p>
             </div>
 

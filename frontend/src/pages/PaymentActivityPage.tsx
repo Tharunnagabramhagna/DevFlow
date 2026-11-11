@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
             Bell,
   X,
@@ -56,6 +57,7 @@ const MONTHLY_TREND: MonthlyDataPoint[] = [
 
 export const PaymentActivityPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isClient } = useAuth();
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
@@ -301,7 +303,7 @@ export const PaymentActivityPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
-                  Payment Activity &amp; Settlements
+                  {isClient ? 'Payments & Settlements' : 'Payments & Payouts'}
                 </h1>
                 <span className="text-[10px] font-sans font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full whitespace-nowrap">
                   SANDBOX TELEMETRY

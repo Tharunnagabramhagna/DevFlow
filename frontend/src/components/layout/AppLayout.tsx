@@ -8,7 +8,7 @@ import { CommandPalette, AmbientBackground } from '@/components/common';
 const AppLayoutInner: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
-  const { isGuest, logout } = useAuth();
+  const { isGuest, isClient, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -54,10 +54,12 @@ const AppLayoutInner: React.FC = () => {
             <div className="flex items-center gap-2 truncate pr-2">
               <span className="w-2 h-2 rounded-full bg-teal-500 dark:bg-teal-400 animate-pulse shrink-0" />
               <span className="font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-500/20 border border-teal-300 dark:border-teal-500/40 shrink-0 font-mono">
-                GUEST MODE
+                {isClient ? 'CLIENT GUEST' : 'DEVELOPER GUEST'}
               </span>
               <span className="text-teal-900 dark:text-slate-300 truncate text-xs">
-                You are exploring DevFlow in Guest Mode. Sign in to unlock full functionality.
+                {isClient
+                  ? 'You are exploring DevFlow from a Client perspective (demonstration mode). Sign in to unlock full functionality.'
+                  : 'You are exploring DevFlow from a Developer perspective (demonstration mode). Sign in to unlock full functionality.'}
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">

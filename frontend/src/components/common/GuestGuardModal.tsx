@@ -14,7 +14,7 @@ export const GuestGuardModal: React.FC<GuestGuardModalProps> = ({
   isOpen,
   onClose,
   actionTitle,
-  message = 'Guest Mode: Please sign in or create an account to use this feature.',
+  message = 'Guest Mode: Please sign in or create an account to access this functionality.',
 }) => {
   const navigate = useNavigate();
 

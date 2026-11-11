@@ -23,14 +23,13 @@ import {
   LogOut,
   BriefcaseBusiness,
   Code2,
-  Eye,
 } from 'lucide-react';
 import { GuestGuardModal } from '@/components/common';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { openMobileSidebar } = useSidebar();
-  const { user, role, isGuest, logout } = useAuth();
+  const { user, isGuest, isClient, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [telemetry, setTelemetry] = useState<DeveloperTelemetry | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -68,23 +67,29 @@ export const DashboardPage: React.FC = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // User details from auth context or profile storage
-  const displayName = isGuest ? 'Guest Explorer' : user?.name || 'Alex Morgan';
-  const firstName = isGuest ? 'Guest' : displayName.split(' ')[0];
-  const initials = isGuest
-    ? 'GE'
-    : displayName
-        .split(' ')
-        .filter(Boolean)
-        .map((n) => n[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase() || 'AM';
+  const displayName = user?.name || (isClient ? 'Marcus Vance' : 'Alex Morgan');
+  const firstName = displayName.split(' ')[0];
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || (isClient ? 'MV' : 'AM');
 
-  const isClientRole = !isGuest && role === 'CLIENT';
-  const roleBadgeLabel = isGuest ? 'Guest Mode' : isClientRole ? 'Client' : 'Developer';
+  const roleBadgeLabel = isGuest
+    ? isClient
+      ? 'Client Guest'
+      : 'Developer Guest'
+    : isClient
+    ? 'Client'
+    : 'Developer';
+
   const avatarGradient = isGuest
-    ? 'bg-gradient-to-tr from-teal-500 to-cyan-500'
-    : isClientRole
+    ? isClient
+      ? 'bg-gradient-to-tr from-blue-500 to-teal-400'
+      : 'bg-gradient-to-tr from-purple-500 to-indigo-400'
+    : isClient
     ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
     : 'bg-gradient-to-tr from-purple-600 to-indigo-400';
 
@@ -231,7 +236,7 @@ export const DashboardPage: React.FC = () => {
                       className={`text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded-full border ${
                         isGuest
                           ? 'bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono'
-                          : isClientRole
+                          : isClient
                           ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
                           : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
                       }`}
@@ -247,24 +252,24 @@ export const DashboardPage: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-56 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                   <div className="px-3.5 py-2 border-b border-[#26344B]/70">
                     <p className="font-bold text-white truncate">{displayName}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{user?.email || (isGuest ? 'guest@devflow.demo' : 'user@devflow.io')}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{user?.email || (isGuest ? (isClient ? 'client.guest@devflow.demo' : 'developer.guest@devflow.demo') : 'user@devflow.io')}</p>
                     <span
                       className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1.5 border ${
                         isGuest
                           ? 'bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono'
-                          : isClientRole
+                          : isClient
                           ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
                           : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
                       }`}
                     >
                       {isGuest ? (
-                        <Eye className="w-2.5 h-2.5" />
-                      ) : isClientRole ? (
+                        isClient ? <BriefcaseBusiness className="w-2.5 h-2.5" /> : <Code2 className="w-2.5 h-2.5" />
+                      ) : isClient ? (
                         <BriefcaseBusiness className="w-2.5 h-2.5" />
                       ) : (
                         <Code2 className="w-2.5 h-2.5" />
                       )}
-                      <span>{isGuest ? 'Guest Mode' : `${roleBadgeLabel} Account`}</span>
+                      <span>{isGuest ? roleBadgeLabel : `${roleBadgeLabel} Account`}</span>
                     </span>
                   </div>
                   {isGuest ? (
@@ -333,42 +338,69 @@ export const DashboardPage: React.FC = () => {
                   className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shrink-0 ${
                     isGuest
                       ? 'bg-teal-950/80 text-teal-300 border-teal-800/60'
-                      : isClientRole
+                      : isClient
                       ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
                       : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
                   }`}
                 >
-                  {isGuest ? 'DEMO MODE' : roleBadgeLabel.toUpperCase()}
+                  {isGuest ? (isClient ? 'CLIENT GUEST' : 'DEVELOPER GUEST') : isClient ? 'CLIENT' : 'DEVELOPER'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
                 {isGuest
-                  ? 'Fictional demo data \u2022 Real-time telemetry, mock commit proofs and simulated milestone intelligence.'
-                  : isClientRole
+                  ? isClient
+                    ? 'Meridian Labs \u2022 Milestone approvals, AST proof audits and PayPal invoice release in demonstration mode.'
+                    : 'Northstar Digital Studio \u2022 Real-time telemetry, commit proofs and milestone intelligence in demonstration mode.'
+                  : isClient
                   ? `${user?.organization || 'Meridian Labs'} \u2022 Milestone approvals, AST proof audits and PayPal invoice release.`
                   : `${user?.organization || 'Northstar Digital Studio'} \u2022 Real-time telemetry, commit proofs and milestone intelligence.`}
               </p>
             </div>
-            <button
-              onClick={() => {
-                if (isGuest) {
-                  setIsGuestGuardOpen(true);
-                  return;
-                }
-                setIsNewProjectModalOpen(true);
-              }}
-              className="self-start sm:self-auto shrink-0 whitespace-nowrap bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span>New Project</span>
-            </button>
+            {isClient ? (
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    setIsGuestGuardOpen(true);
+                    return;
+                  }
+                  setIsNewProjectModalOpen(true);
+                }}
+                className="self-start sm:self-auto shrink-0 whitespace-nowrap bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>New Project</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                <button
+                  onClick={() => navigate('/evidence')}
+                  className="whitespace-nowrap bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <FileCode className="w-4 h-4 shrink-0" />
+                  <span>Submit Evidence</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (isGuest) {
+                      setIsGuestGuardOpen(true);
+                      return;
+                    }
+                    setIsNewProjectModalOpen(true);
+                  }}
+                  className="whitespace-nowrap bg-[#101A2D] hover:bg-[#15233D] text-slate-300 hover:text-white border border-[#26344B] font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 shrink-0" />
+                  <span>New Project</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 4. KPI CARDS */}
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3.5">
             {/* Card 1: Active Projects */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-400 font-semibold">Active Projects</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">{isClient ? 'Active Projects' : 'Assigned Projects'}</span>
               <div className="flex items-center justify-between mt-3">
                 <span className="text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-white">
                   {String(projects.length || 4).padStart(2, '0')}
@@ -395,7 +427,7 @@ export const DashboardPage: React.FC = () => {
 
             {/* Card 3: Pending Approvals */}
             <div className="p-4 rounded-xl bg-white dark:bg-[#171E30] border border-amber-200 dark:border-amber-900/60 flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-700 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-500 dark:text-slate-400 font-semibold">Pending Client Review</span>
+              <span className="font-sans text-xs text-slate-500 dark:text-slate-400 font-semibold">{isClient ? 'Pending Client Review' : 'Deliverables in Review'}</span>
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-amber-600 dark:text-amber-400">
                   02
@@ -406,7 +438,7 @@ export const DashboardPage: React.FC = () => {
 
             {/* Card 4: Outstanding Invoices */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-400 font-semibold">Outstanding Invoices</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">{isClient ? 'Outstanding Invoices' : 'Pending Earnings'}</span>
               <div className="mt-3 text-xl sm:text-2xl font-extrabold font-sans tabular-nums text-white">
                 ${telemetry ? telemetry.pendingInvoicesAmount.toLocaleString() : '4,500'}
               </div>
@@ -414,7 +446,7 @@ export const DashboardPage: React.FC = () => {
 
             {/* Card 5: Confirmed Payments */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-400 font-semibold">Confirmed Settlements</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">{isClient ? 'Confirmed Settlements' : 'Received Payouts'}</span>
               <div className="mt-3 text-xl sm:text-2xl font-extrabold font-sans tabular-nums text-emerald-400">
                 ${telemetry ? telemetry.totalRevenuePaid.toLocaleString() : '9,500'}
               </div>
@@ -432,12 +464,12 @@ export const DashboardPage: React.FC = () => {
                   <div className="flex items-center gap-2.5">
                     <FolderGit2 className="w-4 h-4 text-blue-400 shrink-0" />
                     <h3 className="font-heading text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-200">
-                      Active Projects &amp; Deliverables
+                      {isClient ? 'Active Projects & Milestone Review Queue' : 'Assigned Projects & Deliverables'}
                     </h3>
                   </div>
                   <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold font-sans bg-blue-950/70 border border-blue-800/60 text-blue-400 px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                    <span>4 Active Projects &bull; Fictional Demo Data</span>
+                    <span>4 Active Projects &bull; {isClient ? 'Client Review Queue' : 'Developer Task Stream'}</span>
                   </div>
                 </div>
 
@@ -447,18 +479,21 @@ export const DashboardPage: React.FC = () => {
                     <thead>
                       <tr className="border-b border-[#26344B]/70 text-[11px] text-slate-400 uppercase tracking-wider">
                         <th className="pb-2.5 pr-3 font-semibold">Project Name</th>
-                        <th className="pb-2.5 pr-3 font-semibold">Client</th>
+                        <th className="pb-2.5 pr-3 font-semibold">{isClient ? 'Assigned Studio / Dev' : 'Client'}</th>
                         <th className="pb-2.5 pr-3 font-semibold">Progress</th>
                         <th className="pb-2.5 pr-3 font-semibold">Current Deliverable</th>
                         <th className="pb-2.5 pr-3 font-semibold">Target Date</th>
-                        <th className="pb-2.5 font-semibold text-right">Status</th>
+                        <th className="pb-2.5 font-semibold text-right">{isClient ? 'Review Action' : 'Status'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
                       {projects.map((proj, idx) => {
                         const progress = idx === 0 ? 75 : idx === 1 ? 100 : idx === 2 ? 40 : 25;
                         const milestoneLabel = idx === 0 ? 'PayPal Webhook Engine' : idx === 1 ? 'Settlement Reconciler' : idx === 2 ? 'REST Route Hardening' : 'AST Evidence Audit';
-                        const statusLabel = idx === 1 ? 'Verified' : idx === 0 ? 'In Review' : 'In Progress';
+                        const developerLabel = idx === 0 ? 'Alex Morgan (Northstar)' : idx === 1 ? 'Elena Rostova (DevLabs)' : idx === 2 ? 'Tariq Chen (Skyline)' : 'Marcus Vance (Studio)';
+                        const statusLabel = isClient
+                          ? (idx === 0 ? 'Needs Sign-Off' : idx === 1 ? 'Approved' : 'In Progress')
+                          : (idx === 1 ? 'Verified' : idx === 0 ? 'In Review' : 'In Progress');
                         const statusStyle = idx === 1
                           ? 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60'
                           : idx === 0
@@ -467,11 +502,11 @@ export const DashboardPage: React.FC = () => {
                         return (
                           <tr
                             key={proj.id}
-                            onClick={() => navigate('/projects')}
+                            onClick={() => navigate(isClient && idx === 0 ? '/evidence' : '/projects')}
                             className="hover:bg-[#15233D] transition-colors cursor-pointer"
                           >
                             <td className="py-3 pr-3 font-bold text-white">{proj.name}</td>
-                            <td className="py-3 pr-3 text-slate-300">{proj.clientName}</td>
+                            <td className="py-3 pr-3 text-slate-300">{isClient ? developerLabel : proj.clientName}</td>
                             <td className="py-3 pr-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-20 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
@@ -615,14 +650,14 @@ export const DashboardPage: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-[#2563EB] shrink-0" />
-                      <span className="font-medium font-sans whitespace-nowrap">Confirmed (Demo)</span>
+                      <span className="font-medium font-sans whitespace-nowrap">{isClient ? 'Confirmed Settlements' : 'Received Payouts'}</span>
                     </div>
                     <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">$9,500.00</div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center justify-end gap-1.5 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-[#38BDF8] shrink-0" />
-                      <span className="font-medium font-sans whitespace-nowrap">Pending Client</span>
+                      <span className="font-medium font-sans whitespace-nowrap">{isClient ? 'Outstanding Invoices' : 'Pending Disbursements'}</span>
                     </div>
                     <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">$4,500.00</div>
                   </div>
@@ -671,7 +706,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <FileCode className="w-4 h-4 text-blue-400 shrink-0" />
                     <h3 className="font-heading text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
-                      Audit Activity Feed
+                      {isClient ? 'Client Approval & Audit Feed' : 'Repository & Verification Feed'}
                     </h3>
                   </div>
                   <span className="text-[11px] text-slate-400 font-sans">Live Sync</span>
@@ -694,23 +729,29 @@ export const DashboardPage: React.FC = () => {
                     <div className="font-sans font-semibold text-white leading-snug">
                       Sandbox Invoice #INV-2026-0843 drafted ($5,000)
                     </div>
-                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">1h ago &bull; Meridian Labs</div>
+                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">
+                      1h ago &bull; {isClient ? 'Meridian Labs' : 'Northstar Digital Studio'}
+                    </div>
                   </div>
 
                   {/* Item 3 */}
                   <div className="relative">
                     <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-emerald-400 ring-4 ring-[#111C30]" />
                     <div className="font-sans font-semibold text-white leading-snug">
-                      Marcus Vance approved Milestone 2 deliverables
+                      {isClient ? 'Marcus Vance approved Milestone 2 deliverables' : 'Milestone 2 deliverable evidence verified'}
                     </div>
-                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">3h ago &bull; Human Sign-off</div>
+                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">
+                      {isClient ? '3h ago \u2022 Human Sign-off' : '3h ago \u2022 Commit proof attached'}
+                    </div>
                   </div>
 
                   {/* Item 4 */}
                   <div className="relative">
                     <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-[#111C30]" />
                     <div className="font-sans font-semibold text-white leading-snug">
-                      PayPal Webhook verified PAYMENT.INVOICE.PAID ($4,500)
+                      {isClient
+                        ? 'PayPal Webhook verified PAYMENT.INVOICE.PAID ($4,500)'
+                        : 'PayPal payout received for Milestone 1 ($4,500)'}
                     </div>
                     <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">1d ago &bull; TXN-DEMO-948124</div>
                   </div>
@@ -805,7 +846,7 @@ export const DashboardPage: React.FC = () => {
         isOpen={isGuestGuardOpen}
         onClose={() => setIsGuestGuardOpen(false)}
         actionTitle="Create Project"
-        message="Guest Mode: Please sign in or create an account to use this feature."
+        message="Guest Mode: Please sign in or create an account to access this functionality."
       />
     </div>
   );

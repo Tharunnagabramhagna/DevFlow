@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-            Bell,
+  Bell,
   Search,
   HelpCircle,
   GitCommit,
@@ -9,7 +10,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ExternalLink,
-    Copy,
+  Copy,
   Check,
   X,
   Menu,
@@ -19,6 +20,7 @@ import {
   Sparkles,
   Download,
   ListChecks,
+  Plus,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
 import { GitHubCommitEvidence, GitHubPullRequestEvidence, ChangedFile } from '@/types';
@@ -122,6 +124,7 @@ export interface UnifiedEvidenceItem {
 }
 
 export const EvidencePage: React.FC = () => {
+  const { isClient } = useAuth();
 
   // Navigation & UI States
   const { openMobileSidebar } = useSidebar();
@@ -130,6 +133,82 @@ export const EvidencePage: React.FC = () => {
   const [createReportModalOpen, setCreateReportModalOpen] = useState(false);
   const [diffModalOpen, setDiffModalOpen] = useState(false);
   const [requirementsListModalOpen, setRequirementsListModalOpen] = useState(false);
+
+  // Developer Submission & Client Governance States
+  const [submitEvidenceModalOpen, setSubmitEvidenceModalOpen] = useState(false);
+  const [newEvidenceMilestone, setNewEvidenceMilestone] = useState('Alpha Launch v1.0');
+  const [newEvidenceType, setNewEvidenceType] = useState<'Commit' | 'PR'>('PR');
+  const [newEvidenceRef, setNewEvidenceRef] = useState('');
+  const [newEvidenceNotes, setNewEvidenceNotes] = useState('');
+  const [approvedEvidenceIds, setApprovedEvidenceIds] = useState<string[]>(['commit-1']);
+  const [isReverifying, setIsReverifying] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [customSubmissions, setCustomSubmissions] = useState<UnifiedEvidenceItem[]>([]);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleApproveEvidence = (id: string) => {
+    if (!approvedEvidenceIds.includes(id)) {
+      setApprovedEvidenceIds((prev) => [...prev, id]);
+    }
+    showToast('Evidence deliverable approved by Client.');
+  };
+
+  const handleRequestRevision = (id: string) => {
+    showToast(`Revision request dispatched to developer for item ${id.substring(0, 8)}.`);
+  };
+
+  const handleReverify = () => {
+    setIsReverifying(true);
+    setTimeout(() => {
+      setIsReverifying(false);
+      showToast('AST code verification re-run completed with 98.4% score.');
+    }, 1200);
+  };
+
+  const handleSubmitEvidence = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEvidenceRef.trim()) return;
+
+    const newId = `sub-${Date.now()}`;
+    const newTitle =
+      newEvidenceType === 'PR'
+        ? `PR: ${newEvidenceRef.trim()}`
+        : `Commit: ${newEvidenceRef.trim().substring(0, 7)}`;
+
+    const newItem: UnifiedEvidenceItem = {
+      id: newId,
+      type: newEvidenceType === 'PR' ? 'PR' : 'Commit',
+      title: newTitle,
+      contributor: 'Alex Morgan',
+      contributorAvatar:
+        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
+      relatedMilestone: newEvidenceMilestone,
+      timestamp: 'Just now',
+      status: 'Verified',
+      sourceUrl: 'https://github.com/northstar-studio/payment-gateway',
+      sha: newEvidenceRef.trim().substring(0, 12),
+      description:
+        newEvidenceNotes.trim() ||
+        'Submitted deliverable proof for autonomous AI verification against milestone criteria.',
+      changedFilesCount: 8,
+      aiRelevanceScore: 97,
+      aiConfidence: 'High',
+      aiExplanation:
+        'AST proofs confirmed syntax conformance against requirement acceptance criteria.',
+      relatedRequirements: ['Req 1.1: Secure Login', 'Req 1.2: Token Verification'],
+    };
+
+    setCustomSubmissions((prev) => [newItem, ...prev]);
+    setSelectedId(newId);
+    setSubmitEvidenceModalOpen(false);
+    setNewEvidenceRef('');
+    setNewEvidenceNotes('');
+    showToast('Evidence deliverable submitted! AST verification confirmed.');
+  };
 
   // Data Loading & Live State
   const [, setCommits] = useState<GitHubCommitEvidence[]>([]);
@@ -176,7 +255,7 @@ export const EvidencePage: React.FC = () => {
   };
 
   // Unified Evidence Items (combining reference data and live state)
-  const allEvidence: UnifiedEvidenceItem[] = useMemo(() => [
+  const defaultEvidence: UnifiedEvidenceItem[] = useMemo(() => [
     {
       id: 'commit-1',
       type: 'Commit',
@@ -359,6 +438,11 @@ export const EvidencePage: React.FC = () => {
     },
   ], []);
 
+  const allEvidence: UnifiedEvidenceItem[] = useMemo(
+    () => [...customSubmissions, ...defaultEvidence],
+    [customSubmissions, defaultEvidence]
+  );
+
   // Filter evidence based on active filters
   const filteredEvidence = useMemo(() => {
     return allEvidence.filter((item) => {
@@ -460,10 +544,12 @@ export const EvidencePage: React.FC = () => {
             </button>
             <div>
               <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
-                Evidence Explorer
+                {isClient ? 'Evidence Review' : 'Evidence Submission'}
               </h1>
               <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
-                Explore development activity and connect proof of work to project milestones.
+                {isClient
+                  ? 'Inspect submitted developer deliverables, commit diffs and cryptographic AST proofs.'
+                  : 'Explore development activity and connect proof of work to project milestones.'}
               </p>
             </div>
           </div>
@@ -523,14 +609,24 @@ export const EvidencePage: React.FC = () => {
               )}
             </div>
 
-            {/* Create Report Button */}
-            <button
-              onClick={() => setCreateReportModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <Download className="w-4 h-4 shrink-0" />
-              <span>Create Report</span>
-            </button>
+            {/* Header Action Button: Role Specific */}
+            {isClient ? (
+              <button
+                onClick={() => setCreateReportModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <Download className="w-4 h-4 shrink-0" />
+                <span>Create Report</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setSubmitEvidenceModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>Submit Evidence</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -995,6 +1091,59 @@ export const EvidencePage: React.FC = () => {
                       <GitHubIcon className="w-3.5 h-3.5" />
                     </a>
                   </div>
+
+                  {/* Role-Specific Action Panel */}
+                  {isClient ? (
+                    <div className="pt-3 border-t border-[#26344B]/40 space-y-2">
+                      <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">
+                        Client Governance &amp; Review
+                      </span>
+                      {approvedEvidenceIds.includes(selectedItem.id) ? (
+                        <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>Deliverable Approved by Client</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleApproveEvidence(selectedItem.id)}
+                            className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Approve Proof</span>
+                          </button>
+                          <button
+                            onClick={() => handleRequestRevision(selectedItem.id)}
+                            className="flex-1 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-300 text-xs font-medium transition-colors cursor-pointer"
+                          >
+                            Request Revision
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="pt-3 border-t border-[#26344B]/40 space-y-2">
+                      <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">
+                        Developer Submission Controls
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSubmitEvidenceModalOpen(true)}
+                          className="flex-1 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Submit Proof</span>
+                        </button>
+                        <button
+                          onClick={handleReverify}
+                          className="flex-1 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <RotateCw className={`w-3.5 h-3.5 ${isReverifying ? 'animate-spin' : ''}`} />
+                          <span>Re-run AST</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1020,9 +1169,9 @@ export const EvidencePage: React.FC = () => {
                       <span className="text-slate-300 text-xs">Secure Login - Implemented</span>
                       <button
                         onClick={() => setSelectedId('pr-102')}
-                        className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors"
+                        className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
                       >
-                        Link PR #102
+                        {isClient ? 'Inspect PR #102' : 'Link PR #102'}
                       </button>
                     </div>
                   </div>
@@ -1039,9 +1188,9 @@ export const EvidencePage: React.FC = () => {
                       <span className="text-slate-300 text-xs">User Profile - Partially Met</span>
                       <button
                         onClick={() => setSelectedId('commit-1')}
-                        className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors"
+                        className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
                       >
-                        Link Issue #45, Commits
+                        {isClient ? 'Inspect Commit Diff' : 'Link Issue #45, Commits'}
                       </button>
                     </div>
                   </div>
@@ -1255,12 +1404,132 @@ export const EvidencePage: React.FC = () => {
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setHelpModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold"
+                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold cursor-pointer"
               >
                 Got It
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL 5: SUBMIT DELIVERABLE EVIDENCE (DEVELOPER ONLY) */}
+      {submitEvidenceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
+              <div className="flex items-center gap-2.5">
+                <FileCode className="w-5 h-5 text-blue-400" />
+                <h3 className="text-base font-bold text-white">Submit Deliverable Evidence</h3>
+              </div>
+              <button
+                onClick={() => setSubmitEvidenceModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitEvidence} className="space-y-4 text-xs">
+              <div>
+                <label className="text-slate-400 font-semibold block mb-1">Target Milestone</label>
+                <select
+                  value={newEvidenceMilestone}
+                  onChange={(e) => setNewEvidenceMilestone(e.target.value)}
+                  className="w-full bg-[#0C1524] border border-[#26344B] rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-hidden cursor-pointer"
+                >
+                  <option value="Alpha Launch v1.0">Alpha Launch v1.0</option>
+                  <option value="Payment Gateway Integration">Payment Gateway Integration</option>
+                  <option value="Analytics Dashboard">Analytics Dashboard</option>
+                  <option value="API Modernization">API Modernization</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-400 font-semibold block mb-1">Evidence Type</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewEvidenceType('PR')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
+                      newEvidenceType === 'PR'
+                        ? 'bg-blue-600 text-white border-blue-500'
+                        : 'bg-[#0C1524] text-slate-300 border-[#26344B]'
+                    }`}
+                  >
+                    Pull Request
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewEvidenceType('Commit')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
+                      newEvidenceType === 'Commit'
+                        ? 'bg-blue-600 text-white border-blue-500'
+                        : 'bg-[#0C1524] text-slate-300 border-[#26344B]'
+                    }`}
+                  >
+                    Git Commit SHA
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-400 font-semibold block mb-1">
+                  {newEvidenceType === 'PR' ? 'Pull Request URL or Number' : 'Commit SHA (40 or 7 chars)'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={
+                    newEvidenceType === 'PR'
+                      ? 'e.g. northstar-studio/payment-gateway/pull/103'
+                      : 'e.g. 7b91d4e231fa'
+                  }
+                  value={newEvidenceRef}
+                  onChange={(e) => setNewEvidenceRef(e.target.value)}
+                  className="w-full bg-[#0C1524] border border-[#26344B] rounded-xl px-3 py-2 text-white text-xs font-mono focus:border-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 font-semibold block mb-1">
+                  Implementation Notes &amp; Acceptance Criteria
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Detail cryptographic verification steps, endpoints altered, and test proofs satisfied..."
+                  value={newEvidenceNotes}
+                  onChange={(e) => setNewEvidenceNotes(e.target.value)}
+                  className="w-full bg-[#0C1524] border border-[#26344B] rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2 border-t border-[#26344B]">
+                <button
+                  type="button"
+                  onClick={() => setSubmitEvidenceModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] text-slate-300 text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Submit Proof for AI Verification</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST CONFIRMATION */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#111C30] border border-blue-500/40 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>

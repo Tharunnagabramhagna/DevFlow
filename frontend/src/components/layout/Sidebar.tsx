@@ -22,7 +22,6 @@ import {
   LogOut,
   BriefcaseBusiness,
   Code2,
-  Eye,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -32,7 +31,7 @@ export const Sidebar: React.FC = () => {
     isMobileOpen,
     closeMobileSidebar,
   } = useSidebar();
-  const { user, role, isGuest, logout } = useAuth();
+  const { user, isGuest, isClient, logout } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,20 +47,20 @@ export const Sidebar: React.FC = () => {
     navigate('/login');
   };
 
-  const userName = isGuest ? 'Guest Explorer' : user?.name || 'Alex Morgan';
-  const initials = isGuest
-    ? 'GE'
-    : userName
-        .split(' ')
-        .filter(Boolean)
-        .map((n) => n[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase() || 'AM';
+  const userName = user?.name || (isClient ? 'Marcus Vance' : 'Alex Morgan');
+  const initials = userName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || (isClient ? 'MV' : 'AM');
 
   const avatarGradient = isGuest
-    ? 'bg-gradient-to-tr from-teal-500 to-cyan-500'
-    : role === 'CLIENT'
+    ? isClient
+      ? 'bg-gradient-to-tr from-blue-500 to-teal-400'
+      : 'bg-gradient-to-tr from-purple-500 to-indigo-400'
+    : isClient
     ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
     : 'bg-gradient-to-tr from-purple-600 to-indigo-400';
 
@@ -69,33 +68,35 @@ export const Sidebar: React.FC = () => {
     const current = location.pathname;
     if (path === '/dashboard') return current === '/dashboard' || current === '/';
     if (path === '/projects') return current.startsWith('/projects');
-    if (path === '/milestones') return current.startsWith('/milestones') || current === '/milestone-verification';
+    if (path === '/milestones') return current.startsWith('/milestones');
     if (path === '/agents') return current === '/agents';
     if (path === '/evidence') return current.startsWith('/evidence');
-    if (path === '/verification') return current === '/verification';
-    if (path === '/invoices') return current === '/invoices';
-    if (path === '/payments') return current === '/payments';
+    if (path === '/verification') return current === '/verification' || current === '/milestone-verification';
+    if (path === '/invoices') return current.startsWith('/invoices');
+    if (path === '/payments') return current.startsWith('/payments');
+    if (path.startsWith('/analytics')) return current.startsWith('/analytics');
     if (path === '/notifications') return current === '/notifications';
     if (path === '/integrations') return current === '/integrations';
     if (path === '/settings') return current === '/settings';
     return current === path;
   };
 
-  const navGroups = [
+  // Role-Specific Navigation Groups
+  const clientNavGroups = [
     {
       title: 'WORKSPACE',
       items: [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-[#2563EB]' },
-        { name: 'Projects', path: '/projects', icon: FolderGit2, iconColor: 'text-[#2563EB]' },
+        { name: 'My Projects', path: '/projects', icon: FolderGit2, iconColor: 'text-[#2563EB]' },
         { name: 'Milestones', path: '/milestones', icon: CheckCircle2, iconColor: 'text-[#2563EB]' },
       ],
     },
     {
-      title: 'INTELLIGENCE',
+      title: 'PROJECT MANAGEMENT',
       items: [
-        { name: 'AI Agents', path: '/agents', icon: Sparkles, iconColor: 'text-purple-400' },
-        { name: 'Evidence', path: '/evidence', icon: FileCode, iconColor: 'text-slate-400' },
-        { name: 'Verification', path: '/verification', icon: ShieldCheck, iconColor: 'text-emerald-400' },
+        { name: 'AI Verification Agents', path: '/agents', icon: Sparkles, iconColor: 'text-purple-400' },
+        { name: 'Evidence Review', path: '/evidence', icon: FileCode, iconColor: 'text-slate-400' },
+        { name: 'Verification Results', path: '/verification', icon: ShieldCheck, iconColor: 'text-emerald-400' },
       ],
     },
     {
@@ -103,6 +104,7 @@ export const Sidebar: React.FC = () => {
       items: [
         { name: 'Invoices', path: '/invoices', icon: FileText, iconColor: 'text-slate-400' },
         { name: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-blue-400' },
+        { name: 'Financial Analytics', path: '/analytics/financial', icon: Zap, iconColor: 'text-emerald-400' },
       ],
     },
     {
@@ -114,6 +116,43 @@ export const Sidebar: React.FC = () => {
       ],
     },
   ];
+
+  const developerNavGroups = [
+    {
+      title: 'WORKSPACE',
+      items: [
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-[#2563EB]' },
+        { name: 'My Projects', path: '/projects', icon: FolderGit2, iconColor: 'text-[#2563EB]' },
+        { name: 'Milestones', path: '/milestones', icon: CheckCircle2, iconColor: 'text-[#2563EB]' },
+      ],
+    },
+    {
+      title: 'DEVELOPMENT',
+      items: [
+        { name: 'AI Verification Agents', path: '/agents', icon: Sparkles, iconColor: 'text-purple-400' },
+        { name: 'Evidence Submission', path: '/evidence', icon: FileCode, iconColor: 'text-slate-400' },
+        { name: 'Verification Results', path: '/verification', icon: ShieldCheck, iconColor: 'text-emerald-400' },
+      ],
+    },
+    {
+      title: 'FINANCE',
+      items: [
+        { name: 'Invoices / Earnings', path: '/invoices', icon: FileText, iconColor: 'text-slate-400' },
+        { name: 'Payments / Payouts', path: '/payments', icon: CreditCard, iconColor: 'text-blue-400' },
+        { name: 'Development Analytics', path: '/analytics/development', icon: Zap, iconColor: 'text-purple-400' },
+      ],
+    },
+    {
+      title: 'SYSTEM',
+      items: [
+        { name: 'Notifications', path: '/notifications', icon: Bell, iconColor: 'text-slate-400' },
+        { name: 'Integrations', path: '/integrations', icon: Zap, iconColor: 'text-slate-400' },
+        { name: 'Settings', path: '/settings', icon: Settings, iconColor: 'text-slate-400' },
+      ],
+    },
+  ];
+
+  const navGroups = isClient ? clientNavGroups : developerNavGroups;
 
   return (
     <aside
@@ -235,7 +274,7 @@ export const Sidebar: React.FC = () => {
           <div className="hidden lg:flex flex-col items-center gap-2">
             <div
               className={`w-8 h-8 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
-              title={`${userName} (${isGuest ? 'Guest Mode' : role === 'CLIENT' ? 'Client' : 'Developer'})`}
+              title={`${userName} (${isGuest ? (isClient ? 'Client Guest' : 'Developer Guest') : isClient ? 'Client' : 'Developer'})`}
             >
               {initials}
             </div>
@@ -264,23 +303,23 @@ export const Sidebar: React.FC = () => {
               <div className="flex items-center gap-1.5 mt-0.5">
                 {isGuest ? (
                   <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/60 font-mono">
-                    <Eye className="w-2.5 h-2.5" />
-                    <span>GUEST MODE</span>
+                    {isClient ? <BriefcaseBusiness className="w-2.5 h-2.5" /> : <Code2 className="w-2.5 h-2.5" />}
+                    <span>{isClient ? 'Client Guest' : 'Developer Guest'}</span>
                   </span>
                 ) : (
                   <span
                     className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
-                      role === 'CLIENT'
+                      isClient
                         ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
                         : 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
                     }`}
                   >
-                    {role === 'CLIENT' ? (
+                    {isClient ? (
                       <BriefcaseBusiness className="w-2.5 h-2.5" />
                     ) : (
                       <Code2 className="w-2.5 h-2.5" />
                     )}
-                    <span>{role === 'CLIENT' ? 'Client' : 'Developer'}</span>
+                    <span>{isClient ? 'Client' : 'Developer'}</span>
                   </span>
                 )}
               </div>

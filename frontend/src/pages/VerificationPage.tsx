@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
         Sparkles,
       Bell,
@@ -57,11 +58,13 @@ interface ActivityItem {
 
 export const VerificationPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isClient, isGuest } = useAuth();
 
   // Navigation & UI States
   const { openMobileSidebar } = useSidebar();
   const [activeTab, setActiveTab] = useState<'recent' | 'projects' | 'agents'>('recent');
   const [selectedAgentModal, setSelectedAgentModal] = useState<string | null>(null);
+  const [selectedExecutionDetails, setSelectedExecutionDetails] = useState<AgentExecution | null>(null);
   const [approvalAccordionOpen, setApprovalAccordionOpen] = useState(true);
   const [changesModalOpen, setChangesModalOpen] = useState(false);
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
@@ -272,11 +275,30 @@ export const VerificationPage: React.FC = () => {
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
-                AI Agents
-              </h1>
+              <div className="flex items-center gap-2.5">
+                <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
+                  AI Verification Agents
+                </h1>
+                <span
+                  className={`text-[10px] font-sans font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                    isClient
+                      ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
+                      : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                  }`}
+                >
+                  {isGuest
+                    ? isClient
+                      ? 'CLIENT GUEST (DEMO)'
+                      : 'DEVELOPER GUEST (DEMO)'
+                    : isClient
+                    ? 'CLIENT OVERSIGHT'
+                    : 'DEVELOPER TELEMETRY'}
+                </span>
+              </div>
               <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
-                Your intelligent workforce for project analysis and payment workflows.
+                {isClient
+                  ? 'Monitor autonomous AI agents validating code deliverables against project requirements and milestone acceptance criteria.'
+                  : 'Monitor AST parsing, syntax tree validation, cryptographic commit verification, and agent feedback.'}
               </p>
             </div>
           </div>
@@ -612,12 +634,12 @@ export const VerificationPage: React.FC = () => {
                 <ArrowRight className="w-4 h-4 text-indigo-400 -ml-1 shrink-0" />
               </div>
 
-              {/* STAGE 4: Human Approval */}
+              {/* STAGE 4: Human Approval Gate */}
               <div className="flex flex-col items-center text-center space-y-2.5 flex-1 w-full lg:w-auto">
                 <div className="relative">
                   <div className="w-14 h-14 rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center overflow-hidden">
                     <div className="w-9 h-9 rounded-full bg-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-xs">
-                      TM
+                      {isClient ? 'MV' : 'AM'}
                     </div>
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-black text-[10px] font-bold">
@@ -625,10 +647,10 @@ export const VerificationPage: React.FC = () => {
                   </div>
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-200">
-                  Human Approval
+                  {isClient ? 'Client Approval Gate' : 'Client Review Gate'}
                 </span>
                 <span className="text-xs text-amber-400 font-medium bg-amber-950/40 px-2.5 py-1 rounded-md border border-amber-500/30">
-                  Pending Review
+                  {isClient ? 'Pending Your Sign-off' : 'Awaiting Client Review'}
                 </span>
               </div>
 
@@ -644,10 +666,10 @@ export const VerificationPage: React.FC = () => {
                   <Wallet className="w-7 h-7 text-emerald-400" />
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-200">
-                  Payment Preparation
+                  {isClient ? 'Payment Release Preparation' : 'Payout Disbursement Preparation'}
                 </span>
                 <span className="text-xs text-slate-400 font-medium bg-slate-800/40 px-2.5 py-1 rounded-md border border-slate-700">
-                  Awaiting Approval
+                  {isClient ? 'Awaiting Human Approval' : 'Gated by Client Review'}
                 </span>
               </div>
             </div>
@@ -729,7 +751,7 @@ export const VerificationPage: React.FC = () => {
                           key={row.id}
                           className="hover:bg-[#152238]/60 transition-colors cursor-pointer group"
                           onClick={() => {
-                            showToast(`Inspecting ${row.name}`, `${row.agent} run on ${row.project}`, 'info');
+                            setSelectedExecutionDetails(row);
                           }}
                         >
                           <td className="py-4 px-4 font-medium text-blue-400 group-hover:text-blue-300">
@@ -839,14 +861,16 @@ export const VerificationPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 2. HUMAN APPROVAL QUEUE */}
+              {/* 2. HUMAN APPROVAL QUEUE / TECHNICAL FEEDBACK */}
               <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5">
                 <div className="pb-3 border-b border-[#26344B]">
                   <h3 className="text-sm font-bold text-white tracking-wide">
-                    Human Approval Queue
+                    {isClient ? 'Human Approval & Milestone Governance' : 'Technical Validation & Deliverable Status'}
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
-                    AI-generated recommendations awaiting review.
+                    {isClient
+                      ? 'AI-generated recommendations awaiting client sign-off and payment authorization.'
+                      : 'AST syntax conformance, commit cryptographic proof and acceptance feedback.'}
                   </p>
                 </div>
 
@@ -859,7 +883,7 @@ export const VerificationPage: React.FC = () => {
                     <div className="flex items-center gap-2.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
                       <span className="text-sm font-bold text-white">
-                        Acceptance for Alpha Milestone 3
+                        {isClient ? 'Acceptance for Alpha Milestone 3' : 'Code Verification: Alpha Milestone 3'}
                       </span>
                     </div>
                     {approvalAccordionOpen ? (
@@ -871,48 +895,91 @@ export const VerificationPage: React.FC = () => {
 
                   {approvalAccordionOpen && (
                     <div className="space-y-3.5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-[#26344B]/60 pt-3">
-                      <p>
-                        <strong className="text-slate-100">Summary:</strong> AI Alpha Milestone 3 receives notation scope operating, acceptance for commendante: storomnarez to entrote-useo, and, and aeviliotm-dusionity to comsats a commnts-and recommendation, review.
-                      </p>
+                      {isClient ? (
+                        <>
+                          <p>
+                            <strong className="text-slate-100">Deliverable Assessment:</strong> Milestone 3 meets 94.2% of requirement acceptance criteria. AST code validation passed for Commit <code className="text-blue-400">8c92a10</code>. Ready for client review and escrow release authorization.
+                          </p>
 
-                      {/* Approval Status State pill if triggered */}
-                      {approvalState === 'approved' && (
-                        <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
-                          <CheckCircle className="w-4 h-4 text-emerald-400" />
-                          <span>Milestone approved by client. Ready for PayPal invoicing.</span>
-                        </div>
-                      )}
-                      {approvalState === 'changes_requested' && (
-                        <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
-                          <Clock className="w-4 h-4 text-amber-400" />
-                          <span>Changes requested. Developer notified in backlog.</span>
-                        </div>
-                      )}
+                          {/* Approval Status State pill if triggered */}
+                          {approvalState === 'approved' && (
+                            <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
+                              <CheckCircle className="w-4 h-4 text-emerald-400" />
+                              <span>Milestone approved by client. Ready for PayPal invoicing.</span>
+                            </div>
+                          )}
+                          {approvalState === 'changes_requested' && (
+                            <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
+                              <Clock className="w-4 h-4 text-amber-400" />
+                              <span>Changes requested. Developer notified in backlog.</span>
+                            </div>
+                          )}
 
-                      {/* Action buttons */}
-                      <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
-                        <span className="text-xs font-semibold text-slate-400 mr-1">Actions:</span>
-                        <button
-                          onClick={() => setEvidenceModalOpen(true)}
-                          className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors"
-                        >
-                          Review Evidence
-                        </button>
-                        <button
-                          onClick={() => setChangesModalOpen(true)}
-                          className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors"
-                        >
-                          Request Changes
-                        </button>
-                        <button
-                          onClick={handleApproveAndPay}
-                          disabled={isSubmittingApproval || approvalState === 'approved'}
-                          className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          <span>{approvalState === 'approved' ? 'Approved' : 'Approve & Pay'}</span>
-                        </button>
-                      </div>
+                          {/* Client action buttons */}
+                          <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+                            <span className="text-xs font-semibold text-slate-400 mr-1">Actions:</span>
+                            <button
+                              onClick={() => setEvidenceModalOpen(true)}
+                              className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors cursor-pointer"
+                            >
+                              Review Evidence
+                            </button>
+                            <button
+                              onClick={() => setChangesModalOpen(true)}
+                              className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors cursor-pointer"
+                            >
+                              Request Changes
+                            </button>
+                            <button
+                              onClick={handleApproveAndPay}
+                              disabled={isSubmittingApproval || approvalState === 'approved'}
+                              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>{approvalState === 'approved' ? 'Approved' : 'Approve & Release'}</span>
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="space-y-2 text-xs">
+                            <p>
+                              <strong className="text-slate-100">AST Analysis:</strong> 98.4% syntax conformance across 14 AST parse nodes. Cryptographic signatures validated for 15 commits on branch <code className="text-blue-400">main</code>.
+                            </p>
+                            <div className="p-2.5 rounded-lg bg-[#152238] border border-[#26344B] space-y-1">
+                              <span className="text-slate-400 font-semibold block text-[11px]">Identified Checks &amp; Code Feedback:</span>
+                              <div className="text-emerald-400 font-mono text-[11px]">✓ OAuth2 PKCE Token Flow: Verified (100% AST match)</div>
+                              <div className="text-emerald-400 font-mono text-[11px]">✓ Refresh Token Storage: Verified (Signed JWTs)</div>
+                              <div className="text-amber-400 font-mono text-[11px]">⚠ Session Revocation: Missing automated integration test</div>
+                            </div>
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
+                            <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
+                            <span>Deliverable verified by AI agents. Awaiting client review in the milestone approval queue.</span>
+                          </div>
+
+                          {/* Developer action buttons (Strictly NO client payment or approval buttons!) */}
+                          <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+                            <span className="text-xs font-semibold text-slate-400 mr-1">Developer Actions:</span>
+                            <button
+                              onClick={() => setEvidenceModalOpen(true)}
+                              className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors cursor-pointer"
+                            >
+                              Inspect AST Code Proofs
+                            </button>
+                            <button
+                              onClick={() => {
+                                showToast('Agent Re-evaluation Triggered', 'Re-analyzing AST trees against requirement acceptance criteria.', 'info');
+                              }}
+                              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
+                            >
+                              <RotateCw className="w-4 h-4" />
+                              <span>Re-run Agent Verification</span>
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1179,9 +1246,126 @@ export const VerificationPage: React.FC = () => {
             <div className="flex justify-end">
               <button
                 onClick={() => setHelpModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold"
+                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold cursor-pointer"
               >
                 Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: EXECUTION DETAILS & AST DIAGNOSTICS */}
+      {selectedExecutionDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    selectedExecutionDetails.status === 'SUCCESS'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                      : selectedExecutionDetails.status === 'FAILED'
+                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                  }`}
+                >
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    {selectedExecutionDetails.name} &bull; {selectedExecutionDetails.agent}
+                  </h3>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    Project: {selectedExecutionDetails.project} &bull; {selectedExecutionDetails.timestamp}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedExecutionDetails(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#1E2E4E] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#0C1524] border border-[#26344B]">
+                <span className="text-slate-400 font-semibold">Execution Status:</span>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full font-bold text-xs ${
+                    selectedExecutionDetails.status === 'SUCCESS'
+                      ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
+                      : selectedExecutionDetails.status === 'FAILED'
+                      ? 'bg-rose-950/70 text-rose-400 border border-rose-500/30'
+                      : 'bg-amber-950/70 text-amber-400 border border-amber-500/30'
+                  }`}
+                >
+                  {selectedExecutionDetails.status}
+                </span>
+              </div>
+
+              {isClient ? (
+                /* Client Oversight View */
+                <div className="space-y-2.5">
+                  <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      Deliverable Verification Summary
+                    </span>
+                    <p className="text-slate-200 leading-relaxed text-xs">
+                      {selectedExecutionDetails.status === 'SUCCESS'
+                        ? 'Cryptographic commit signatures and AST requirement criteria have been fully verified. Deliverable meets agreement specifications with 0 blocking anomalies.'
+                        : selectedExecutionDetails.status === 'FAILED'
+                        ? 'Verification checks identified discrepancies between code changes and acceptance criteria. Awaiting developer updates or revision.'
+                        : 'Autonomous agent is actively parsing repository commits and evaluating milestone criteria.'}
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-[#152238] border border-[#26344B] space-y-1 text-slate-400 text-[11px]">
+                    <div className="flex justify-between text-slate-300">
+                      <span>Requirement Match:</span>
+                      <strong className="text-emerald-400">94.2% Passed</strong>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Audit Trail:</span>
+                      <strong className="text-white font-mono">Immutable cryptographic hash verified</strong>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Developer Technical Feedback View */
+                <div className="space-y-2.5">
+                  <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      AST Code Analysis &amp; Feedback
+                    </span>
+                    <p className="text-slate-200 leading-relaxed font-mono text-[11px]">
+                      {selectedExecutionDetails.status === 'FAILED'
+                        ? 'AST parse error (status code 400): Missing PKCE code_challenge verification in session.service.ts on authorization handshake route.'
+                        : 'AST evaluation passed: 14 syntax nodes evaluated, 0 circular dependency issues detected, 100% token signature conformance.'}
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[#152238] border border-[#26344B] space-y-1.5">
+                    <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider block">
+                      Suggested Technical Correction:
+                    </span>
+                    <p className="text-slate-300 leading-relaxed text-xs">
+                      {selectedExecutionDetails.status === 'FAILED'
+                        ? 'Ensure code_verifier is hashed using SHA-256 before token exchange and register refresh token lifetime to 7 days.'
+                        : 'Maintain existing code quality and test suites before triggering final deliverable sign-off.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2 border-t border-[#26344B]">
+              <button
+                onClick={() => setSelectedExecutionDetails(null)}
+                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold cursor-pointer"
+              >
+                Close Diagnostics
               </button>
             </div>
           </div>

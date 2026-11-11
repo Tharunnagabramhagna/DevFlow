@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
+import { RoleGuard } from '@/components/layout/RoleGuard';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignUpPage } from '@/pages/SignUpPage';
@@ -20,6 +21,7 @@ import { VerificationPage } from '@/pages/VerificationPage';
 import { MilestoneVerificationPage } from '@/pages/MilestoneVerificationPage';
 import { PaymentsPage } from '@/pages/PaymentsPage';
 import { PaymentActivityPage } from '@/pages/PaymentActivityPage';
+import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { IntegrationsPage } from '@/pages/IntegrationsPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
@@ -56,12 +58,77 @@ export const App: React.FC = () => {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/milestones" element={<MilestonesPage />} />
+
+                {/* Evidence Routes: Adaptive & Role-Guarded */}
                 <Route path="/evidence" element={<EvidencePage />} />
-                <Route path="/verification" element={<VerificationPage />} />
-                <Route path="/milestone-verification" element={<MilestoneVerificationPage />} />
+                <Route
+                  path="/evidence/review"
+                  element={
+                    <RoleGuard allowedRole="CLIENT">
+                      <EvidencePage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/evidence/submit"
+                  element={
+                    <RoleGuard allowedRole="DEVELOPER">
+                      <EvidencePage />
+                    </RoleGuard>
+                  }
+                />
+
                 <Route path="/agents" element={<VerificationPage />} />
-                <Route path="/payments" element={<PaymentActivityPage />} />
+                <Route path="/verification" element={<MilestoneVerificationPage />} />
+                <Route path="/milestone-verification" element={<MilestoneVerificationPage />} />
+
+                {/* Finance Routes: Adaptive & Role-Guarded */}
                 <Route path="/invoices" element={<PaymentsPage />} />
+                <Route
+                  path="/invoices/review"
+                  element={
+                    <RoleGuard allowedRole="CLIENT">
+                      <PaymentsPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/invoices/earnings"
+                  element={
+                    <RoleGuard allowedRole="DEVELOPER">
+                      <PaymentsPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route path="/payments" element={<PaymentActivityPage />} />
+                <Route
+                  path="/payments/payouts"
+                  element={
+                    <RoleGuard allowedRole="DEVELOPER">
+                      <PaymentActivityPage />
+                    </RoleGuard>
+                  }
+                />
+
+                {/* Analytics Routes: Adaptive & Role-Guarded */}
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route
+                  path="/analytics/financial"
+                  element={
+                    <RoleGuard allowedRole="CLIENT">
+                      <AnalyticsPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/analytics/development"
+                  element={
+                    <RoleGuard allowedRole="DEVELOPER">
+                      <AnalyticsPage />
+                    </RoleGuard>
+                  }
+                />
+
                 <Route path="/integrations" element={<IntegrationsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />

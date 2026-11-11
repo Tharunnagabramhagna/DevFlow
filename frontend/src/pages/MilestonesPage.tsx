@@ -53,7 +53,7 @@ interface DisplayMilestone extends Milestone {
 
 export const MilestonesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isGuest } = useAuth();
+  const { isGuest, isClient } = useAuth();
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
   const [guardActionTitle, setGuardActionTitle] = useState('Create Milestone');
   const [milestones, setMilestones] = useState<DisplayMilestone[]>([]);
@@ -335,7 +335,9 @@ export const MilestonesPage: React.FC = () => {
                 <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">Milestones</h1>
               </div>
               <p className="text-xs sm:text-sm text-slate-400">
-                Track deliverables, evaluate progress and manage milestone approvals.
+                {isClient
+                  ? 'Review submitted deliverables, approve milestone completions and authorize payment release.'
+                  : 'Track assigned development deliverables, satisfy acceptance criteria and submit milestone proof.'}
               </p>
             </div>
 

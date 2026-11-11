@@ -41,16 +41,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (session?.user) {
       try {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
-        const roleLabel =
-          session.user.role === 'GUEST'
-            ? 'Guest Explorer (Demo Mode)'
-            : session.user.role === 'CLIENT'
-            ? 'Client / Project Administrator'
-            : 'Lead Developer';
+        const isGuestUser = session.user.role === 'GUEST' || Boolean(session.user.isGuest);
+        const persona = session.user.guestPersona || (session.user.role === 'CLIENT' ? 'CLIENT' : 'DEVELOPER');
+        const roleLabel = isGuestUser
+          ? persona === 'CLIENT'
+            ? 'Client Guest (Demo Mode)'
+            : 'Developer Guest (Demo Mode)'
+          : session.user.role === 'CLIENT'
+          ? 'Client / Project Administrator'
+          : 'Lead Developer';
         const orgLabel =
-          session.user.role === 'GUEST'
-            ? 'DevFlow Sandbox Demo'
-            : session.user.organization || 'Northstar Digital Studio';
+          session.user.organization ||
+          (persona === 'CLIENT' ? 'Meridian Labs' : 'Northstar Digital Studio');
 
         localStorage.setItem(
           PROFILE_STORAGE_KEY,
@@ -141,16 +143,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const contextValue = useMemo<AuthContextType>(
-    () => ({
+  const contextValue = useMemo<AuthContextType>(() => {
+    const isGuest = session?.user?.role === 'GUEST' || Boolean(session?.user?.isGuest);
+    const guestPersona = session?.user?.guestPersona || (isGuest ? 'DEVELOPER' : null);
+    const effectiveRole: 'CLIENT' | 'DEVELOPER' = isGuest
+      ? guestPersona || 'DEVELOPER'
+      : session?.user?.role === 'CLIENT'
+      ? 'CLIENT'
+      : 'DEVELOPER';
+
+    return {
       user: session?.user || null,
       token: session?.accessToken || null,
       role: session?.user?.role || null,
-      guestPersona: session?.user?.guestPersona || (session?.user?.role === 'GUEST' ? 'DEVELOPER' : null),
+      guestPersona,
       isAuthenticated: !!session?.user,
-      isClient: session?.user?.role === 'CLIENT',
-      isDeveloper: session?.user?.role === 'DEVELOPER',
-      isGuest: session?.user?.role === 'GUEST' || Boolean(session?.user?.isGuest),
+      isClient: effectiveRole === 'CLIENT',
+      isDeveloper: effectiveRole === 'DEVELOPER',
+      isGuest,
       login,
       register,
       continueAsGuest,
@@ -158,9 +168,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       handleMockSocialAuth,
       logout,
       loading,
-    }),
-    [session, loading]
-  );
+    };
+  }, [session, loading]);
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-      CheckCircle2,
+  CheckCircle2,
   FileText,
   Settings,
   Bell,
@@ -20,10 +20,12 @@ import {
   Lock,
   RefreshCw,
   AlertTriangle,
-    TrendingUp,
+  TrendingUp,
   TrendingDown,
   DollarSign,
   ArrowRight,
+  Clock,
+  Download,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
 import { Milestone, Project } from '@/types';
@@ -75,7 +77,7 @@ export const PaymentsPage: React.FC = () => {
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
-  const { isGuest } = useAuth();
+  const { isGuest, isClient } = useAuth();
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
   const [guardActionTitle, setGuardActionTitle] = useState('Create Invoice');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -433,10 +435,12 @@ export const PaymentsPage: React.FC = () => {
             </button>
             <div>
               <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
-                Invoices
+                {isClient ? 'Invoices' : 'Invoices & Earnings'}
               </h1>
               <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
-                Manage milestone-based invoices and track client payments.
+                {isClient
+                  ? 'Manage milestone-based invoices and release verified client payments via PayPal.'
+                  : 'Track milestone-based invoices, payout disbursements and developer earnings.'}
               </p>
             </div>
           </div>
@@ -497,21 +501,31 @@ export const PaymentsPage: React.FC = () => {
               <ChevronDown className="w-4 h-4 text-slate-400" />
             </div>
 
-            {/* Create Invoice Button */}
-            <button
-              onClick={() => {
-                if (isGuest) {
-                  setGuardActionTitle('Create Invoice');
-                  setIsGuestGuardOpen(true);
-                  return;
-                }
-                setIsCreateInvoiceModalOpen(true);
-              }}
-              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors whitespace-nowrap shrink-0"
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span>Create Invoice</span>
-            </button>
+            {/* Action Button: Role Specific */}
+            {isClient ? (
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    setGuardActionTitle('Create Invoice');
+                    setIsGuestGuardOpen(true);
+                    return;
+                  }
+                  setIsCreateInvoiceModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>Create Invoice</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsPrintModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Download className="w-4 h-4 shrink-0" />
+                <span>Export Statement</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -996,22 +1010,34 @@ export const PaymentsPage: React.FC = () => {
                   <Printer className="w-4 h-4 text-slate-300" />
                   <span>Print View</span>
                 </button>
-                {selectedInvoice.status !== 'Paid' && (
-                  <button
-                    onClick={() => {
-                      if (isGuest) {
-                        setGuardActionTitle('Release Payment');
-                        setIsGuestGuardOpen(true);
-                        return;
-                      }
-                      setCheckoutStep('review');
-                      setIsCheckoutModalOpen(true);
-                    }}
-                    className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/30 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <PayPalIcon className="w-4 h-4" />
-                    <span>Pay Sandbox</span>
-                  </button>
+                {selectedInvoice.status !== 'Paid' ? (
+                  isClient ? (
+                    <button
+                      onClick={() => {
+                        if (isGuest) {
+                          setGuardActionTitle('Release Payment');
+                          setIsGuestGuardOpen(true);
+                          return;
+                        }
+                        setCheckoutStep('review');
+                        setIsCheckoutModalOpen(true);
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <PayPalIcon className="w-4 h-4" />
+                      <span>Pay Sandbox</span>
+                    </button>
+                  ) : (
+                    <div className="flex-1 py-2.5 px-3 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-400 text-xs font-semibold flex items-center justify-center gap-2">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Awaiting Client Release</span>
+                    </div>
+                  )
+                ) : (
+                  <div className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{isClient ? 'Payment Settled' : 'Payout Received'}</span>
+                  </div>
                 )}
               </div>
 
@@ -1027,10 +1053,10 @@ export const PaymentsPage: React.FC = () => {
           {/* PHASE 8: UNBILLED APPROVED MILESTONES & PENDING MILESTONE APPROVALS */}
           <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              {/* Left Column: Unbilled Approved Milestones */}
+              {/* Left Column: Unbilled Approved Milestones / Claimable Earnings */}
               <div className="space-y-2.5">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                  Unbilled Approved Milestones
+                  {isClient ? 'Unbilled Approved Milestones' : 'Claimable Milestone Earnings'}
                 </span>
                 <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
                   <div className="flex items-center gap-2 text-xs sm:text-sm">
@@ -1044,9 +1070,9 @@ export const PaymentsPage: React.FC = () => {
                     <span className="font-mono font-bold text-white text-xs sm:text-sm">$8,200.00</span>
                     <button
                       onClick={handleGenerateInvoiceForUnbilled}
-                      className="text-xs sm:text-sm text-blue-400 hover:text-white font-semibold transition-colors"
+                      className="text-xs sm:text-sm text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
                     >
-                      Generate Invoice
+                      {isClient ? 'Generate Invoice' : 'Submit for Invoicing'}
                     </button>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
             Settings,
         Bell,
@@ -49,6 +50,7 @@ const PayPalLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
 
 export const IntegrationsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isClient } = useAuth();
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
@@ -111,14 +113,16 @@ export const IntegrationsPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="font-heading text-lg sm:text-xl font-extrabold text-white tracking-tight leading-none">
-                  Integrations &amp; Webhooks
+                  {isClient ? 'Integrations & Merchant Services' : 'Integrations & Webhooks'}
                 </h1>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider font-sans whitespace-nowrap">
                   SANDBOX
                 </span>
               </div>
               <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
-                Connect and monitor the services powering code verification, telemetry, and PayPal settlement.
+                {isClient
+                  ? 'Configure PayPal merchant credentials, invoicing webhooks, and team notification channels.'
+                  : 'Connect and monitor the services powering code verification, GitHub repository telemetry, and PayPal settlement.'}
               </p>
             </div>
           </div>

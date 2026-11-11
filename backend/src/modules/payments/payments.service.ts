@@ -92,7 +92,11 @@ export class PaymentsService {
   /**
    * Creates and dispatches a PayPal invoice for an approved milestone.
    */
-  async createInvoice(actorId: string, input: CreateInvoiceInput): Promise<Payment> {
+  async createInvoice(actorId: string, input: CreateInvoiceInput, actorRole?: Role): Promise<Payment> {
+    if (actorRole === Role.FREELANCER) {
+      throw new ForbiddenError('Only a project client or owner (non-developer) can initiate payment invoicing');
+    }
+
     const milestone = await prisma.milestone.findUnique({
       where: { id: input.milestoneId },
       include: {
@@ -112,15 +116,16 @@ export class PaymentsService {
       throw new NotFoundError(`Milestone with ID ${input.milestoneId} not found`);
     }
 
-    // Authorization check: Actor must be project OWNER, CLIENT, or global ADMIN
+    // Authorization check: Actor must be project OWNER, CLIENT, or global ADMIN (and never lead developer unless ADMIN)
     const isOwner =
       milestone.project.createdById === actorId ||
       milestone.project.members.some((m) => m.userId === actorId && m.role === ProjectMemberRole.OWNER);
     const isClient =
       milestone.project.clientId === actorId ||
       milestone.project.members.some((m) => m.userId === actorId && m.role === ProjectMemberRole.CLIENT);
+    const isLeadDeveloper = Boolean(milestone.project.leadDeveloperId && milestone.project.leadDeveloperId === actorId);
 
-    if (!isOwner && !isClient) {
+    if (actorRole !== Role.ADMIN && (isLeadDeveloper || (!isOwner && !isClient))) {
       throw new ForbiddenError('Only a project client or owner can initiate payment invoicing');
     }
 
@@ -287,7 +292,11 @@ export class PaymentsService {
   /**
    * Cancels an unpaid invoice.
    */
-  async cancelInvoice(actorId: string, paymentId: string, reason?: string): Promise<Payment> {
+  async cancelInvoice(actorId: string, paymentId: string, reason?: string, actorRole?: Role): Promise<Payment> {
+    if (actorRole === Role.FREELANCER) {
+      throw new ForbiddenError('Developers cannot cancel client invoices.');
+    }
+
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
       include: {
@@ -349,6 +358,10 @@ export class PaymentsService {
     paymentId: string,
     input: CreateRefundInput
   ) {
+    if (actorRole === Role.FREELANCER) {
+      throw new ForbiddenError('Developers cannot issue payment refunds. Only a project client or administrator can issue refunds.');
+    }
+
     const grossAmountDecimal = new Prisma.Decimal(input.grossAmount);
 
     // -------------------------------------------------------------
@@ -522,7 +535,16 @@ export class PaymentsService {
             title: true,
             status: true,
             projectId: true,
-            project: { select: { id: true, title: true, createdById: true, clientId: true, leadDeveloperId: true } },
+            project: {
+              select: {
+                id: true,
+                title: true,
+                createdById: true,
+                clientId: true,
+                leadDeveloperId: true,
+                members: { where: { userId: actorId }, select: { id: true, role: true } },
+              },
+            },
           },
         },
       },
@@ -532,19 +554,68 @@ export class PaymentsService {
       throw new NotFoundError(`Payment with ID ${paymentId} not found`);
     }
 
+    if (actorRole !== Role.ADMIN && payment.milestone?.project) {
+      const project = payment.milestone.project;
+      const hasAccess =
+        project.createdById === actorId ||
+        project.clientId === actorId ||
+        project.leadDeveloperId === actorId ||
+        (project.members && project.members.length > 0);
+      if (!hasAccess) {
+        throw new ForbiddenError('Access denied. You are not authorized to view this payment.');
+      }
+    }
+
     return payment;
   }
 
   /**
-   * Lists payments for a project.
+   * Lists payments scoped strictly to projects the authenticated user owns or belongs to (unless ADMIN).
    */
-  async getProjectPayments(actorId: string, actorRole: Role, projectId: string, query?: PaymentQueryInput) {
+  async getProjectPayments(actorId: string, actorRole: Role, projectId?: string, query?: PaymentQueryInput) {
     const page = Math.max(1, query?.page || 1);
     const limit = Math.min(100, Math.max(1, query?.limit || 20));
     const skip = (page - 1) * limit;
 
+    if (projectId && actorRole !== Role.ADMIN) {
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: { members: { where: { userId: actorId } } },
+      });
+
+      if (!project) {
+        throw new NotFoundError(`Project with ID ${projectId} not found`);
+      }
+
+      const hasAccess =
+        project.createdById === actorId ||
+        project.clientId === actorId ||
+        project.leadDeveloperId === actorId ||
+        project.members.length > 0;
+
+      if (!hasAccess) {
+        throw new ForbiddenError('Access denied. You are not authorized to view payments for this project.');
+      }
+    }
+
+    const projectFilter: Prisma.ProjectWhereInput | undefined =
+      actorRole === Role.ADMIN
+        ? projectId
+          ? { id: projectId }
+          : undefined
+        : {
+            ...(projectId ? { id: projectId } : {}),
+            isArchived: false,
+            OR: [
+              { createdById: actorId },
+              { clientId: actorId },
+              { leadDeveloperId: actorId },
+              { members: { some: { userId: actorId } } },
+            ],
+          };
+
     const where: Prisma.PaymentWhereInput = {
-      milestone: { projectId },
+      ...(projectFilter ? { milestone: { project: projectFilter } } : {}),
       ...(query?.status ? { status: query.status } : {}),
     };
 

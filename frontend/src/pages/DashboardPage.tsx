@@ -30,7 +30,7 @@ import { GuestGuardModal } from '@/components/common';
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { openMobileSidebar } = useSidebar();
-  const { user, role, isGuest, logout } = useAuth();
+  const { user, effectiveRole, isClient, isDeveloper, isGuest, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [telemetry, setTelemetry] = useState<DeveloperTelemetry | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -67,26 +67,63 @@ export const DashboardPage: React.FC = () => {
   // Notifications dropdown state
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  // User details from auth context or profile storage
-  const displayName = isGuest ? 'Guest Explorer' : user?.name || 'Alex Morgan';
-  const firstName = isGuest ? 'Guest' : displayName.split(' ')[0];
+  // Role & identity derived strictly from unified AuthContext
+  const displayName = isGuest
+    ? isClient
+      ? 'Client Guest'
+      : 'Developer Guest'
+    : user?.name || (isClient ? 'Client Account' : 'Developer Account');
+  const firstName = isGuest
+    ? isClient
+      ? 'Client'
+      : 'Developer'
+    : displayName.split(' ')[0];
   const initials = isGuest
-    ? 'GE'
+    ? isClient
+      ? 'CG'
+      : 'DG'
     : displayName
         .split(' ')
         .filter(Boolean)
         .map((n) => n[0])
         .join('')
         .slice(0, 2)
-        .toUpperCase() || 'AM';
+        .toUpperCase() || (isClient ? 'CL' : 'DV');
 
-  const isClientRole = !isGuest && role === 'CLIENT';
-  const roleBadgeLabel = isGuest ? 'Guest Mode' : isClientRole ? 'Client' : 'Developer';
-  const avatarGradient = isGuest
-    ? 'bg-gradient-to-tr from-teal-500 to-cyan-500'
-    : isClientRole
+  const userEmail = isGuest
+    ? isClient
+      ? 'client.demo@devflow.demo'
+      : 'developer.demo@devflow.demo'
+    : user?.email || '';
+
+  const roleBadgeLabel = isClient ? 'Client' : 'Developer';
+  const roleSignupPath = isDeveloper ? '/signup/developer' : '/signup/client';
+  const roleLoginPath = isDeveloper ? '/login/developer' : '/login/client';
+  const avatarGradient = isClient
     ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-    : 'bg-gradient-to-tr from-purple-600 to-indigo-400';
+    : 'bg-gradient-to-tr from-violet-600 to-indigo-500';
+
+  const filteredProjects = projects.filter((proj) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      proj.name.toLowerCase().includes(q) ||
+      proj.clientName.toLowerCase().includes(q) ||
+      proj.githubRepo.toLowerCase().includes(q)
+    );
+  });
+
+  const pendingClientReviewCount = milestones.filter(
+    (m) => m.status === 'client_review' || m.status === 'ai_verified'
+  ).length;
+  const activeDeliverablesCount = milestones.filter(
+    (m) =>
+      m.status === 'in_progress' ||
+      m.status === 'ai_analyzing' ||
+      m.status === 'evidence_submitted'
+  ).length;
+  const awaitingSettlementAmount = telemetry?.pendingInvoicesAmount ?? 0;
+  const confirmedSettlementAmount = telemetry?.totalRevenuePaid ?? 0;
 
   useEffect(() => {
     async function loadDashboard() {
@@ -108,7 +145,7 @@ export const DashboardPage: React.FC = () => {
       }
     }
     loadDashboard();
-  }, []);
+  }, [effectiveRole, isGuest]);
 
   if (loading) {
     return (
@@ -200,14 +237,29 @@ export const DashboardPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
-                      <div className="font-semibold text-white">Payment Received</div>
-                      <div className="text-[11px] text-slate-400">$4,500 settled via PayPal Webhook (Sandbox)</div>
-                    </div>
-                    <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
-                      <div className="font-semibold text-white">Milestone Verified</div>
-                      <div className="text-[11px] text-slate-400">94.2% AI score on SHA a1e9482</div>
-                    </div>
+                    {isGuest ? (
+                      <>
+                        <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
+                          <div className="font-semibold text-white">Demo Payment Settled</div>
+                          <div className="text-[11px] text-slate-400">$4,500 sample settlement via Sandbox</div>
+                        </div>
+                        <div className="p-2 rounded bg-[#080D18] border border-[#26344B]">
+                          <div className="font-semibold text-white">Demo Milestone Verified</div>
+                          <div className="text-[11px] text-slate-400">94.2% AI score on SHA a1e9482</div>
+                        </div>
+                      </>
+                    ) : milestones.length > 0 ? (
+                      milestones.slice(0, 3).map((m) => (
+                        <div key={m.id} className="p-2 rounded bg-[#080D18] border border-[#26344B]">
+                          <div className="font-semibold text-white truncate">{m.title}</div>
+                          <div className="text-[11px] text-slate-400">Status: {m.status.replace(/_/g, ' ')}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-2 rounded bg-[#080D18] border border-[#26344B] text-slate-400 text-[11px]">
+                        No recent alerts in your workspace.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -227,13 +279,16 @@ export const DashboardPage: React.FC = () => {
                 <div className="hidden sm:flex flex-col text-left">
                   <span className="text-xs font-semibold text-white leading-tight">{displayName}</span>
                   <div className="flex items-center gap-1">
+                    {isGuest && (
+                      <span className="text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded-full border bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono">
+                        DEMO MODE
+                      </span>
+                    )}
                     <span
                       className={`text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded-full border ${
-                        isGuest
-                          ? 'bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono'
-                          : isClientRole
+                        isClient
                           ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
-                          : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                          : 'bg-violet-950/80 text-violet-300 border-violet-800/60'
                       }`}
                     >
                       {roleBadgeLabel}
@@ -247,32 +302,36 @@ export const DashboardPage: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-56 bg-[#111C30] border border-[#26344B] rounded-xl shadow-2xl py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                   <div className="px-3.5 py-2 border-b border-[#26344B]/70">
                     <p className="font-bold text-white truncate">{displayName}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{user?.email || (isGuest ? 'guest@devflow.demo' : 'user@devflow.io')}</p>
-                    <span
-                      className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1.5 border ${
-                        isGuest
-                          ? 'bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono'
-                          : isClientRole
-                          ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
-                          : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
-                      }`}
-                    >
-                      {isGuest ? (
-                        <Eye className="w-2.5 h-2.5" />
-                      ) : isClientRole ? (
-                        <BriefcaseBusiness className="w-2.5 h-2.5" />
-                      ) : (
-                        <Code2 className="w-2.5 h-2.5" />
+                    {userEmail && <p className="text-[11px] text-slate-400 truncate">{userEmail}</p>}
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      {isGuest && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono">
+                          <Eye className="w-2.5 h-2.5" />
+                          <span>DEMO MODE</span>
+                        </span>
                       )}
-                      <span>{isGuest ? 'Guest Mode' : `${roleBadgeLabel} Account`}</span>
-                    </span>
+                      <span
+                        className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
+                          isClient
+                            ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
+                            : 'bg-violet-950/80 text-violet-300 border-violet-800/60'
+                        }`}
+                      >
+                        {isClient ? (
+                          <BriefcaseBusiness className="w-2.5 h-2.5" />
+                        ) : (
+                          <Code2 className="w-2.5 h-2.5" />
+                        )}
+                        <span>{isGuest ? `${roleBadgeLabel} Guest` : `${roleBadgeLabel} Account`}</span>
+                      </span>
+                    </div>
                   </div>
                   {isGuest ? (
                     <div className="py-1">
                       <button
                         onClick={() => {
                           setUserMenuOpen(false);
-                          navigate('/signup');
+                          navigate(roleSignupPath);
                         }}
                         className="w-full text-left px-3.5 py-2 text-teal-300 hover:text-white hover:bg-[#1B2A47] transition-colors font-medium"
                       >
@@ -281,7 +340,7 @@ export const DashboardPage: React.FC = () => {
                       <button
                         onClick={() => {
                           setUserMenuOpen(false);
-                          navigate('/login');
+                          navigate(roleLoginPath);
                         }}
                         className="w-full text-left px-3.5 py-2 text-slate-300 hover:text-white hover:bg-[#1B2A47] transition-colors"
                       >
@@ -306,12 +365,12 @@ export const DashboardPage: React.FC = () => {
                       onClick={async () => {
                         setUserMenuOpen(false);
                         await logout();
-                        navigate('/login');
+                        navigate(roleLoginPath, { replace: true });
                       }}
                       className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-400 hover:bg-rose-500/10 transition-colors text-left"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      <span>{isGuest ? 'Exit Guest Mode' : 'Sign Out'}</span>
+                      <span>{isGuest ? 'Exit Demo Mode' : 'Sign Out'}</span>
                     </button>
                   </div>
                 </div>
@@ -329,55 +388,78 @@ export const DashboardPage: React.FC = () => {
                 <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
                   Welcome back, {firstName}
                 </h2>
+                {isGuest && (
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shrink-0 bg-teal-950/80 text-teal-300 border-teal-800/60">
+                    DEMO MODE
+                  </span>
+                )}
                 <span
                   className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shrink-0 ${
-                    isGuest
-                      ? 'bg-teal-950/80 text-teal-300 border-teal-800/60'
-                      : isClientRole
+                    isClient
                       ? 'bg-blue-950/80 text-blue-400 border-blue-800/60'
-                      : 'bg-purple-950/80 text-purple-300 border-purple-800/60'
+                      : 'bg-violet-950/80 text-violet-300 border-violet-800/60'
                   }`}
                 >
-                  {isGuest ? 'DEMO MODE' : roleBadgeLabel.toUpperCase()}
+                  {isClient ? 'CLIENT' : 'DEVELOPER'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
                 {isGuest
-                  ? 'Fictional demo data \u2022 Real-time telemetry, mock commit proofs and simulated milestone intelligence.'
-                  : isClientRole
-                  ? `${user?.organization || 'Meridian Labs'} \u2022 Milestone approvals, AST proof audits and PayPal invoice release.`
-                  : `${user?.organization || 'Northstar Digital Studio'} \u2022 Real-time telemetry, commit proofs and milestone intelligence.`}
+                  ? isClient
+                    ? 'Client Guest Perspective \u2022 Explore sample project scopes, milestone approvals and escrow settlement telemetry.'
+                    : 'Developer Guest Perspective \u2022 Explore sample commit proofs, AI verification scores and deliverable tracking.'
+                  : isClient
+                  ? `${user?.organization || 'Client Workspace'} \u2022 Milestone approvals, evidence audits and settlement tracking.`
+                  : `${user?.organization || 'Developer Workspace'} \u2022 Real-time telemetry, commit proofs and milestone intelligence.`}
               </p>
             </div>
-            <button
-              onClick={() => {
-                if (isGuest) {
-                  setIsGuestGuardOpen(true);
-                  return;
-                }
-                setIsNewProjectModalOpen(true);
-              }}
-              className="self-start sm:self-auto shrink-0 whitespace-nowrap bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span>New Project</span>
-            </button>
+            {isClient ? (
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    setIsGuestGuardOpen(true);
+                    return;
+                  }
+                  setIsNewProjectModalOpen(true);
+                }}
+                className="self-start sm:self-auto shrink-0 whitespace-nowrap bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>New Project</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    setIsGuestGuardOpen(true);
+                    return;
+                  }
+                  navigate('/milestones?view=deliverables');
+                }}
+                className="self-start sm:self-auto shrink-0 whitespace-nowrap bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-violet-600/30 flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>Submit Deliverable</span>
+              </button>
+            )}
           </div>
 
           {/* 4. KPI CARDS */}
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3.5">
             {/* Card 1: Active Projects */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-400 font-semibold">Active Projects</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">
+                {isClient ? 'Active Projects' : 'Assigned Repositories'}
+              </span>
               <div className="flex items-center justify-between mt-3">
                 <span className="text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-white">
-                  {String(projects.length || 4).padStart(2, '0')}
+                  {String(projects.length).padStart(2, '0')}
                 </span>
                 {/* Mini Trend Sparkline */}
-                <svg className="w-16 h-7 text-[#2563EB] shrink-0" viewBox="0 0 60 25" fill="none">
+                <svg className="w-16 h-7 shrink-0" viewBox="0 0 60 25" fill="none">
                   <path
                     d="M2 18 Q 15 5, 28 16 T 58 6"
-                    stroke="#2563EB"
+                    stroke={isClient ? '#2563EB' : '#8B5CF6'}
                     strokeWidth="2.5"
                     strokeLinecap="round"
                   />
@@ -387,57 +469,84 @@ export const DashboardPage: React.FC = () => {
 
             {/* Card 2: Total Milestones */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-400 font-semibold">Total Milestones</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">
+                {isClient ? 'Total Milestones' : 'Tracked Deliverables'}
+              </span>
               <div className="mt-3 text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-white">
-                {String(milestones.length || 14).padStart(2, '0')}
+                {String(milestones.length).padStart(2, '0')}
               </div>
             </div>
 
-            {/* Card 3: Pending Approvals */}
+            {/* Card 3: Role-specific Pending Count */}
             <div className="p-4 rounded-xl bg-white dark:bg-[#171E30] border border-amber-200 dark:border-amber-900/60 flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-700 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-500 dark:text-slate-400 font-semibold">Pending Client Review</span>
+              <span className="font-sans text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                {isClient ? 'Pending Your Approval' : 'Active / Pending Review'}
+              </span>
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-2xl sm:text-3xl font-extrabold font-sans tabular-nums text-amber-600 dark:text-amber-400">
-                  02
+                  {String(
+                    isClient
+                      ? pendingClientReviewCount
+                      : pendingClientReviewCount + activeDeliverablesCount
+                  ).padStart(2, '0')}
                 </span>
                 <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse" />
               </div>
             </div>
 
-            {/* Card 4: Outstanding Invoices */}
+            {/* Card 4: Outstanding Invoices / Pending Payouts */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-400 font-semibold">Outstanding Invoices</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">
+                {isClient ? 'Awaiting Settlement' : 'Pending Payouts'}
+              </span>
               <div className="mt-3 text-xl sm:text-2xl font-extrabold font-sans tabular-nums text-white">
-                ${telemetry ? telemetry.pendingInvoicesAmount.toLocaleString() : '4,500'}
+                ${awaitingSettlementAmount.toLocaleString()}
               </div>
             </div>
 
-            {/* Card 5: Confirmed Payments */}
+            {/* Card 5: Confirmed Settlements / Earnings */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-slate-600 transition-colors shadow-xs">
-              <span className="font-sans text-xs text-slate-400 font-semibold">Confirmed Settlements</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">
+                {isClient ? 'Total Released' : 'Confirmed Earnings'}
+              </span>
               <div className="mt-3 text-xl sm:text-2xl font-extrabold font-sans tabular-nums text-emerald-400">
-                ${telemetry ? telemetry.totalRevenuePaid.toLocaleString() : '9,500'}
+                ${confirmedSettlementAmount.toLocaleString()}
               </div>
             </div>
           </div>
 
           {/* 5 & 6. MAIN CONTENT & FINANCIAL OVERVIEW (2-Column Grid) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-            {/* Left Column: Project Overview + AI Agent Activity (lg:col-span-8) */}
+            {/* Left Column: Project Overview + AI Verification Activity (lg:col-span-8) */}
             <div className="lg:col-span-8 space-y-4">
               {/* SECTION: PROJECT OVERVIEW */}
               <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
                 {/* Table Header */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#26344B]">
                   <div className="flex items-center gap-2.5">
-                    <FolderGit2 className="w-4 h-4 text-blue-400 shrink-0" />
+                    <FolderGit2 className={`w-4 h-4 shrink-0 ${isClient ? 'text-blue-400' : 'text-violet-400'}`} />
                     <h3 className="font-heading text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-200">
-                      Active Projects &amp; Deliverables
+                      {isClient ? 'Active Projects & Approvals' : 'Active Projects & Deliverables'}
                     </h3>
                   </div>
-                  <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold font-sans bg-blue-950/70 border border-blue-800/60 text-blue-400 px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                    <span>4 Active Projects &bull; Fictional Demo Data</span>
+                  <div
+                    className={`inline-flex items-center gap-1.5 text-[11px] font-semibold font-sans px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0 border ${
+                      isGuest
+                        ? 'bg-teal-950/70 border-teal-800/60 text-teal-300'
+                        : isClient
+                        ? 'bg-blue-950/70 border-blue-800/60 text-blue-400'
+                        : 'bg-violet-950/70 border-violet-800/60 text-violet-300'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        isGuest ? 'bg-teal-400' : isClient ? 'bg-blue-400' : 'bg-violet-400'
+                      }`}
+                    />
+                    <span>
+                      {projects.length} Active Project{projects.length === 1 ? '' : 's'} &bull;{' '}
+                      {isGuest ? 'DEMO MODE' : 'Live Workspace'}
+                    </span>
                   </div>
                 </div>
 
@@ -447,70 +556,96 @@ export const DashboardPage: React.FC = () => {
                     <thead>
                       <tr className="border-b border-[#26344B]/70 text-[11px] text-slate-400 uppercase tracking-wider">
                         <th className="pb-2.5 pr-3 font-semibold">Project Name</th>
-                        <th className="pb-2.5 pr-3 font-semibold">Client</th>
+                        <th className="pb-2.5 pr-3 font-semibold">{isClient ? 'Workspace Client' : 'Client'}</th>
                         <th className="pb-2.5 pr-3 font-semibold">Progress</th>
-                        <th className="pb-2.5 pr-3 font-semibold">Current Deliverable</th>
-                        <th className="pb-2.5 pr-3 font-semibold">Target Date</th>
+                        <th className="pb-2.5 pr-3 font-semibold">Repository</th>
+                        <th className="pb-2.5 pr-3 font-semibold">Milestones</th>
                         <th className="pb-2.5 font-semibold text-right">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
-                      {projects.map((proj, idx) => {
-                        const progress = idx === 0 ? 75 : idx === 1 ? 100 : idx === 2 ? 40 : 25;
-                        const milestoneLabel = idx === 0 ? 'PayPal Webhook Engine' : idx === 1 ? 'Settlement Reconciler' : idx === 2 ? 'REST Route Hardening' : 'AST Evidence Audit';
-                        const statusLabel = idx === 1 ? 'Verified' : idx === 0 ? 'In Review' : 'In Progress';
-                        const statusStyle = idx === 1
-                          ? 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60'
-                          : idx === 0
-                          ? 'bg-amber-950/70 text-amber-400 border-amber-800/60'
-                          : 'bg-blue-950/70 text-blue-400 border-blue-800/60';
-                        return (
-                          <tr
-                            key={proj.id}
-                            onClick={() => navigate('/projects')}
-                            className="hover:bg-[#15233D] transition-colors cursor-pointer"
-                          >
-                            <td className="py-3 pr-3 font-bold text-white">{proj.name}</td>
-                            <td className="py-3 pr-3 text-slate-300">{proj.clientName}</td>
-                            <td className="py-3 pr-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-20 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
-                                  <div className="bg-[#2563EB] h-full rounded-full" style={{ width: `${progress}%` }} />
+                      {filteredProjects.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-6 text-center text-xs text-slate-400">
+                            {projects.length === 0
+                              ? 'No projects in this workspace yet.'
+                              : 'No projects match your current search filter.'}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredProjects.map((proj) => {
+                          const totalMs = proj.milestonesCount || 0;
+                          const completedMs = proj.completedMilestonesCount || 0;
+                          const progress = totalMs > 0 ? Math.round((completedMs / totalMs) * 100) : 0;
+                          const isComplete = totalMs > 0 && completedMs >= totalMs;
+                          const statusLabel = isComplete ? 'Verified' : completedMs > 0 ? 'In Progress' : 'Active';
+                          const statusStyle = isComplete
+                            ? 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60'
+                            : 'bg-blue-950/70 text-blue-400 border-blue-800/60';
+
+                          return (
+                            <tr
+                              key={proj.id}
+                              onClick={() => navigate('/projects')}
+                              className="hover:bg-[#15233D] transition-colors cursor-pointer"
+                            >
+                              <td className="py-3 pr-3 font-bold text-white">{proj.name}</td>
+                              <td className="py-3 pr-3 text-slate-300">{proj.clientName}</td>
+                              <td className="py-3 pr-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-20 bg-[#1E2E4E] h-1.5 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${isClient ? 'bg-[#2563EB]' : 'bg-violet-500'}`}
+                                      style={{ width: `${progress}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-[11px] font-mono text-slate-400">{progress}%</span>
                                 </div>
-                                <span className="text-[11px] font-mono text-slate-400">{progress}%</span>
-                              </div>
-                            </td>
-                            <td className="py-3 pr-3 font-mono text-slate-300 text-xs">{milestoneLabel}</td>
-                            <td className="py-3 pr-3 text-slate-400 font-mono text-xs">Nov {10 + idx * 3}</td>
-                            <td className="py-3 text-right">
-                              <span className={`text-[11px] font-bold border px-2 py-0.5 rounded-md ${statusStyle}`}>
-                                {statusLabel}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                              </td>
+                              <td className="py-3 pr-3 font-mono text-slate-300 text-xs">{proj.githubRepo}</td>
+                              <td className="py-3 pr-3 text-slate-400 font-mono text-xs">
+                                {completedMs}/{totalMs} done
+                              </td>
+                              <td className="py-3 text-right">
+                                <span className={`text-[11px] font-bold border px-2 py-0.5 rounded-md ${statusStyle}`}>
+                                  {statusLabel}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* 7. AI AGENT ACTIVITY SECTION */}
+              {/* 7. ROLE-TAILORED VERIFICATION & QUICK ACTIONS SECTION */}
               <div className="p-4 sm:p-5 rounded-xl bg-[#111C30] border border-[#26344B] space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#26344B]">
                   <div className="flex items-center gap-2.5">
-                    <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                    <Sparkles className={`w-4 h-4 shrink-0 ${isClient ? 'text-blue-400' : 'text-violet-400'}`} />
                     <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
-                      Autonomous Verification Agents
+                      {isClient ? 'Delivery Verification Safeguards' : 'Autonomous Verification Agents'}
                     </h3>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-mono bg-[#080D18] px-2.5 py-0.5 rounded-md border border-[#26344B]">
-                    AST Code Parser &bull; Human-in-the-Loop Governance
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigate(isClient ? '/milestone-verification' : '/verification')}
+                    className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                      isClient
+                        ? 'text-blue-300 bg-blue-950/60 border-blue-800/60 hover:bg-blue-900/60'
+                        : 'text-violet-300 bg-violet-950/60 border-violet-800/60 hover:bg-violet-900/60'
+                    }`}
+                  >
+                    {isClient ? 'Open Approvals Queue' : 'Open AI Verification'}
+                  </button>
                 </div>
 
                 <p className="text-xs sm:text-[13px] text-slate-400 leading-relaxed">
-                  AI agents validate cryptographic commits and AST proofs against requirement acceptance criteria. Human client sign-off is always required prior to invoice creation and money movement.
+                  {isClient
+                    ? 'AI pre-checks submitted commits and AST proofs against your acceptance criteria. Your explicit approval is always required before PayPal invoice settlement.'
+                    : 'AI agents validate cryptographic commits and AST proofs against requirement acceptance criteria before queueing deliverables for client review.'}
                 </p>
 
                 {/* 4 Agent Cards in a Row */}
@@ -525,12 +660,12 @@ export const DashboardPage: React.FC = () => {
                       <h4 className="font-bold text-xs sm:text-sm text-white mt-1">AST Syntax Auditor</h4>
                       <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 mt-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span>Active &bull; 98% Pass</span>
+                        <span>{isGuest ? 'Demo • 98% Pass' : 'Active • Guarded'}</span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Parsed TypeScript abstract syntax trees</p>
                     </div>
                     <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
-                      <span>Verified commit a1e9482</span>
+                      <span>{isGuest ? 'Sample commit a1e9482' : `${milestones.length} tracked milestones`}</span>
                     </div>
                   </div>
 
@@ -544,12 +679,12 @@ export const DashboardPage: React.FC = () => {
                       <h4 className="font-bold text-xs sm:text-sm text-white mt-1">Requirement Matcher</h4>
                       <div className="flex items-center gap-1.5 text-[11px] text-blue-400 mt-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        <span>Evaluating &bull; 94.2%</span>
+                        <span>{isGuest ? 'Demo • 94.2%' : 'Criteria Check Ready'}</span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Matching milestone acceptance criteria</p>
                     </div>
                     <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
-                      <span>4 criteria satisfied</span>
+                      <span>Automated proof diffing</span>
                     </div>
                   </div>
 
@@ -568,7 +703,7 @@ export const DashboardPage: React.FC = () => {
                       <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Synthesizing evidence audit report</p>
                     </div>
                     <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
-                      <span>Client review queued</span>
+                      <span>{pendingClientReviewCount} awaiting client review</span>
                     </div>
                   </div>
 
@@ -582,12 +717,12 @@ export const DashboardPage: React.FC = () => {
                       <h4 className="font-bold text-xs sm:text-sm text-white mt-1">Payment Assistant</h4>
                       <div className="flex items-center gap-1.5 text-[11px] text-amber-400 mt-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        <span>Awaiting Sign-off</span>
+                        <span>Human Sign-off Gate</span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">PayPal Invoicing REST client standby</p>
                     </div>
                     <div className="pt-2 border-t border-[#26344B]/60 text-[11px] text-slate-500 flex items-center gap-1">
-                      <span>Awaiting human approval</span>
+                      <span>Zero autonomous payouts</span>
                     </div>
                   </div>
                 </div>
@@ -602,11 +737,17 @@ export const DashboardPage: React.FC = () => {
                   <div className="flex items-center gap-2 min-w-0">
                     <CreditCard className="w-4 h-4 text-emerald-400 shrink-0" />
                     <h3 className="font-heading text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200 truncate">
-                      Financial Telemetry
+                      {isClient ? 'Escrow & Settlements' : 'Financial Telemetry'}
                     </h3>
                   </div>
-                  <span className="text-[10px] font-sans font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">
-                    SANDBOX
+                  <span
+                    className={`text-[10px] font-sans font-bold px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap border ${
+                      isGuest
+                        ? 'bg-teal-950/80 text-teal-300 border-teal-800/60 font-mono'
+                        : 'bg-emerald-950/80 text-emerald-400 border-emerald-800/60'
+                    }`}
+                  >
+                    {isGuest ? 'DEMO MODE' : 'LIVE LEDGER'}
                   </span>
                 </div>
 
@@ -615,16 +756,24 @@ export const DashboardPage: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-[#2563EB] shrink-0" />
-                      <span className="font-medium font-sans whitespace-nowrap">Confirmed (Demo)</span>
+                      <span className="font-medium font-sans whitespace-nowrap">
+                        {isClient ? 'Total Released' : 'Confirmed Payouts'}
+                      </span>
                     </div>
-                    <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">$9,500.00</div>
+                    <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">
+                      ${confirmedSettlementAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center justify-end gap-1.5 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-[#38BDF8] shrink-0" />
-                      <span className="font-medium font-sans whitespace-nowrap">Pending Client</span>
+                      <span className="font-medium font-sans whitespace-nowrap">
+                        {isClient ? 'Awaiting Settlement' : 'Pending Client'}
+                      </span>
                     </div>
-                    <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">$4,500.00</div>
+                    <div className="text-base sm:text-lg font-bold font-sans tabular-nums text-white mt-0.5">
+                      ${awaitingSettlementAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
                   </div>
                 </div>
 
@@ -633,8 +782,8 @@ export const DashboardPage: React.FC = () => {
                   <svg className="w-full h-28" viewBox="0 0 300 100" fill="none">
                     <defs>
                       <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2563EB" stopOpacity="0.45" />
-                        <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
+                        <stop offset="0%" stopColor={isClient ? '#2563EB' : '#8B5CF6'} stopOpacity="0.45" />
+                        <stop offset="100%" stopColor={isClient ? '#2563EB' : '#8B5CF6'} stopOpacity="0" />
                       </linearGradient>
                     </defs>
                     <path
@@ -643,7 +792,7 @@ export const DashboardPage: React.FC = () => {
                     />
                     <path
                       d="M 10 75 Q 70 85, 120 45 T 220 55 T 290 15"
-                      stroke="#2563EB"
+                      stroke={isClient ? '#2563EB' : '#8B5CF6'}
                       strokeWidth="3"
                       strokeLinecap="round"
                     />
@@ -674,46 +823,70 @@ export const DashboardPage: React.FC = () => {
                       Audit Activity Feed
                     </h3>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-sans">Live Sync</span>
+                  <span className="text-[11px] text-slate-400 font-sans">
+                    {isGuest ? 'Demo Feed' : 'Live Sync'}
+                  </span>
                 </div>
 
                 {/* Timeline */}
                 <div className="relative pl-6 space-y-4 text-xs sm:text-[13px] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#26344B]">
-                  {/* Item 1 */}
-                  <div className="relative">
-                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#2563EB] ring-4 ring-[#111C30]" />
-                    <div className="font-sans font-semibold text-white leading-snug">
-                      AST code verification passed for Commit a1e9482
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">10m ago &bull; 94.2% confidence</div>
-                  </div>
+                  {isGuest ? (
+                    <>
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#2563EB] ring-4 ring-[#111C30]" />
+                        <div className="font-sans font-semibold text-white leading-snug">
+                          Sample AST verification passed for Commit a1e9482
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">Demo &bull; 94.2% confidence</div>
+                      </div>
 
-                  {/* Item 2 */}
-                  <div className="relative">
-                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-slate-500 ring-4 ring-[#111C30]" />
-                    <div className="font-sans font-semibold text-white leading-snug">
-                      Sandbox Invoice #INV-2026-0843 drafted ($5,000)
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">1h ago &bull; Meridian Labs</div>
-                  </div>
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-slate-500 ring-4 ring-[#111C30]" />
+                        <div className="font-sans font-semibold text-white leading-snug">
+                          Sample Invoice #INV-2026-0843 drafted ($5,000)
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">Demo &bull; Northstar Sandbox</div>
+                      </div>
 
-                  {/* Item 3 */}
-                  <div className="relative">
-                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-emerald-400 ring-4 ring-[#111C30]" />
-                    <div className="font-sans font-semibold text-white leading-snug">
-                      Marcus Vance approved Milestone 2 deliverables
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-emerald-400 ring-4 ring-[#111C30]" />
+                        <div className="font-sans font-semibold text-white leading-snug">
+                          Demo Client signed off Milestone 2 deliverables
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">Demo &bull; Human Sign-off</div>
+                      </div>
+                    </>
+                  ) : milestones.length > 0 ? (
+                    milestones.slice(0, 4).map((m, idx) => (
+                      <div key={m.id} className="relative">
+                        <span
+                          className={`absolute -left-6 top-1 w-3 h-3 rounded-full ring-4 ring-[#111C30] ${
+                            idx === 0
+                              ? 'bg-[#2563EB]'
+                              : m.status === 'paid'
+                              ? 'bg-emerald-400'
+                              : 'bg-slate-500'
+                          }`}
+                        />
+                        <div className="font-sans font-semibold text-white leading-snug truncate">
+                          {m.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">
+                          ${m.amount.toLocaleString()} {m.currency} &bull; {m.status.replace(/_/g, ' ')}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="relative">
+                      <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#2563EB] ring-4 ring-[#111C30]" />
+                      <div className="font-sans font-semibold text-white leading-snug">
+                        Workspace initialized
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-sans mt-0.5">
+                        Create a project or track deliverables to populate live audit events.
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">3h ago &bull; Human Sign-off</div>
-                  </div>
-
-                  {/* Item 4 */}
-                  <div className="relative">
-                    <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-[#111C30]" />
-                    <div className="font-sans font-semibold text-white leading-snug">
-                      PayPal Webhook verified PAYMENT.INVOICE.PAID ($4,500)
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-sans tabular-nums mt-0.5">1d ago &bull; TXN-DEMO-948124</div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -804,7 +977,7 @@ export const DashboardPage: React.FC = () => {
       <GuestGuardModal
         isOpen={isGuestGuardOpen}
         onClose={() => setIsGuestGuardOpen(false)}
-        actionTitle="Create Project"
+        actionTitle={isClient ? 'Create Project' : 'Submit Deliverable'}
         message="Guest Mode: Please sign in or create an account to use this feature."
       />
     </div>

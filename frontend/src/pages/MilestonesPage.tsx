@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { devFlowApi } from '@/services/api';
 import { Milestone, Requirement, Project } from '@/types';
@@ -53,7 +53,9 @@ interface DisplayMilestone extends Milestone {
 
 export const MilestonesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isGuest } = useAuth();
+  const location = useLocation();
+  const { isGuest, isClient } = useAuth();
+  const isDeliverablesView = new URLSearchParams(location.search).get('view') === 'deliverables';
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
   const [guardActionTitle, setGuardActionTitle] = useState('Create Milestone');
   const [milestones, setMilestones] = useState<DisplayMilestone[]>([]);
@@ -216,7 +218,11 @@ export const MilestonesPage: React.FC = () => {
     if (isGuest) {
       setGuardActionTitle('Approve Deliverable');
       setIsGuestGuardOpen(true);
-      return;
+      return false;
+    }
+    if (!isClient) {
+      showToast('Client Action Only', 'Only client accounts can approve deliverables.', 'error');
+      return false;
     }
     try {
       await devFlowApi.submitClientApproval(
@@ -233,12 +239,23 @@ export const MilestonesPage: React.FC = () => {
           m.id === milestoneId ? { ...m, status: 'client_approved' } : m
         )
       );
+      return true;
     } catch {
       showToast('Approval Error', 'Failed to record approval.', 'error');
+      return false;
     }
   };
 
   const handleGenerateInvoice = async (milestoneId: string) => {
+    if (isGuest) {
+      setGuardActionTitle('Generate PayPal Invoice');
+      setIsGuestGuardOpen(true);
+      return;
+    }
+    if (!isClient) {
+      showToast('Client Action Only', 'Only client accounts can generate invoices.', 'error');
+      return;
+    }
     try {
       const res = await devFlowApi.generatePayPalInvoice(milestoneId);
       showToast(
@@ -270,7 +287,7 @@ export const MilestonesPage: React.FC = () => {
       if (statusFilter === 'completed') matchesStatus = m.status === 'paid';
       if (statusFilter === 'in_progress') matchesStatus = m.status === 'in_progress';
       if (statusFilter === 'review')
-        matchesStatus = m.status === 'ai_verified' || m.status === 'client_approved';
+        matchesStatus = m.status === 'ai_verified' || m.status === 'client_approved' || m.status === 'client_review';
 
       return matchesSearch && matchesProject && matchesStatus;
     });
@@ -285,11 +302,18 @@ export const MilestonesPage: React.FC = () => {
     );
   }, [milestones, selectedMilestoneId]);
 
-  // KPI Calculations
-  const totalMilestonesCount = 24; // Visual anchor matching reference image
-  const completedCount = 12;
-  const inProgressCount = 8;
-  const awaitingReviewCount = 4;
+  // Live KPI Calculations from active dataset
+  const totalMilestonesCount = milestones.length;
+  const completedCount = milestones.filter((m) => m.status === 'paid' || m.status === 'client_approved').length;
+  const inProgressCount = milestones.filter(
+    (m) =>
+      m.status === 'in_progress' ||
+      m.status === 'ai_analyzing' ||
+      m.status === 'evidence_submitted'
+  ).length;
+  const awaitingReviewCount = milestones.filter(
+    (m) => m.status === 'client_review' || m.status === 'ai_verified'
+  ).length;
 
   if (loading) {
     return (
@@ -332,10 +356,16 @@ export const MilestonesPage: React.FC = () => {
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">Milestones</h1>
+                <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                  {isDeliverablesView ? 'Deliverables' : 'Milestones'}
+                </h1>
               </div>
               <p className="text-xs sm:text-sm text-slate-400">
-                Track deliverables, evaluate progress and manage milestone approvals.
+                {isDeliverablesView
+                  ? 'Prepare code deliverables, run AI verification and track client sign-off.'
+                  : isClient
+                  ? 'Define acceptance criteria, review evidence and approve milestone releases.'
+                  : 'Track milestone requirements, commit evidence and verification status.'}
               </p>
             </div>
 
@@ -344,7 +374,7 @@ export const MilestonesPage: React.FC = () => {
               <button
                 onClick={() => {
                   if (isGuest) {
-                    setGuardActionTitle('Create Milestone');
+                    setGuardActionTitle(isClient ? 'Create Milestone' : 'Submit Deliverable');
                     setIsGuestGuardOpen(true);
                     return;
                   }
@@ -353,7 +383,7 @@ export const MilestonesPage: React.FC = () => {
                 className="bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
               >
                 <Plus className="w-4 h-4 shrink-0" />
-                <span>Create Milestone</span>
+                <span>{isDeliverablesView ? 'Submit Deliverable' : 'Create Milestone'}</span>
               </button>
 
               <div className="relative">
@@ -770,36 +800,62 @@ export const MilestonesPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Right: Approval Actions */}
+                        {/* Right: Role-Aware Workflow Actions */}
                         <div className="space-y-2 text-right self-start xl:self-auto">
                           <div className="text-xs font-mono uppercase text-slate-400 font-bold">
-                            APPROVAL WORKFLOW
+                            {isClient ? 'APPROVAL WORKFLOW' : 'DELIVERABLE WORKFLOW'}
                           </div>
                           <div className="flex flex-wrap items-center gap-2.5">
                             <button
                               onClick={() => navigate('/evidence')}
-                              className="px-4 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs sm:text-sm text-slate-200 transition-colors"
+                              className="px-4 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs sm:text-sm text-slate-200 transition-colors cursor-pointer"
                             >
                               Review Evidence
                             </button>
-                            <button
-                              onClick={() =>
-                                showToast('Changes Requested', 'Notified developer team to resolve open unit tests.', 'info')
-                              }
-                              className="px-4 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs sm:text-sm text-slate-200 transition-colors"
-                            >
-                              Request Changes
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleClientApprove(selectedMilestone.id);
-                                handleGenerateInvoice(selectedMilestone.id);
-                              }}
-                              className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 cursor-pointer"
-                            >
-                              <Check className="w-4 h-4" />
-                              <span>Approve Milestone</span>
-                            </button>
+                            {isClient ? (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    if (isGuest) {
+                                      setGuardActionTitle('Request Changes');
+                                      setIsGuestGuardOpen(true);
+                                      return;
+                                    }
+                                    showToast('Changes Requested', 'Notified developer team to resolve open unit tests.', 'info');
+                                  }}
+                                  className="px-4 py-2.5 rounded-xl bg-[#080D18] border border-[#26344B] hover:border-slate-400 text-xs sm:text-sm text-slate-200 transition-colors cursor-pointer"
+                                >
+                                  Request Changes
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    const approved = await handleClientApprove(selectedMilestone.id);
+                                    if (approved) {
+                                      await handleGenerateInvoice(selectedMilestone.id);
+                                    }
+                                  }}
+                                  className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Check className="w-4 h-4" />
+                                  <span>Approve Milestone</span>
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  if (isGuest) {
+                                    setGuardActionTitle('Submit Deliverable');
+                                    setIsGuestGuardOpen(true);
+                                    return;
+                                  }
+                                  navigate('/verification');
+                                }}
+                                className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-violet-600/30 transition-all flex items-center gap-2 cursor-pointer"
+                              >
+                                <Sparkles className="w-4 h-4" />
+                                <span>Run AI Verification</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

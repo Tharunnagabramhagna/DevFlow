@@ -12,11 +12,41 @@ export interface JwtPayload {
   exp?: number;
 }
 
+import { ForbiddenError, UnauthorizedError } from '../utils/errors';
+
 export interface AuthenticatedUser {
   id: string;
   email: string;
   role: Role | 'GUEST';
   isGuest?: boolean;
+}
+
+export interface VerifiedAccountUser {
+  id: string;
+  email: string;
+  role: Role;
+}
+
+export function isNonGuestUser(user: AuthenticatedUser | undefined): user is VerifiedAccountUser {
+  return Boolean(user && !user.isGuest && user.role !== 'GUEST');
+}
+
+export function assertVerifiedUser(req: Request): VerifiedAccountUser {
+  if (!req.user) {
+    throw new UnauthorizedError('Authentication required.');
+  }
+  if (req.user.isGuest || req.user.role === 'GUEST') {
+    throw new ForbiddenError(
+      'Guest Mode: Please sign in or create an account to use this feature.',
+      undefined,
+      'GUEST_RESTRICTED'
+    );
+  }
+  return {
+    id: req.user.id,
+    email: req.user.email,
+    role: req.user.role,
+  };
 }
 
 declare global {
@@ -48,12 +78,13 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    const isGuest = Boolean(decoded.isGuest || decoded.role === 'GUEST');
 
     req.user = {
       id: decoded.sub,
       email: decoded.email,
       role: decoded.role,
-      isGuest: Boolean(decoded.isGuest || decoded.role === 'GUEST'),
+      ...(isGuest ? { isGuest: true } : {}),
     };
 
     next();
@@ -84,11 +115,12 @@ export const optionalAuthenticate = (req: Request, _res: Response, next: NextFun
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    const isGuest = Boolean(decoded.isGuest || decoded.role === 'GUEST');
     req.user = {
       id: decoded.sub,
       email: decoded.email,
       role: decoded.role,
-      isGuest: Boolean(decoded.isGuest || decoded.role === 'GUEST'),
+      ...(isGuest ? { isGuest: true } : {}),
     };
   } catch {
     // Ignore invalid tokens on optional auth
@@ -101,7 +133,7 @@ export const optionalAuthenticate = (req: Request, _res: Response, next: NextFun
  * Guard ensuring guest users cannot perform write or financial operations.
  */
 export const requireNonGuest = (req: Request, res: Response, next: NextFunction): void => {
-  if (req.user?.role === ('GUEST' as Role) || req.user?.isGuest) {
+  if (req.user?.role === 'GUEST' || req.user?.isGuest) {
     res.status(403).json({
       error: {
         code: 'GUEST_RESTRICTED',
@@ -130,7 +162,7 @@ export const requireRole = (allowedRoles: Role[]) => {
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (req.user.role === 'GUEST' || !allowedRoles.includes(req.user.role)) {
       res.status(403).json({
         error: {
           code: 'FORBIDDEN',

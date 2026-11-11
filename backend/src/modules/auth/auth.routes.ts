@@ -13,6 +13,7 @@ import {
   GitHubCallbackQuerySchema,
   AccountLinkingPasswordSchema,
   AccountLinkingOtpSchema,
+  MockSocialAuthSchema,
 } from './auth.schema';
 
 export const authRouter = Router();
@@ -41,7 +42,7 @@ authRouter.get('/oauth/google/callback', (req, res) => authController.handleGoog
 authRouter.get('/oauth/facebook', (req, res, next) => authController.initiateFacebookOAuth(req, res, next));
 authRouter.post('/oauth/facebook/initiate', (req, res, next) => authController.initiateFacebookOAuth(req, res, next));
 authRouter.get('/oauth/facebook/callback', (req, res) => authController.handleFacebookOAuthCallback(req, res));
-authRouter.post('/oauth/mock', (req, res, next) => authController.mockSocialAuth(req, res, next));
+authRouter.post('/oauth/mock', validateBody(MockSocialAuthSchema), (req, res, next) => authController.mockSocialAuth(req, res, next));
 
 // OAuth Exchange & Account Linking Flow
 authRouter.post('/oauth/exchange', validateBody(OAuthExchangeSchema), (req, res, next) => authController.exchangeOAuthCode(req, res, next));

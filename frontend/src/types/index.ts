@@ -199,6 +199,7 @@ export interface DeveloperTelemetry {
 }
 
 // User & Role-Based Authentication Types
+export type EffectiveRole = 'CLIENT' | 'DEVELOPER';
 export type UserRole = 'CLIENT' | 'DEVELOPER' | 'ADMIN' | 'GUEST';
 
 export interface AuthUser {

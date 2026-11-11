@@ -13,8 +13,11 @@ import {
   FileText,
   ExternalLink,
   CornerDownLeft,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { Project, Milestone, PayPalInvoice } from '@/types';
 import { cn } from '@/utils/cn';
 
@@ -43,6 +46,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpenCreateMilestone,
 }) => {
   const navigate = useNavigate();
+  const { isClient, isDeveloper, isGuest } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -68,14 +72,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   }, [isOpen]);
 
-  // Static commands: Pages & Actions
-  const staticItems: CommandItem[] = useMemo(
-    () => [
+  // Static commands filtered by active role and guest restrictions
+  const staticItems: CommandItem[] = useMemo(() => {
+    const items: CommandItem[] = [
       {
         id: 'nav-dashboard',
         category: 'Pages',
         title: 'Dashboard Overview',
-        subtitle: 'Telemetry, active pipelines, revenue metrics',
+        subtitle: isClient
+          ? 'Client overview, milestone progress and escrow telemetry'
+          : 'Developer telemetry, verification confidence and payouts',
         icon: LayoutDashboard,
         action: () => {
           navigate('/dashboard');
@@ -107,7 +113,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       {
         id: 'nav-evidence',
         category: 'Pages',
-        title: 'GitHub Evidence Audit',
+        title: isClient ? 'Evidence Review' : 'GitHub Evidence Audit',
         subtitle: 'Verify commit SHAs, PR diffs & author signoffs',
         icon: GitBranch,
         action: () => {
@@ -115,24 +121,74 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           onClose();
         },
       },
-      {
-        id: 'nav-verification',
-        category: 'Pages',
-        title: 'AI Verification Intelligence',
-        subtitle: 'Explainable requirements validation & code scoring',
-        icon: Sparkles,
-        badge: 'AI Engine',
-        badgeColor: 'lavender',
-        action: () => {
-          navigate('/verification');
-          onClose();
+    ];
+
+    if (isClient) {
+      items.push(
+        {
+          id: 'nav-approvals',
+          category: 'Pages',
+          title: 'Approvals Queue',
+          subtitle: 'Human-in-the-loop milestone review & sign-off',
+          icon: ShieldCheck,
+          badge: 'Client',
+          badgeColor: 'blue',
+          action: () => {
+            navigate('/milestone-verification');
+            onClose();
+          },
         },
-      },
+        {
+          id: 'nav-invoices',
+          category: 'Pages',
+          title: 'Invoices & Sandbox Settlement',
+          subtitle: 'Review PayPal invoices and authorize escrow settlement',
+          icon: FileText,
+          badge: 'PayPal',
+          badgeColor: 'blue',
+          action: () => {
+            navigate('/invoices');
+            onClose();
+          },
+        }
+      );
+    }
+
+    if (isDeveloper) {
+      items.push(
+        {
+          id: 'nav-verification',
+          category: 'Pages',
+          title: 'AI Verification Intelligence',
+          subtitle: 'Explainable requirements validation & code scoring',
+          icon: Sparkles,
+          badge: 'AI Engine',
+          badgeColor: 'lavender',
+          action: () => {
+            navigate('/verification');
+            onClose();
+          },
+        },
+        {
+          id: 'nav-integrations',
+          category: 'Pages',
+          title: 'Repository & AI Integrations',
+          subtitle: 'GitHub repositories, webhooks & provider telemetry',
+          icon: Zap,
+          action: () => {
+            navigate('/integrations');
+            onClose();
+          },
+        }
+      );
+    }
+
+    items.push(
       {
         id: 'nav-payments',
         category: 'Pages',
-        title: 'PayPal Invoices & Settlements',
-        subtitle: 'Sandbox invoices, checkout simulation & receipts',
+        title: isClient ? 'Payments & Settlement History' : 'Payment Tracking',
+        subtitle: 'Transaction ledger, settlement history & receipts',
         icon: CreditCard,
         badge: 'PayPal',
         badgeColor: 'blue',
@@ -145,61 +201,68 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         id: 'nav-settings',
         category: 'Pages',
         title: 'Platform Settings',
-        subtitle: 'API keys, webhook tokens, developer preferences',
+        subtitle: 'Workspace preferences & account security',
         icon: Settings,
         action: () => {
           navigate('/settings');
           onClose();
         },
-      },
-      {
-        id: 'act-new-project',
-        category: 'Actions',
-        title: 'Create New Project',
-        subtitle: 'Register GitHub repo and set milestone budget',
-        icon: PlusCircle,
-        badge: 'Action',
-        badgeColor: 'mint',
-        action: () => {
-          onClose();
-          if (onOpenCreateProject) {
-            onOpenCreateProject();
-          } else {
-            navigate('/projects');
-          }
+      }
+    );
+
+    if (!isGuest) {
+      items.push(
+        {
+          id: 'act-new-project',
+          category: 'Actions',
+          title: 'Create New Project',
+          subtitle: 'Register GitHub repo and set milestone budget',
+          icon: PlusCircle,
+          badge: 'Action',
+          badgeColor: 'mint',
+          action: () => {
+            onClose();
+            if (onOpenCreateProject) {
+              onOpenCreateProject();
+            } else {
+              navigate('/projects');
+            }
+          },
         },
+        {
+          id: 'act-new-milestone',
+          category: 'Actions',
+          title: 'Add Deliverable Milestone',
+          subtitle: 'Define criteria and set settlement payout',
+          icon: PlusCircle,
+          badge: 'Action',
+          badgeColor: 'yellow',
+          action: () => {
+            onClose();
+            if (onOpenCreateMilestone) {
+              onOpenCreateMilestone();
+            } else {
+              navigate('/milestones');
+            }
+          },
+        }
+      );
+    }
+
+    items.push({
+      id: 'act-sandbox-dash',
+      category: 'Actions',
+      title: 'Open PayPal Developer Dashboard',
+      subtitle: 'External link to PayPal developer portal',
+      icon: ExternalLink,
+      action: () => {
+        window.open('https://developer.paypal.com/dashboard/', '_blank');
+        onClose();
       },
-      {
-        id: 'act-new-milestone',
-        category: 'Actions',
-        title: 'Add Deliverable Milestone',
-        subtitle: 'Define criteria and set settlement payout',
-        icon: PlusCircle,
-        badge: 'Action',
-        badgeColor: 'yellow',
-        action: () => {
-          onClose();
-          if (onOpenCreateMilestone) {
-            onOpenCreateMilestone();
-          } else {
-            navigate('/milestones');
-          }
-        },
-      },
-      {
-        id: 'act-sandbox-dash',
-        category: 'Actions',
-        title: 'Open PayPal Developer Dashboard',
-        subtitle: 'External link to PayPal developer portal',
-        icon: ExternalLink,
-        action: () => {
-          window.open('https://developer.paypal.com/dashboard/', '_blank');
-          onClose();
-        },
-      },
-    ],
-    [navigate, onClose, onOpenCreateProject, onOpenCreateMilestone]
-  );
+    });
+
+    return items;
+  }, [isClient, isDeveloper, isGuest, navigate, onClose, onOpenCreateProject, onOpenCreateMilestone]);
 
   // Dynamic commands from active data
   const dynamicItems: CommandItem[] = useMemo(() => {
@@ -239,25 +302,27 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       });
     });
 
-    // Invoices
-    invoices.forEach((inv) => {
-      list.push({
-        id: `inv-${inv.id}`,
-        category: 'Invoices',
-        title: `Invoice ${inv.invoiceNumber}`,
-        subtitle: `Recipient: ${inv.recipientName} • $${inv.amount.toLocaleString()} ${inv.currency}`,
-        icon: FileText,
-        badge: inv.status,
-        badgeColor: inv.status === 'PAID' ? 'mint' : inv.status === 'SENT' ? 'blue' : 'yellow',
-        action: () => {
-          navigate('/payments');
-          onClose();
-        },
+    // Invoices (Client-only)
+    if (isClient) {
+      invoices.forEach((inv) => {
+        list.push({
+          id: `inv-${inv.id}`,
+          category: 'Invoices',
+          title: `Invoice ${inv.invoiceNumber}`,
+          subtitle: `Recipient: ${inv.recipientName} • $${inv.amount.toLocaleString()} ${inv.currency}`,
+          icon: FileText,
+          badge: inv.status,
+          badgeColor: inv.status === 'PAID' ? 'mint' : inv.status === 'SENT' ? 'blue' : 'yellow',
+          action: () => {
+            navigate('/invoices');
+            onClose();
+          },
+        });
       });
-    });
+    }
 
     return list;
-  }, [projects, milestones, invoices, navigate, onClose]);
+  }, [projects, milestones, invoices, isClient, navigate, onClose]);
 
   const allItems = useMemo(() => [...staticItems, ...dynamicItems], [staticItems, dynamicItems]);
 

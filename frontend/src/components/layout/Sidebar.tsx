@@ -3,18 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DevFlowLogo, ThemeToggle } from '@/components/common';
+import { getNavigationForRole, NavItemConfig } from '@/config/navigation';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  CheckCircle2,
-  Sparkles,
-  FileCode,
-  ShieldCheck,
-  FileText,
-  CreditCard,
-  Bell,
-  Zap,
-  Settings,
   X,
   Menu,
   PanelLeftClose,
@@ -32,7 +22,7 @@ export const Sidebar: React.FC = () => {
     isMobileOpen,
     closeMobileSidebar,
   } = useSidebar();
-  const { user, role, isGuest, logout } = useAuth();
+  const { user, effectiveRole, isClient, isGuest, logout } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,76 +34,61 @@ export const Sidebar: React.FC = () => {
 
   const handleLogout = async () => {
     closeMobileSidebar();
+    const targetLogin =
+      effectiveRole === 'DEVELOPER'
+        ? '/login/developer'
+        : effectiveRole === 'CLIENT'
+          ? '/login/client'
+          : '/login';
     await logout();
-    navigate('/login');
+    navigate(targetLogin, { replace: true });
   };
 
-  const userName = isGuest ? 'Guest Explorer' : user?.name || 'Alex Morgan';
+  const userName = isGuest
+    ? isClient
+      ? 'Client Guest'
+      : 'Developer Guest'
+    : user?.name || (isClient ? 'Client Account' : 'Developer Account');
+
   const initials = isGuest
-    ? 'GE'
+    ? isClient
+      ? 'CG'
+      : 'DG'
     : userName
         .split(' ')
         .filter(Boolean)
         .map((n) => n[0])
         .join('')
         .slice(0, 2)
-        .toUpperCase() || 'AM';
+        .toUpperCase() || (isClient ? 'CL' : 'DV');
 
-  const avatarGradient = isGuest
-    ? 'bg-gradient-to-tr from-teal-500 to-cyan-500'
-    : role === 'CLIENT'
+  const avatarGradient = isClient
     ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-    : 'bg-gradient-to-tr from-purple-600 to-indigo-400';
+    : 'bg-gradient-to-tr from-violet-600 to-indigo-500';
 
-  const isActive = (path: string): boolean => {
-    const current = location.pathname;
-    if (path === '/dashboard') return current === '/dashboard' || current === '/';
-    if (path === '/projects') return current.startsWith('/projects');
-    if (path === '/milestones') return current.startsWith('/milestones') || current === '/milestone-verification';
-    if (path === '/agents') return current === '/agents';
-    if (path === '/evidence') return current.startsWith('/evidence');
-    if (path === '/verification') return current === '/verification';
-    if (path === '/invoices') return current === '/invoices';
-    if (path === '/payments') return current === '/payments';
-    if (path === '/notifications') return current === '/notifications';
-    if (path === '/integrations') return current === '/integrations';
-    if (path === '/settings') return current === '/settings';
-    return current === path;
+  const isActive = (item: NavItemConfig): boolean => {
+    const currentPath = location.pathname;
+    const currentSearch = location.search;
+
+    if (item.matchQuery) {
+      return currentPath === item.matchPath && currentSearch.includes(item.matchQuery);
+    }
+
+    if (item.matchPath === '/milestones') {
+      if (currentPath === '/milestones') {
+        return !currentSearch.includes('view=deliverables');
+      }
+      return false;
+    }
+
+    if (item.matchPath === '/dashboard') {
+      return currentPath === '/dashboard' || currentPath === '/';
+    }
+
+    return currentPath === item.matchPath || currentPath.startsWith(`${item.matchPath}/`);
   };
 
-  const navGroups = [
-    {
-      title: 'WORKSPACE',
-      items: [
-        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-[#2563EB]' },
-        { name: 'Projects', path: '/projects', icon: FolderGit2, iconColor: 'text-[#2563EB]' },
-        { name: 'Milestones', path: '/milestones', icon: CheckCircle2, iconColor: 'text-[#2563EB]' },
-      ],
-    },
-    {
-      title: 'INTELLIGENCE',
-      items: [
-        { name: 'AI Agents', path: '/agents', icon: Sparkles, iconColor: 'text-purple-400' },
-        { name: 'Evidence', path: '/evidence', icon: FileCode, iconColor: 'text-slate-400' },
-        { name: 'Verification', path: '/verification', icon: ShieldCheck, iconColor: 'text-emerald-400' },
-      ],
-    },
-    {
-      title: 'FINANCE',
-      items: [
-        { name: 'Invoices', path: '/invoices', icon: FileText, iconColor: 'text-slate-400' },
-        { name: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-blue-400' },
-      ],
-    },
-    {
-      title: 'SYSTEM',
-      items: [
-        { name: 'Notifications', path: '/notifications', icon: Bell, iconColor: 'text-slate-400' },
-        { name: 'Integrations', path: '/integrations', icon: Zap, iconColor: 'text-slate-400' },
-        { name: 'Settings', path: '/settings', icon: Settings, iconColor: 'text-slate-400' },
-      ],
-    },
-  ];
+  const navGroups = getNavigationForRole(effectiveRole);
 
   return (
     <aside
@@ -193,12 +168,15 @@ export const Sidebar: React.FC = () => {
               </div>
 
               {group.items.map((item) => {
-                const active = isActive(item.path);
+                const active = isActive(item);
                 const Icon = item.icon;
+                const activeClasses = isClient
+                  ? 'bg-gradient-to-r from-blue-500/15 via-blue-500/10 to-indigo-500/10 dark:from-blue-600/25 dark:via-blue-600/20 dark:to-indigo-600/15 text-blue-700 dark:text-blue-300 font-semibold border border-blue-500/30 dark:border-blue-400/30 shadow-xs backdrop-blur-md'
+                  : 'bg-gradient-to-r from-violet-500/15 via-violet-500/10 to-indigo-500/10 dark:from-violet-600/25 dark:via-violet-600/20 dark:to-indigo-600/15 text-violet-700 dark:text-violet-300 font-semibold border border-violet-500/30 dark:border-violet-400/30 shadow-xs backdrop-blur-md';
 
                 return (
                   <button
-                    key={item.name}
+                    key={item.id}
                     onClick={() => handleNavigate(item.path)}
                     className={`w-full flex items-center ${
                       isSidebarCollapsed
@@ -206,10 +184,10 @@ export const Sidebar: React.FC = () => {
                         : 'gap-2.5 px-3 py-2'
                     } rounded-lg font-sans text-[13px] transition-all duration-200 cursor-pointer ${
                       active
-                        ? 'bg-gradient-to-r from-blue-500/15 via-blue-500/10 to-indigo-500/10 dark:from-blue-600/25 dark:via-blue-600/20 dark:to-indigo-600/15 text-blue-700 dark:text-blue-300 font-semibold border border-blue-500/30 dark:border-blue-400/30 shadow-xs backdrop-blur-md'
+                        ? activeClasses
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 dark:hover:bg-white/5 border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 font-medium'
                     }`}
-                    title={item.name}
+                    title={item.description || item.name}
                   >
                     <Icon
                       className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
@@ -235,15 +213,15 @@ export const Sidebar: React.FC = () => {
           <div className="hidden lg:flex flex-col items-center gap-2">
             <div
               className={`w-8 h-8 rounded-lg ${avatarGradient} text-white flex items-center justify-center font-bold text-xs ring-1 ring-slate-300 dark:ring-[#26344B] shadow-xs`}
-              title={`${userName} (${isGuest ? 'Guest Mode' : role === 'CLIENT' ? 'Client' : 'Developer'})`}
+              title={`${userName} (${isGuest ? 'DEMO MODE' : isClient ? 'Client' : 'Developer'})`}
             >
               {initials}
             </div>
             <button
               onClick={handleLogout}
               className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors focus:outline-none cursor-pointer"
-              title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
-              aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
+              title={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
+              aria-label={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -261,36 +239,35 @@ export const Sidebar: React.FC = () => {
               <div className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">
                 {userName}
               </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                {isGuest ? (
+              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                {isGuest && (
                   <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/60 font-mono">
                     <Eye className="w-2.5 h-2.5" />
-                    <span>GUEST MODE</span>
-                  </span>
-                ) : (
-                  <span
-                    className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
-                      role === 'CLIENT'
-                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
-                        : 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
-                    }`}
-                  >
-                    {role === 'CLIENT' ? (
-                      <BriefcaseBusiness className="w-2.5 h-2.5" />
-                    ) : (
-                      <Code2 className="w-2.5 h-2.5" />
-                    )}
-                    <span>{role === 'CLIENT' ? 'Client' : 'Developer'}</span>
+                    <span>DEMO MODE</span>
                   </span>
                 )}
+                <span
+                  className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full border ${
+                    isClient
+                      ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
+                      : 'bg-violet-50 dark:bg-violet-950/80 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/60'
+                  }`}
+                >
+                  {isClient ? (
+                    <BriefcaseBusiness className="w-2.5 h-2.5" />
+                  ) : (
+                    <Code2 className="w-2.5 h-2.5" />
+                  )}
+                  <span>{isClient ? 'Client' : 'Developer'}</span>
+                </span>
               </div>
             </div>
           </div>
           <button
             onClick={handleLogout}
             className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-[#1B2A47] rounded-lg transition-colors shrink-0 focus:outline-none cursor-pointer"
-            title={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
-            aria-label={isGuest ? 'Exit Guest Mode' : 'Sign Out'}
+            title={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
+            aria-label={isGuest ? 'Exit Demo Mode' : 'Sign Out'}
           >
             <LogOut className="w-4 h-4" />
           </button>

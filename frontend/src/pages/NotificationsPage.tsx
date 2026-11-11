@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { GuestGuardModal } from '@/components/common';
 import {
               Bell,
   Settings,
@@ -83,9 +85,33 @@ export const NotificationsPage: React.FC = () => {
 
   // Navigation & UI States
   const { openMobileSidebar } = useSidebar();
+  const { user, isGuest, isClient, isDeveloper, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'All' | 'Unread' | 'Projects' | 'AI Activity' | 'Payments'>('All');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+
+  const actorDisplayName = isGuest
+    ? isClient
+      ? 'Client Guest'
+      : 'Developer Guest'
+    : user?.name || (isClient ? 'Client Account' : 'Developer Account');
+  const actorEmail = isGuest
+    ? isClient
+      ? 'client.demo@devflow.demo'
+      : 'developer.demo@devflow.demo'
+    : user?.email || '';
+  const actorInitials = isGuest
+    ? isClient
+      ? 'CG'
+      : 'DG'
+    : actorDisplayName
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || (isClient ? 'CL' : 'DV');
 
   // Toast feedback
   const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' } | null>(null);
@@ -97,6 +123,9 @@ export const NotificationsPage: React.FC = () => {
 
   // Notification Preferences (Interactive with safe local persistence)
   const [preferences, setPreferences] = useState<{ email: boolean; slack: boolean; push: boolean }>(() => {
+    if (isGuest) {
+      return { email: true, slack: false, push: false };
+    }
     try {
       const saved = localStorage.getItem('devflow_notification_preferences');
       if (saved) return JSON.parse(saved);
@@ -107,6 +136,10 @@ export const NotificationsPage: React.FC = () => {
   });
 
   const handleTogglePreference = (channel: 'email' | 'slack' | 'push') => {
+    if (isGuest) {
+      setIsGuestGuardOpen(true);
+      return;
+    }
     setPreferences((prev) => {
       const next = { ...prev, [channel]: !prev[channel] };
       try {
@@ -116,7 +149,7 @@ export const NotificationsPage: React.FC = () => {
       }
       showToast(
         'Preferences Updated',
-        `${channel.toUpperCase()} alerts ${next[channel] ? 'enabled' : 'disabled'} (Demo setting stored locally).`,
+        `${channel.toUpperCase()} alerts ${next[channel] ? 'enabled' : 'disabled'}.`,
         'info'
       );
       return next;
@@ -290,41 +323,44 @@ export const NotificationsPage: React.FC = () => {
                       setUserMenuOpen(!userMenuOpen);
                       setNotificationsOpen(false);
                     }}
-                    className="w-10 h-10 rounded-xl ring-2 ring-[#293B55] hover:ring-[#2879E8] transition-all overflow-hidden flex items-center justify-center bg-[#172235]"
+                    className={`w-10 h-10 rounded-xl ring-2 ring-[#293B55] hover:ring-[#2879E8] transition-all flex items-center justify-center font-bold text-xs text-white ${
+                      isClient
+                        ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
+                        : 'bg-gradient-to-tr from-violet-600 to-indigo-500'
+                    }`}
                     title="User Profile"
                   >
-                    <img
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
-                      alt="Alex Morgan"
-                      className="w-full h-full object-cover"
-                    />
+                    {actorInitials}
                   </button>
 
                   {/* User Profile Popover */}
                   {userMenuOpen && (
                     <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs sm:text-sm animate-in fade-in duration-150">
                       <div className="px-3.5 py-2.5 border-b border-[#293B55]/70 mb-1.5">
-                        <div className="font-semibold text-white">Alex Morgan</div>
-                        <div className="text-xs text-[#AAB6C8] truncate">alex.morgan@northstar.studio</div>
+                        <div className="font-semibold text-white">{actorDisplayName}</div>
+                        {actorEmail && <div className="text-xs text-[#AAB6C8] truncate">{actorEmail}</div>}
                       </div>
+                      {!isGuest && (
+                        <button
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            navigate('/settings');
+                          }}
+                          className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#20304B] text-[#AAB6C8] hover:text-white transition-colors flex items-center gap-2"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Account Settings
+                        </button>
+                      )}
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setUserMenuOpen(false);
-                          navigate('/settings');
-                        }}
-                        className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#20304B] text-[#AAB6C8] hover:text-white transition-colors flex items-center gap-2"
-                      >
-                        <Settings className="w-4 h-4" />
-                        Account Settings
-                      </button>
-                      <button
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          navigate('/');
+                          await logout();
+                          navigate(isDeveloper ? '/login/developer' : '/login/client', { replace: true });
                         }}
                         className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-rose-500/10 text-rose-400 transition-colors"
                       >
-                        Sign Out
+                        {isGuest ? 'Exit Demo Mode' : 'Sign Out'}
                       </button>
                     </div>
                   )}
@@ -686,7 +722,9 @@ export const NotificationsPage: React.FC = () => {
                   {/* Informational Footer */}
                   <div className="pt-3 border-t border-[#293B55]/70">
                     <p className="text-[11px] text-[#AAB6C8] leading-tight">
-                      Preferences are saved locally in your browser session for demo presentation.
+                      {isGuest
+                        ? 'Guest Demo Mode: notification preferences are read-only previews.'
+                        : 'Preferences are saved locally in your browser session.'}
                     </p>
                   </div>
                 </div>
@@ -694,6 +732,13 @@ export const NotificationsPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <GuestGuardModal
+          isOpen={isGuestGuardOpen}
+          onClose={() => setIsGuestGuardOpen(false)}
+          actionTitle="Update Notification Preferences"
+          message="Notification delivery settings are disabled in Guest Demo Mode."
+        />
       </div>
   );
 };

@@ -23,6 +23,8 @@ import {
   Check,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { GuestGuardModal } from '@/components/common';
 import { Milestone, Project } from '@/types';
 
 // Octocat GitHub SVG Icon
@@ -60,6 +62,9 @@ export const VerificationPage: React.FC = () => {
 
   // Navigation & UI States
   const { openMobileSidebar } = useSidebar();
+  const { isGuest, isClient } = useAuth();
+  const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
+  const [guardActionTitle, setGuardActionTitle] = useState('AI Verification Action');
   const [activeTab, setActiveTab] = useState<'recent' | 'projects' | 'agents'>('recent');
   const [selectedAgentModal, setSelectedAgentModal] = useState<string | null>(null);
   const [approvalAccordionOpen, setApprovalAccordionOpen] = useState(true);
@@ -215,6 +220,20 @@ export const VerificationPage: React.FC = () => {
 
   // Action Handlers
   const handleApproveAndPay = async () => {
+    if (isGuest) {
+      setGuardActionTitle('Approve & Dispatch Verification');
+      setIsGuestGuardOpen(true);
+      return;
+    }
+    if (!isClient) {
+      setApprovalState('approved');
+      showToast(
+        'Evidence Submitted for Client Review',
+        'AI verification packet dispatched. Client sign-off is required before invoice creation.',
+        'info'
+      );
+      return;
+    }
     setIsSubmittingApproval(true);
     try {
       const targetMilestone = milestones[0];
@@ -231,6 +250,12 @@ export const VerificationPage: React.FC = () => {
   };
 
   const handleRequestChanges = async () => {
+    if (isGuest) {
+      setChangesModalOpen(false);
+      setGuardActionTitle('Request Changes');
+      setIsGuestGuardOpen(true);
+      return;
+    }
     if (!changesFeedback.trim()) return;
     setIsSubmittingApproval(true);
     try {
@@ -898,20 +923,44 @@ export const VerificationPage: React.FC = () => {
                         >
                           Review Evidence
                         </button>
-                        <button
-                          onClick={() => setChangesModalOpen(true)}
-                          className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors"
-                        >
-                          Request Changes
-                        </button>
-                        <button
-                          onClick={handleApproveAndPay}
-                          disabled={isSubmittingApproval || approvalState === 'approved'}
-                          className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          <span>{approvalState === 'approved' ? 'Approved' : 'Approve & Pay'}</span>
-                        </button>
+                        {isClient ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                if (isGuest) {
+                                  setGuardActionTitle('Request Changes');
+                                  setIsGuestGuardOpen(true);
+                                  return;
+                                }
+                                setChangesModalOpen(true);
+                              }}
+                              className="px-3.5 py-2 rounded-xl bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-slate-200 text-xs sm:text-sm font-medium transition-colors"
+                            >
+                              Request Changes
+                            </button>
+                            <button
+                              onClick={handleApproveAndPay}
+                              disabled={isSubmittingApproval || approvalState === 'approved'}
+                              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>{approvalState === 'approved' ? 'Approved' : 'Approve & Pay'}</span>
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={handleApproveAndPay}
+                            disabled={isSubmittingApproval || approvalState === 'approved'}
+                            className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-violet-600/30 flex items-center gap-2 transition-colors cursor-pointer"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            <span>
+                              {approvalState === 'approved'
+                                ? 'Dispatched to Client'
+                                : 'Submit Packet for Client Review'}
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1187,6 +1236,13 @@ export const VerificationPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <GuestGuardModal
+        isOpen={isGuestGuardOpen}
+        onClose={() => setIsGuestGuardOpen(false)}
+        actionTitle={guardActionTitle}
+        message="Submitting verification packets or dispatching milestone changes is disabled in Guest Demo Mode."
+      />
     </div>
   );
 };

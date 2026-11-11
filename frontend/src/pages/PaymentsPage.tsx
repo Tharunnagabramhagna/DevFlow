@@ -75,11 +75,22 @@ export const PaymentsPage: React.FC = () => {
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
-  const { isGuest } = useAuth();
+  const { user, isGuest, isClient, logout } = useAuth();
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
   const [guardActionTitle, setGuardActionTitle] = useState('Create Invoice');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const clientDisplayName = isGuest ? 'Client Guest' : user?.name || 'Client Account';
+  const clientInitials = isGuest
+    ? 'CG'
+    : clientDisplayName
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'CL';
 
   // Data Loading & Live State
   const [, setMilestones] = useState<Milestone[]>([]);
@@ -489,11 +500,9 @@ export const PaymentsPage: React.FC = () => {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-2 cursor-pointer p-1 rounded-xl hover:bg-[#152238] transition-colors"
             >
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
-                alt="Alex Morgan"
-                className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/40"
-              />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-500/40">
+                {clientInitials}
+              </div>
               <ChevronDown className="w-4 h-4 text-slate-400" />
             </div>
 
@@ -1470,26 +1479,31 @@ export const PaymentsPage: React.FC = () => {
       {userMenuOpen && (
         <div className="fixed bottom-16 left-4 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150">
           <div className="font-bold text-white border-b border-[#26344B] pb-2">
-            Alex Morgan
-            <div className="text-[10px] text-slate-400 font-normal">Project Administrator &bull; Northstar Studio</div>
+            {clientDisplayName}
+            <div className="text-[10px] text-slate-400 font-normal">
+              {isGuest ? 'DEMO MODE \u2022 Client Invoices Preview' : user?.organization || 'Client Workspace'}
+            </div>
           </div>
+          {!isGuest && (
+            <button
+              onClick={() => {
+                setUserMenuOpen(false);
+                navigate('/settings');
+              }}
+              className="w-full text-left py-1 text-slate-300 hover:text-white"
+            >
+              Billing Preferences
+            </button>
+          )}
           <button
-            onClick={() => {
+            onClick={async () => {
               setUserMenuOpen(false);
-              navigate('/settings');
-            }}
-            className="w-full text-left py-1 text-slate-300 hover:text-white"
-          >
-            Billing Preferences
-          </button>
-          <button
-            onClick={() => {
-              setUserMenuOpen(false);
-              navigate('/');
+              await logout();
+              navigate(isClient ? '/login/client' : '/login', { replace: true });
             }}
             className="w-full text-left py-1 text-rose-400 hover:text-rose-300"
           >
-            Sign Out
+            {isGuest ? 'Exit Demo Mode' : 'Sign Out'}
           </button>
         </div>
       )}

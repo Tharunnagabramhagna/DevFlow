@@ -48,6 +48,43 @@ vi.mock('../src/config/database', () => {
   return { prisma: mockPrisma };
 });
 
+vi.mock('../src/services/paypal.service', () => ({
+  paypalService: {
+    isConfigured: vi.fn().mockReturnValue(true),
+    getAccessToken: vi.fn().mockResolvedValue('mock_sandbox_access_token_12345'),
+    createInvoice: vi.fn().mockImplementation(async (payload: any) => ({
+      id: 'INV2-MOCK-TEST',
+      status: 'DRAFT',
+      href: 'https://www.sandbox.paypal.com/invoice/payerView/details/INV2-MOCK-TEST',
+      detail: {
+        invoice_number: payload.invoiceNumber,
+        invoice_date: new Date().toISOString().split('T')[0],
+        currency_code: payload.currency,
+      },
+    })),
+    sendInvoice: vi.fn().mockImplementation(async (invoiceId: string) => ({
+      success: true,
+      invoiceUrl: `https://www.sandbox.paypal.com/invoice/payerView/details/${invoiceId}`,
+    })),
+    getInvoice: vi.fn().mockImplementation(async (invoiceId: string) => ({
+      id: invoiceId,
+      status: 'SENT',
+      detail: { invoice_number: 'INV-12345', currency_code: 'USD' },
+    })),
+    cancelInvoice: vi.fn().mockResolvedValue({ success: true }),
+    refundCapture: vi.fn().mockImplementation(async (_captureId: string, params: any) => ({
+      id: 'REF-MOCK-123',
+      status: 'COMPLETED',
+      net_amount_breakdown: {
+        gross_amount: { value: params.amount, currency_code: params.currency },
+        paypal_fee: { value: '0.00', currency_code: params.currency },
+        net_amount: { value: params.amount, currency_code: params.currency },
+      },
+    })),
+    verifyWebhookSignature: vi.fn().mockResolvedValue(true),
+  },
+}));
+
 const generateTestToken = (userId: string, email: string, role: Role = Role.FREELANCER) => {
   return jwt.sign({ sub: userId, email, role }, env.JWT_SECRET, { expiresIn: '1h' });
 };
@@ -526,6 +563,37 @@ describe('Phase 5: Payments & Invoicing REST Integration Suite', () => {
       expect(res.status).toBe(200);
       expect(res.body.isRetry).toBe(true);
       expect(res.body.refund.id).toBe('existing-ref-id');
+    });
+  });
+
+  describe('PayPalService Credential Validation (isConfigured)', () => {
+    it('correctly validates configured status against empty, whitespace, and template placeholders', async () => {
+      const { PayPalService } = await vi.importActual<any>('../src/services/paypal.service');
+      const service = new PayPalService();
+
+      // Placeholder credentials
+      service.clientId = 'your_paypal_sandbox_client_id';
+      service.clientSecret = 'your_paypal_sandbox_client_secret';
+      expect(service.isConfigured()).toBe(false);
+
+      // Empty / whitespace
+      service.clientId = '   ';
+      service.clientSecret = 'valid_secret';
+      expect(service.isConfigured()).toBe(false);
+
+      service.clientId = 'valid_client_id';
+      service.clientSecret = '';
+      expect(service.isConfigured()).toBe(false);
+
+      // Example template
+      service.clientId = 'example_client';
+      service.clientSecret = 'example_secret';
+      expect(service.isConfigured()).toBe(false);
+
+      // Valid sandbox / production credentials
+      service.clientId = 'A21AAH_TEST_CLIENT_ID_XYZ123';
+      service.clientSecret = 'ELq_TEST_SECRET_ABC789';
+      expect(service.isConfigured()).toBe(true);
     });
   });
 });

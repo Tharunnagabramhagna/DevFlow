@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { DevFlowLogo, ThemeToggle, SocialAuthButtons, AmbientBackground } from '@/components/common';
-import { Button } from '@/components/design/Button';
 import { RoleAccountCards } from '@/components/auth/RoleAccountCards';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, EffectiveRole } from '@/types';
@@ -145,12 +144,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/70 dark:bg-[#060B16] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col justify-between selection:bg-[#0070BA] selection:text-white relative overflow-x-hidden antialiased py-8 px-4 sm:px-6">
+    <div className="min-h-screen isolate bg-slate-50/70 dark:bg-[#060B16] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col justify-between selection:bg-[#0070BA] selection:text-white relative overflow-x-hidden antialiased py-6 px-4 sm:px-6">
       {/* Dynamic ambient glass lighting */}
       <AmbientBackground />
 
       {/* Top Bar with Logo and Theme Toggle */}
-      <header className="max-w-5xl mx-auto w-full flex items-center justify-between pb-6 relative z-10">
+      <header className="max-w-5xl mx-auto w-full flex items-center justify-between pb-4 relative z-10">
         <Link to="/" className="cursor-pointer group select-none flex items-center gap-2">
           <DevFlowLogo variant="horizontal" theme="auto" size="md" />
         </Link>
@@ -166,8 +165,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
       </header>
 
       {/* Main Authentication Card */}
-      <main className={`w-full relative z-10 my-auto transition-all duration-300 ${selectedRole ? 'max-w-[32rem] mx-auto' : 'max-w-2xl mx-auto'}`}>
-        <div className="bg-white/80 dark:bg-[#0F172A]/80 border border-white/80 dark:border-white/[0.12] rounded-2xl p-6 sm:p-9 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl ring-1 ring-white/20 dark:ring-white/[0.06]">
+      <main className={`w-full relative z-10 my-auto transition-all duration-300 ${selectedRole ? 'max-w-[30rem] mx-auto' : 'max-w-2xl mx-auto'}`}>
+        <div className="bg-white/80 dark:bg-[#0F172A]/80 border border-slate-200/80 dark:border-white/[0.12] rounded-2xl p-6 sm:p-8 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl ring-1 ring-white/20 dark:ring-white/[0.06]">
           {/* STEP 1: TWO ROLE ACCOUNT OPTIONS */}
           {!selectedRole ? (
             <div className="space-y-6 sm:space-y-7">
@@ -194,7 +193,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                 <span>Don't have an account yet? </span>
                 <Link
                   to="/signup"
-                  className="text-[#2563EB] hover:text-blue-600 dark:hover:text-blue-400 font-semibold underline underline-offset-4"
+                  className="text-[#2563EB] dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-semibold hover:underline underline-offset-4 transition-colors"
                 >
                   Sign Up
                 </Link>
@@ -202,22 +201,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
             </div>
           ) : (
             /* STEP 2: CREDENTIALS LOGIN FORM */
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Header with Role Indicator & Back Button */}
               <div>
-                <Button
+                <button
                   type="button"
                   onClick={handleBackToRoleSelection}
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-3"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-3 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Change Role</span>
-                </Button>
+                </button>
 
-                <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Welcome back</h1>
+                <div className="flex items-center justify-between gap-3">
+                  <h1 className="font-heading text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Welcome back</h1>
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border shrink-0 ${
                       selectedRole === 'CLIENT'
                         ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
                         : 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
@@ -268,14 +267,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                     Email Address *
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="email"
                       required
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-3 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
                       autoComplete="email"
                     />
                   </div>
@@ -287,55 +286,55 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                     <label className="text-slate-700 dark:text-slate-300 font-semibold uppercase text-[10px] tracking-wider">
                       Password *
                     </label>
-                    <Button
+                    <button
                       type="button"
                       onClick={handleForgotPassword}
                       disabled={forgotPasswordLoading}
-                      className="text-[11px] text-[#2563EB] hover:text-blue-600 dark:hover:text-blue-400 font-medium underline underline-offset-2"
+                      className="text-[11px] text-[#2563EB] dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium hover:underline underline-offset-2 transition-colors disabled:opacity-50 cursor-pointer"
                     >
                       {forgotPasswordLoading ? 'Dispatching...' : 'Forgot password?'}
-                    </Button>
+                    </button>
                   </div>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#080D18] border border-slate-200 dark:border-[#26344B] rounded-lg pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
                       autoComplete="current-password"
                     />
-                    <Button
+                    <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
+                    </button>
                   </div>
                 </div>
 
                 {/* Remember Me */}
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between pt-0.5">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded-sm border-slate-300 dark:border-[#26344B] bg-slate-50 dark:bg-[#080D18] text-[#2563EB] focus:ring-[#2563EB] cursor-pointer"
+                      className="w-4 h-4 rounded-sm border-slate-300 dark:border-[#26344B] bg-slate-50 dark:bg-[#080D18] text-[#2563EB] accent-[#2563EB] focus:ring-[#2563EB] cursor-pointer"
                     />
                     <span className="text-slate-700 dark:text-slate-300 text-[11px]">Remember this browser session</span>
                   </label>
                 </div>
 
                 {/* Submit Button */}
-                <Button
+                <button
                   type="submit"
                   disabled={loading || guestLoading}
-                  className="w-full py-2.5 px-4 rounded-lg disabled:opacity-50 text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-xs transition-all shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 mt-1 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -345,24 +344,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                   ) : (
                     <span>Sign in as {selectedRole === 'CLIENT' ? 'Client' : 'Developer'}</span>
                   )}
-                </Button>
+                </button>
               </form>
 
               {/* Subtle Divider + Secondary Continue as Guest */}
               <div className="space-y-2.5 pt-1">
                 <div className="relative flex py-1 items-center">
                   <div className="flex-grow border-t border-slate-200 dark:border-[#26344B]/80" />
-                  <span className="shrink mx-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="shrink mx-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none">
                     Or explore in Demo Mode
                   </span>
                   <div className="flex-grow border-t border-slate-200 dark:border-[#26344B]/80" />
                 </div>
 
-                <Button
+                <button
                   type="button"
                   onClick={handleContinueAsGuest}
                   disabled={loading || guestLoading}
-                  className="w-full py-2.5 px-4 rounded-lg border border-slate-300 dark:border-white/[0.14] bg-slate-100/70 dark:bg-white/[0.04] hover:bg-slate-200/80 dark:hover:bg-white/[0.09] disabled:opacity-50 text-slate-800 dark:text-slate-200 font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg border border-slate-200 dark:border-white/[0.12] bg-slate-100/70 dark:bg-white/[0.04] hover:bg-slate-200/80 dark:hover:bg-white/[0.09] hover:border-slate-300 dark:hover:border-white/[0.2] disabled:opacity-50 text-slate-800 dark:text-slate-200 font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {guestLoading ? (
                     <>
@@ -378,18 +377,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
                       <ArrowRight className="w-3.5 h-3.5 opacity-70" />
                     </>
                   )}
-                </Button>
+                </button>
                 <p className="text-[11px] text-center text-slate-500 dark:text-slate-400">
                   Read-only demo experience — mutations, approvals and payments are disabled.
                 </p>
               </div>
 
               {/* Bottom Sign Up Link */}
-              <div className="text-center pt-2 border-t border-slate-200 dark:border-[#26344B]/60 text-xs text-slate-600 dark:text-slate-400">
+              <div className="text-center pt-3 border-t border-slate-200 dark:border-[#26344B]/60 text-xs text-slate-600 dark:text-slate-400">
                 <span>Don't have an account? </span>
                 <Link
                   to={selectedRole === 'DEVELOPER' ? '/signup/developer' : '/signup/client'}
-                  className="text-[#2563EB] hover:text-blue-600 dark:hover:text-blue-400 font-semibold underline underline-offset-4"
+                  className="text-[#2563EB] dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-semibold hover:underline underline-offset-4 transition-colors"
                 >
                   Create account
                 </Link>
@@ -400,7 +399,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
       </main>
 
       {/* Footer */}
-      <footer className="text-center text-[11px] text-slate-500 pt-6 relative z-10">
+      <footer className="text-center text-[11px] text-slate-500 pt-4 relative z-10">
         <span>DevFlow Autonomous Milestone Platform &bull; PayPal Hackathon &bull; 2026</span>
       </footer>
     </div>

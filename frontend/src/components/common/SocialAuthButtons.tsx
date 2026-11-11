@@ -157,13 +157,12 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
       </div>
 
       {/* DIVIDER: OR CONTINUE WITH EMAIL */}
-      <div className="relative my-5 text-center">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200 dark:border-[#26344B]" />
-        </div>
-        <span className="relative px-3 bg-white dark:bg-[#111C30] text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 select-none">
+      <div className="relative flex items-center my-4 py-1">
+        <div className="flex-grow border-t border-slate-200 dark:border-[#26344B]/80" />
+        <span className="shrink mx-3 text-[10px] font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 select-none">
           OR CONTINUE WITH EMAIL
         </span>
+        <div className="flex-grow border-t border-slate-200 dark:border-[#26344B]/80" />
       </div>
 
       {/* SETUP ASSISTANCE MODAL FOR LOCAL ENV */}

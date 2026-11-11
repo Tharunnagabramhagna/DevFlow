@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { getAuthenticatedRole } from '../../middleware/auth';
 import { paymentsService } from './payments.service';
 
 export class PaymentsController {
@@ -26,9 +27,10 @@ export class PaymentsController {
 
   async createRefund(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const role = getAuthenticatedRole(req.user);
       const result = await paymentsService.createRefund(
         req.user!.id,
-        req.user!.role,
+        role,
         req.params.id,
         req.body
       );
@@ -40,9 +42,10 @@ export class PaymentsController {
 
   async getPaymentById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const role = getAuthenticatedRole(req.user);
       const payment = await paymentsService.getPaymentById(
         req.user!.id,
-        req.user!.role,
+        role,
         req.params.id
       );
       res.status(200).json(payment);
@@ -53,10 +56,11 @@ export class PaymentsController {
 
   async getProjectPayments(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const role = getAuthenticatedRole(req.user);
       const projectId = req.params.projectId || (req.query.projectId as string);
       const result = await paymentsService.getProjectPayments(
         req.user!.id,
-        req.user!.role,
+        role,
         projectId,
         req.query as any
       );

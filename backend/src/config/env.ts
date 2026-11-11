@@ -16,7 +16,12 @@ export const CombinedEnvSchema = z.object({
     (val) => val || process.env.JWT_ACCESS_SECRET,
     z.string({ required_error: 'JWT_SECRET (or JWT_ACCESS_SECRET) is required' }).min(32, "JWT_SECRET must be at least 32 characters long")
   ),
-  CLIENT_URL: z.string().url(),
+  CLIENT_URL: z.preprocess(
+    emptyToUndefined,
+    process.env.NODE_ENV === 'production'
+      ? z.string({ required_error: 'CLIENT_URL is required in production' }).url()
+      : z.string().url().default('http://localhost:3000')
+  ),
   ENCRYPTION_KEY: z.preprocess(
     emptyToUndefined,
     z.string().regex(/^[0-9a-fA-F]{64}$/, "ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes)").optional()

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { getAuthenticatedRole } from '../../middleware/auth';
 import { milestonesService } from './milestones.service';
 
 export class MilestonesController {
@@ -24,7 +25,8 @@ export class MilestonesController {
 
   async getUserMilestones(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const milestones = await milestonesService.getUserMilestones(req.user!.id, req.user!.role, req.query as any);
+      const role = getAuthenticatedRole(req.user);
+      const milestones = await milestonesService.getUserMilestones(req.user!.id, role, req.query as any);
       res.status(200).json(milestones);
     } catch (err) {
       next(err);

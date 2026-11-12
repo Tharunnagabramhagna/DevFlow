@@ -1,8 +1,8 @@
 {
   "framework": "vite",
+  "installCommand": "npm install --include=optional",
   "buildCommand": "npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm install",
   "cleanUrls": true,
   "rewrites": [
     {
@@ -22,3 +22,4 @@
     }
   ]
 }
+

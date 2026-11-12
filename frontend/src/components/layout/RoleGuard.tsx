@@ -10,11 +10,11 @@ interface RoleGuardProps {
 }
 
 export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRole, allowedRoles, children }) => {
-  const { isAuthenticated, isClient, isGuest } = useAuth();
+  const { hasSession, isClient, isGuest } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  if (!isAuthenticated) {
+  if (!hasSession) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 

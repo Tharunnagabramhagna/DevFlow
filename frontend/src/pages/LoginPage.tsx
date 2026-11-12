@@ -5,7 +5,7 @@ import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import { AuthStepHeader } from '@/components/auth/AuthStepHeader';
 import { AuthDemoModeSection } from '@/components/auth/AuthDemoModeSection';
 import { AuthCheckbox } from '@/components/auth/AuthCheckbox';
-import { RoleAccountCards } from '@/components/auth/RoleAccountCards';
+import { RoleWelcomeSelector } from '@/components/auth/RoleWelcomeSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { EffectiveRole, UserRole } from '@/types';
 import {
@@ -41,6 +41,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
   const [selectedRole, setSelectedRole] = useState<EffectiveRole | null>(() =>
     toEffectiveRole(initialRole)
   );
+  const [isGuestSelectOpen, setIsGuestSelectOpen] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
 
   // Form fields
@@ -74,15 +75,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
     const propRole = toEffectiveRole(initialRole);
     if (queryRole) {
       setSelectedRole(queryRole);
+      setIsGuestSelectOpen(false);
     } else if (propRole) {
       setSelectedRole(propRole);
+      setIsGuestSelectOpen(false);
     } else if (location.pathname === '/login') {
       setSelectedRole(null);
+      setIsGuestSelectOpen(false);
     }
   }, [location, initialRole]);
 
   const handleSelectRole = (role: EffectiveRole) => {
     setSelectedRole(role);
+    setIsGuestSelectOpen(false);
     setError(null);
     setFieldErrors({});
     navigate(role === 'CLIENT' ? '/login/client' : '/login/developer');
@@ -90,6 +95,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
 
   const handleBackToRoleSelection = () => {
     setSelectedRole(null);
+    setIsGuestSelectOpen(false);
     setError(null);
     setFieldErrors({});
     navigate('/login');
@@ -179,40 +185,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
     : 'focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30';
 
   return (
-    <AuthPageShell width={selectedRole ? 'narrow' : 'medium'}>
+    <AuthPageShell width={selectedRole ? 'narrow' : 'wide'}>
       {!selectedRole ? (
-        <div className="space-y-3.5 sm:space-y-4">
-          <div className="text-center space-y-1">
-            <h1 className="font-heading text-[clamp(1.625rem,2.25vw,2.125rem)] font-bold text-slate-900 dark:text-white tracking-tight leading-[1.15]">
-              Welcome Back to DevFlow
-            </h1>
-            <p className="font-sans text-[clamp(0.875rem,1.12vw,1rem)] text-slate-600 dark:text-slate-400 leading-snug mx-auto">
-              Select your workspace role to log in or explore in Demo Mode.
-            </p>
-          </div>
-
-          {error && (
-            <div
-              role="alert"
-              className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs sm:text-sm flex items-start gap-2.5"
-            >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <RoleAccountCards onSelectRole={handleSelectRole} />
-
-          <div className="text-center pt-2.5 border-t border-slate-200 dark:border-[#1E2C47] text-[13.5px] sm:text-sm text-slate-600 dark:text-slate-400">
-            <span>Don't have an account yet? </span>
-            <Link
-              to="/signup"
-              className="text-[#2563EB] hover:text-blue-600 dark:text-[#60A5FA] dark:hover:text-blue-300 font-semibold underline underline-offset-4"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </div>
+        <RoleWelcomeSelector
+          title="Welcome Back to DevFlow"
+          subtitle="Select your workspace role to log in or explore in Demo Mode."
+          error={error}
+          isGuestSelectOpen={isGuestSelectOpen}
+          guestLoading={guestLoading}
+          bottomPromptText="Don't have an account yet?"
+          bottomLinkLabel="Sign Up"
+          bottomLinkTo="/signup"
+          onSelectRole={handleSelectRole}
+          onToggleGuestSelect={(open) => {
+            setError(null);
+            setIsGuestSelectOpen(open);
+          }}
+          onContinueAsGuest={handleContinueAsGuest}
+          clientTitle="Client Account"
+          clientBadge="CLIENT ACCOUNT"
+          developerTitle="Developer Account"
+          developerBadge="DEVELOPER ACCOUNT"
+        />
       ) : (
         <div className="space-y-5">
           <AuthStepHeader

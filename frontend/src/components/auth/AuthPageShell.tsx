@@ -10,7 +10,7 @@ export interface AuthPageShellProps {
 
 const widthClassMap: Record<NonNullable<AuthPageShellProps['width']>, string> = {
   wide: 'max-w-[52rem]',
-  medium: 'max-w-[710px]',
+  medium: 'max-w-[52rem]',
   narrow: 'max-w-[30rem]',
 };
 
@@ -44,7 +44,7 @@ export const AuthPageShell: React.FC<AuthPageShellProps> = ({
       <main
         className={`w-full relative z-10 my-auto transition-all duration-300 mx-auto ${widthClassMap[width]}`}
       >
-        <div className="bg-white/85 dark:bg-[#0B1222]/90 border border-slate-200/90 dark:border-white/[0.11] rounded-2xl px-5 py-4 sm:px-7 sm:py-4 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl ring-1 ring-white/20 dark:ring-white/[0.05]">
+        <div className="bg-white/85 dark:bg-[#0B1222]/90 border border-slate-200/90 dark:border-white/[0.11] rounded-2xl p-5 sm:p-7 shadow-glass-elevated dark:shadow-dark-glass-elevated backdrop-blur-2xl ring-1 ring-white/20 dark:ring-white/[0.05]">
           {children}
         </div>
       </main>

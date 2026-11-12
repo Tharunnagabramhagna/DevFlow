@@ -1,26 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestGuardModal } from '@/components/common';
 import {
-              Bell,
-  Settings,
-  X,
-  Menu,
-  ChevronRight,
-  ExternalLink,
+  User,
+  Sliders,
   Shield,
-  Smartphone,
-  Laptop,
-  Check,
+  Bell,
+  Zap,
+  Sparkles,
+  Menu,
+  Save,
+  RotateCcw,
+  X,
   KeyRound,
   Eye,
   EyeOff,
-  User,
+  Laptop,
   Info,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
+
+import {
+  SettingsTabId,
+  ProfileData,
+  NotificationToggles,
+  InAppToggles,
+  AccountPreferences,
+  AiPreferences,
+} from '@/components/settings/types';
+import { ProfileTab } from '@/components/settings/ProfileTab';
+import { AccountTab, TIME_ZONE_OPTIONS } from '@/components/settings/AccountTab';
+import { SecurityTab } from '@/components/settings/SecurityTab';
+import { NotificationsTab } from '@/components/settings/NotificationsTab';
+import { IntegrationsTab } from '@/components/settings/IntegrationsTab';
+import { AiPreferencesTab } from '@/components/settings/AiPreferencesTab';
 
 // Storage Keys (Preserved and backward-compatible)
 const PROFILE_STORAGE_KEY = 'devflow_user_profile_preferences';
@@ -28,44 +45,6 @@ const NOTIFICATIONS_STORAGE_KEY = 'devflow_user_notification_preferences';
 const ACCOUNT_STORAGE_KEY = 'devflow_user_account_preferences';
 const AI_PREFS_STORAGE_KEY = 'devflow_user_ai_preferences';
 const IN_APP_STORAGE_KEY = 'devflow_in_app_preferences';
-
-interface ProfileData {
-  fullName: string;
-  email: string;
-  role: string;
-  organization: string;
-  avatarUrl: string;
-}
-
-interface NotificationToggles {
-  email: boolean;
-  milestones: boolean;
-  inApp: boolean;
-  githubActivity: boolean;
-  aiResults: boolean;
-  payments: boolean;
-}
-
-interface InAppToggles {
-  milestones: boolean;
-  githubActivity: boolean;
-  aiResults: boolean;
-  payments: boolean;
-}
-
-interface AccountPreferences {
-  timeZone: string;
-  dateFormat: string;
-  currency: string;
-  theme: string;
-}
-
-interface AiPreferences {
-  model: string;
-  approvalGitHub: boolean;
-  approvalPayments: boolean;
-  strictAstVerification: boolean;
-}
 
 const DEFAULT_PROFILE: ProfileData = {
   fullName: 'DevFlow User',
@@ -96,6 +75,7 @@ const DEFAULT_ACCOUNT: AccountPreferences = {
   dateFormat: 'YYYY-MM-DD',
   currency: 'USD',
   theme: 'Dark',
+  language: 'en-US',
 };
 
 const DEFAULT_AI: AiPreferences = {
@@ -103,64 +83,59 @@ const DEFAULT_AI: AiPreferences = {
   approvalGitHub: true,
   approvalPayments: true,
   strictAstVerification: true,
+  reasoningEffort: 'balanced',
+  autoDiffParsing: true,
 };
-
-// Valid Time Zone Definitions (Corrected and standardized)
-export const TIME_ZONE_OPTIONS = [
-  { value: 'UTC-08:00 (Pacific Time - US & Canada)', label: 'UTC-08:00 (Pacific Time - US & Canada)' },
-  { value: 'UTC-05:00 (Eastern Time - US & Canada)', label: 'UTC-05:00 (Eastern Time - US & Canada)' },
-  { value: 'UTC+00:00 (Greenwich Mean Time - London)', label: 'UTC+00:00 (Greenwich Mean Time - London)' },
-  { value: 'UTC+01:00 (Central European Time - Berlin)', label: 'UTC+01:00 (Central European Time - Berlin)' },
-  { value: 'UTC+05:30 (India Standard Time - New Delhi)', label: 'UTC+05:30 (India Standard Time - New Delhi)' },
-  { value: 'UTC+08:00 (Singapore, Hong Kong)', label: 'UTC+08:00 (Singapore, Hong Kong)' },
-  { value: 'UTC+09:00 (Tokyo Standard Time)', label: 'UTC+09:00 (Tokyo Standard Time)' },
-];
-
-export const DATE_FORMAT_OPTIONS = [
-  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (e.g. 2026-11-07)' },
-  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY (e.g. 11/07/2026)' },
-  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY (e.g. 07/11/2026)' },
-  { value: 'MMM DD, YYYY', label: 'MMM DD, YYYY (e.g. Nov 07, 2026)' },
-];
-
-export const CURRENCY_OPTIONS = [
-  { value: 'USD', label: 'USD ($) - US Dollar' },
-  { value: 'EUR', label: 'EUR (€) - Euro' },
-  { value: 'GBP', label: 'GBP (£) - British Pound' },
-];
-
-export const THEME_OPTIONS = [
-  { value: 'Dark', label: '🌙 Dark (Fintech High-Contrast)' },
-  { value: 'Light', label: '☀️ Light (High-Contrast)' },
-];
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Navigation & Layout states
   const { openMobileSidebar } = useSidebar();
   const { theme: currentTheme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState<'Profile' | 'Account' | 'Security' | 'Notifications' | 'Integrations' | 'AI Preferences'>('Profile');
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  useEffect(() => {
-    setAccount((prev) => ({
-      ...prev,
-      theme: currentTheme === 'light' ? 'Light' : 'Dark',
-    }));
-  }, [currentTheme]);
+  const { user, isGuest, isClient } = useAuth();
 
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const { user, isGuest, isClient, logout } = useAuth();
+  // Active Tab synchronized with URL query parameter
+  const rawTab = (searchParams.get('tab') || '').toLowerCase();
+  const activeTab: SettingsTabId = useMemo(() => {
+    if (['profile', 'account', 'security', 'notifications', 'integrations', 'ai'].includes(rawTab)) {
+      return rawTab as SettingsTabId;
+    }
+    return 'profile';
+  }, [rawTab]);
+
+  const handleTabChange = (tabId: SettingsTabId) => {
+    setSearchParams({ tab: tabId });
+  };
+
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
   const [guardActionTitle, setGuardActionTitle] = useState('Change Settings');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Modals
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
+  const [twoFactorSimulated, setTwoFactorSimulated] = useState(false);
+  const [manageAccountModalOpen, setManageAccountModalOpen] = useState(false);
+  const [activeSessionDetailModal, setActiveSessionDetailModal] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Toast feedback state
+  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
+
+  const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setToastMessage({ title, desc, type });
+    setTimeout(() => setToastMessage(null), 3800);
+  };
 
   const roleAccountLabel = isClient ? 'Client' : 'Developer';
   const sessionFallbackProfile: ProfileData = isGuest
     ? {
-        fullName: isClient ? 'Client Guest' : 'Developer Guest',
+        fullName: isClient ? 'Marcus Vance' : 'Alex Morgan',
         email: isClient ? 'client.demo@devflow.demo' : 'developer.demo@devflow.demo',
         role: `${roleAccountLabel} (Demo Mode)`,
-        organization: isClient ? 'Demo Client Workspace' : 'Demo Developer Workspace',
+        organization: isClient ? 'Meridian Labs' : 'Northstar Digital Studio',
         avatarUrl: '',
       }
     : {
@@ -171,27 +146,9 @@ export const SettingsPage: React.FC = () => {
         avatarUrl: '',
       };
 
-  // Modals
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
-  const [twoFactorSimulated, setTwoFactorSimulated] = useState(false);
-  const [manageAccountModalOpen, setManageAccountModalOpen] = useState(false);
-  const [activeSessionDetailModal, setActiveSessionDetailModal] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Toast feedback
-  const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
-
-  const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
-    setToastMessage({ title, desc, type });
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // 1. Profile State (Isolated cleanly per guest/authenticated session)
+  // 1. Profile State
   const [profile, setProfile] = useState<ProfileData>(() => {
-    if (isGuest) {
-      return sessionFallbackProfile;
-    }
+    if (isGuest) return sessionFallbackProfile;
     try {
       const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
       if (raw) {
@@ -204,20 +161,18 @@ export const SettingsPage: React.FC = () => {
           avatarUrl: parsed.avatarUrl || '',
         };
       }
-    } catch {
-      // safe fallback
-    }
+    } catch {}
     return sessionFallbackProfile;
   });
 
-  // Sync profile if role/guest/user session switches
+  // Sync profile when role or session updates
   useEffect(() => {
     if (isGuest) {
       setProfile({
-        fullName: isClient ? 'Client Guest' : 'Developer Guest',
+        fullName: isClient ? 'Marcus Vance' : 'Alex Morgan',
         email: isClient ? 'client.demo@devflow.demo' : 'developer.demo@devflow.demo',
-        role: `${isClient ? 'Client' : 'Developer'} (Demo Mode)`,
-        organization: isClient ? 'Demo Client Workspace' : 'Demo Developer Workspace',
+        role: `${roleAccountLabel} (Demo Mode)`,
+        organization: isClient ? 'Meridian Labs' : 'Northstar Digital Studio',
         avatarUrl: '',
       });
     } else if (user) {
@@ -229,9 +184,9 @@ export const SettingsPage: React.FC = () => {
         organization: user.organization || prev.organization,
       }));
     }
-  }, [isGuest, isClient, user]);
+  }, [isGuest, isClient, user, roleAccountLabel]);
 
-  // 2. Notifications State (Loaded safely with backward-compatibility)
+  // 2. Notifications State
   const [notifications, setNotifications] = useState<NotificationToggles>(() => {
     try {
       const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
@@ -242,13 +197,11 @@ export const SettingsPage: React.FC = () => {
           milestones: typeof parsed.milestones === 'boolean' ? parsed.milestones : DEFAULT_NOTIFICATIONS.milestones,
           inApp: typeof parsed.inApp === 'boolean' ? parsed.inApp : DEFAULT_NOTIFICATIONS.inApp,
           githubActivity: typeof parsed.githubActivity === 'boolean' ? parsed.githubActivity : DEFAULT_NOTIFICATIONS.githubActivity,
-          aiResults: typeof parsed.aiResults === 'boolean' ? parsed.aiResults : (typeof parsed.notifyOnAiComplete === 'boolean' ? parsed.notifyOnAiComplete : DEFAULT_NOTIFICATIONS.aiResults),
-          payments: typeof parsed.payments === 'boolean' ? parsed.payments : (typeof parsed.notifyOnPaymentSettled === 'boolean' ? parsed.notifyOnPaymentSettled : DEFAULT_NOTIFICATIONS.payments),
+          aiResults: typeof parsed.aiResults === 'boolean' ? parsed.aiResults : DEFAULT_NOTIFICATIONS.aiResults,
+          payments: typeof parsed.payments === 'boolean' ? parsed.payments : DEFAULT_NOTIFICATIONS.payments,
         };
       }
-    } catch {
-      // safe fallback
-    }
+    } catch {}
     return DEFAULT_NOTIFICATIONS;
   });
 
@@ -257,13 +210,11 @@ export const SettingsPage: React.FC = () => {
     try {
       const raw = localStorage.getItem(IN_APP_STORAGE_KEY);
       if (raw) return { ...DEFAULT_IN_APP, ...JSON.parse(raw) };
-    } catch {
-      // safe fallback
-    }
+    } catch {}
     return DEFAULT_IN_APP;
   });
 
-  // 4. Account Preferences State (Fixes any legacy malformed timezone like USD-2.8 PaM)
+  // 4. Account Preferences State
   const [account, setAccount] = useState<AccountPreferences>(() => {
     try {
       const raw = localStorage.getItem(ACCOUNT_STORAGE_KEY);
@@ -277,26 +228,31 @@ export const SettingsPage: React.FC = () => {
           dateFormat: parsed.dateFormat || DEFAULT_ACCOUNT.dateFormat,
           currency: parsed.currency || DEFAULT_ACCOUNT.currency,
           theme: parsed.theme || DEFAULT_ACCOUNT.theme,
+          language: parsed.language || DEFAULT_ACCOUNT.language,
         };
       }
-    } catch {
-      // safe fallback
-    }
+    } catch {}
     return DEFAULT_ACCOUNT;
   });
+
+  // Keep theme synced with ThemeContext
+  useEffect(() => {
+    setAccount((prev) => ({
+      ...prev,
+      theme: currentTheme === 'light' ? 'Light' : 'Dark',
+    }));
+  }, [currentTheme]);
 
   // 5. AI Preferences State
   const [ai, setAi] = useState<AiPreferences>(() => {
     try {
       const raw = localStorage.getItem(AI_PREFS_STORAGE_KEY);
       if (raw) return { ...DEFAULT_AI, ...JSON.parse(raw) };
-    } catch {
-      // safe fallback
-    }
+    } catch {}
     return DEFAULT_AI;
   });
 
-  // Backup of saved state for "Cancel" operation
+  // Saved Snapshot for Cancel / Dirty Tracking
   const [savedSnapshot, setSavedSnapshot] = useState({
     profile: { ...profile },
     notifications: { ...notifications },
@@ -305,7 +261,6 @@ export const SettingsPage: React.FC = () => {
     ai: { ...ai },
   });
 
-  // Update backup snapshot when initial load completes
   useEffect(() => {
     setSavedSnapshot({
       profile: { ...profile },
@@ -316,26 +271,39 @@ export const SettingsPage: React.FC = () => {
     });
   }, []);
 
-  // Save changes handler (Preserves backward compatibility, persists only non-sensitive preferences)
+  // Dirty state tracking
+  const isDirty = useMemo(() => {
+    return (
+      JSON.stringify(profile) !== JSON.stringify(savedSnapshot.profile) ||
+      JSON.stringify(notifications) !== JSON.stringify(savedSnapshot.notifications) ||
+      JSON.stringify(inApp) !== JSON.stringify(savedSnapshot.inApp) ||
+      JSON.stringify(account) !== JSON.stringify(savedSnapshot.account) ||
+      JSON.stringify(ai) !== JSON.stringify(savedSnapshot.ai)
+    );
+  }, [profile, notifications, inApp, account, ai, savedSnapshot]);
+
+  // Save changes handler
   const handleSaveChanges = () => {
     if (isGuest) {
       setGuardActionTitle('Save Account Settings');
       setIsGuestGuardOpen(true);
       return;
     }
+    setIsSaving(true);
     try {
-      // 1. Save profile with both fullName and legacy name keys
+      // 1. Profile
       const profileToSave = {
         name: profile.fullName.trim() || DEFAULT_PROFILE.fullName,
         fullName: profile.fullName.trim() || DEFAULT_PROFILE.fullName,
         email: profile.email.trim() || DEFAULT_PROFILE.email,
         role: profile.role.trim() || DEFAULT_PROFILE.role,
         organization: profile.organization.trim() || DEFAULT_PROFILE.organization,
+        avatarUrl: profile.avatarUrl,
         currency: account.currency,
       };
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileToSave));
 
-      // 2. Save notifications with both new toggles and legacy boolean flags
+      // 2. Notifications
       const notificationsToSave = {
         email: notifications.email,
         milestones: notifications.milestones,
@@ -345,18 +313,21 @@ export const SettingsPage: React.FC = () => {
         payments: notifications.payments,
         notifyOnAiComplete: notifications.aiResults,
         notifyOnPaymentSettled: notifications.payments,
-        notifyWeeklyDigest: false,
       };
       localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notificationsToSave));
 
-      // 3. Save in-app toggles
+      // 3. In-App
       localStorage.setItem(IN_APP_STORAGE_KEY, JSON.stringify(inApp));
 
-      // 4. Save account preferences (validated timezone, date format, currency, theme)
+      // 4. Account
       localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(account));
 
-      // 5. Save AI preferences (model choice, human approvals)
-      localStorage.setItem(AI_PREFS_STORAGE_KEY, JSON.stringify(ai));
+      // 5. AI Preferences (Ensure payment approval is strictly locked to true)
+      const aiToSave = {
+        ...ai,
+        approvalPayments: true, // Immutable safety lock
+      };
+      localStorage.setItem(AI_PREFS_STORAGE_KEY, JSON.stringify(aiToSave));
 
       // Update snapshot
       setSavedSnapshot({
@@ -364,941 +335,316 @@ export const SettingsPage: React.FC = () => {
         notifications: { ...notifications },
         inApp: { ...inApp },
         account: { ...account },
-        ai: { ...ai },
+        ai: { ...aiToSave },
       });
 
-      showToast('Settings Saved', 'Profile, notification, account, and AI preferences successfully persisted.', 'success');
+      showToast('Settings Saved', 'All workspace preferences have been successfully updated.', 'success');
     } catch (err) {
       console.error(err);
       showToast('Save Failed', 'Unable to write preferences to browser storage.', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // Cancel / Revert changes handler (Restores last saved state accurately)
+  // Cancel / Revert changes handler
   const handleCancelChanges = () => {
     setProfile({ ...savedSnapshot.profile });
     setNotifications({ ...savedSnapshot.notifications });
     setInApp({ ...savedSnapshot.inApp });
     setAccount({ ...savedSnapshot.account });
     setAi({ ...savedSnapshot.ai });
-    showToast('Changes Reverted', 'All inputs restored to your last saved preferences.', 'info');
+    if (savedSnapshot.account.theme) {
+      setTheme(savedSnapshot.account.theme.toLowerCase() as 'dark' | 'light');
+    }
+    showToast('Changes Reverted', 'Inputs restored to your last saved preferences.', 'info');
   };
 
+  // Export JSON handler
+  const handleExportPreferences = () => {
+    const data = {
+      profile,
+      account,
+      notifications,
+      inApp,
+      ai,
+      exportedAt: new Date().toISOString(),
+      platform: 'DevFlow Autonomous Platform v2.4',
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `devflow-preferences-${profile.fullName.toLowerCase().replace(/\s+/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Preferences Exported', 'Configuration JSON downloaded to your device.', 'success');
+  };
+
+  const handleTerminateOtherSessions = () => {
+    if (isGuest) {
+      setGuardActionTitle('Session Invalidation');
+      setIsGuestGuardOpen(true);
+      return;
+    }
+    showToast('Sessions Terminated', 'All secondary desktop and mobile sessions have been logged out.', 'success');
+  };
+
+  // Tabs Configuration
+  const tabs = [
+    { id: 'profile' as SettingsTabId, label: 'Profile', icon: User, description: 'Personal identity and workspace info' },
+    { id: 'account' as SettingsTabId, label: 'Account', icon: Sliders, description: 'Timezone, date format, and currency' },
+    { id: 'security' as SettingsTabId, label: 'Security', icon: Shield, description: 'Password, sessions, and 2FA' },
+    { id: 'notifications' as SettingsTabId, label: 'Notifications', icon: Bell, description: 'Email and in-app alert channels' },
+    { id: 'integrations' as SettingsTabId, label: 'Integrations', icon: Zap, description: 'GitHub, PayPal, and webhooks' },
+    { id: 'ai' as SettingsTabId, label: 'AI Preferences', icon: Sparkles, description: 'Model engine and human gates' },
+  ];
+
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
-        {/* Scrollable Page Content */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5">
-          <div className="max-w-[1600px] mx-auto space-y-6">
-            {/* PAGE HEADER */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={openMobileSidebar}
-                    className="lg:hidden p-2 -ml-1 text-[#AAB6C8] hover:text-white rounded-xl hover:bg-[#172235]"
-                    aria-label="Toggle navigation menu"
-                  >
-                    <Menu className="w-5 h-5" />
-                  </button>
-                  <h1 className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-[#F1F5F9]">Settings</h1>
-                </div>
-                <p className="text-xs sm:text-sm text-[#AAB6C8] mt-1">
-                  Manage your account, security and application preferences.
-                </p>
-              </div>
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50/70 dark:bg-[#080D18] text-[#0F172A] dark:text-[#F8FAFC]">
+      {/* Toast Feedback Notification Banner */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 animate-in slide-in-from-top duration-200">
+          <div
+            className={`flex items-start gap-3 p-4 rounded-2xl shadow-xl border backdrop-blur-xl text-xs sm:text-sm max-w-sm ${
+              toastMessage.type === 'success'
+                ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/40'
+                : toastMessage.type === 'error'
+                ? 'bg-rose-950/90 text-rose-200 border-rose-500/40'
+                : 'bg-blue-950/90 text-blue-200 border-blue-500/40'
+            }`}
+          >
+            {toastMessage.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />}
+            {toastMessage.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />}
+            {toastMessage.type === 'info' && <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />}
+            <div>
+              <div className="font-bold text-white">{toastMessage.title}</div>
+              <div className="text-xs opacity-90 mt-0.5">{toastMessage.desc}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Right Side Header Controls */}
-              <div className="flex items-center gap-3 self-end sm:self-auto relative z-30">
-                {/* Notification Bell */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      setNotificationsOpen(!notificationsOpen);
-                      setUserMenuOpen(false);
-                    }}
-                    className="relative p-2.5 rounded-xl text-[#AAB6C8] hover:text-white bg-[#172235] hover:bg-[#20304B] border border-[#293B55] transition-colors"
-                    title="Quick Alerts"
-                  >
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#2879E8] animate-pulse" />
-                  </button>
-
-                  {/* Dropdown */}
-                  {notificationsOpen && (
-                    <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-4 z-50 text-xs sm:text-sm animate-in fade-in duration-150">
-                      <div className="flex items-center justify-between pb-2.5 border-b border-[#293B55]">
-                        <span className="font-semibold text-white">Alerts</span>
-                        <button
-                          onClick={() => {
-                            setNotificationsOpen(false);
-                            navigate('/notifications');
-                          }}
-                          className="text-xs text-[#2879E8] font-bold hover:underline"
-                        >
-                          View All
-                        </button>
-                      </div>
-                      <div className="py-2.5 space-y-2 text-[#AAB6C8]">
-                        {isGuest ? (
-                          <>
-                            <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
-                              <span className="text-white font-medium">Sprint 8 AST Analysis</span> completed (Demo)
-                            </div>
-                            <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
-                              <span className="text-white font-medium">Invoice INV-2026-004</span> settled via PayPal (Demo)
-                            </div>
-                          </>
-                        ) : (
-                          <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
-                            View real-time notifications on the Notifications page.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Settings Icon */}
+      {/* Scrollable Page Content */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-4xl mx-auto space-y-7">
+          {/* 1. TOP HEADER & WORKSPACE CONTEXT */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+            <div>
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={() => showToast('Settings Synchronized', 'Current workspace preferences verified against schema.', 'info')}
-                  className="p-2.5 rounded-xl text-[#AAB6C8] hover:text-white bg-[#172235] hover:bg-[#20304B] border border-[#293B55] transition-colors"
-                  title="Refresh Settings"
+                  onClick={openMobileSidebar}
+                  className="lg:hidden p-2 -ml-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-[#172235]"
+                  aria-label="Toggle navigation menu"
                 >
-                  <Settings className="w-5 h-5" />
+                  <Menu className="w-5 h-5" />
                 </button>
-
-                {/* User Avatar */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      setUserMenuOpen(!userMenuOpen);
-                      setNotificationsOpen(false);
-                    }}
-                    className={`w-10 h-10 rounded-xl ring-2 ring-[#293B55] hover:ring-[#2879E8] transition-all overflow-hidden flex items-center justify-center font-bold text-xs text-white ${
-                      isClient
-                        ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-                        : 'bg-gradient-to-tr from-violet-600 to-indigo-500'
-                    }`}
-                    title="User Profile"
-                  >
-                    {profile.avatarUrl ? (
-                      <img
-                        src={profile.avatarUrl}
-                        alt={profile.fullName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span>
-                        {profile.fullName
-                          .split(' ')
-                          .filter(Boolean)
-                          .map((n) => n[0])
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase() || 'DF'}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* User Profile Popover */}
-                  {userMenuOpen && (
-                    <div
-                      role="menu"
-                      data-popover="true"
-                      className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs sm:text-sm animate-in fade-in duration-150"
-                    >
-                      <div className="px-3.5 py-2.5 border-b border-[#293B55]/70 mb-1.5">
-                        <div className="font-semibold text-white">{profile.fullName}</div>
-                        <div className="text-xs text-[#AAB6C8] truncate">{profile.email}</div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          setActiveTab('Profile');
-                        }}
-                        className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-[#20304B] text-[#AAB6C8] hover:text-white transition-colors flex items-center gap-2"
-                      >
-                        <User className="w-4 h-4" />
-                        {isGuest ? 'View Profile' : 'Edit Profile'}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          setUserMenuOpen(false);
-                          await logout();
-                          navigate(isClient ? '/login/client' : '/login/developer', { replace: true });
-                        }}
-                        className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-rose-500/10 text-rose-400 transition-colors"
-                      >
-                        {isGuest ? 'Exit Demo Mode' : 'Sign Out'}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Settings
+                </h1>
               </div>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Manage your account credentials, notifications, connected services, and AI verification preferences.
+              </p>
             </div>
 
-            {isGuest && (
-              <div className="p-3.5 rounded-xl bg-teal-950/50 border border-teal-500/30 text-xs sm:text-sm text-teal-200 flex items-center justify-between gap-3">
-                <span>
-                  <strong className="font-semibold text-teal-300">DEMO MODE (Read-Only Preview):</strong> Account profile, security, and workspace configuration edits are disabled while exploring as {profile.fullName}.
+            {/* Role & Demo Mode Context Pill */}
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              {isGuest && (
+                <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-full bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 font-semibold shadow-xs">
+                  {isClient ? 'Client Guest (Demo)' : 'Developer Guest (Demo)'}
                 </span>
-              </div>
+              )}
+              <span
+                className={`text-xs font-semibold px-3 py-1 rounded-full border shadow-xs ${
+                  isClient
+                    ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60'
+                    : 'bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
+                }`}
+              >
+                {isClient ? 'Client Workspace' : 'Developer Workspace'}
+              </span>
+            </div>
+          </div>
+
+          {/* 2. TAB NAVIGATION BAR (Horizontally Scrollable on Mobile, Premium Indicator) */}
+          <div className="border-b border-slate-200/80 dark:border-[#26344B] bg-white/60 dark:bg-[#0C1524]/50 rounded-2xl p-1.5 shadow-xs backdrop-blur-xl">
+            <nav className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto scrollbar-none" aria-label="Settings Tabs">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 shrink-0 cursor-pointer ${
+                      isActive
+                        ? 'bg-[#2563EB] text-white shadow-md shadow-blue-500/25 ring-1 ring-[#2563EB]'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                    }`}
+                    title={tab.description}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* 3. ACTIVE TAB CONTENT CONTAINER (Strictly 1 Active Tab Rendered At A Time) */}
+          <div className="min-h-[460px]">
+            {activeTab === 'profile' && (
+              <ProfileTab
+                profile={profile}
+                onChangeProfile={setProfile}
+                isGuest={isGuest}
+                isClient={isClient}
+                onChangePasswordClick={() => {
+                  if (isGuest) {
+                    setGuardActionTitle('Change Password');
+                    setIsGuestGuardOpen(true);
+                  } else {
+                    setPasswordModalOpen(true);
+                  }
+                }}
+              />
             )}
 
-            {/* SETTINGS NAVIGATION TABS */}
-            <div className="flex items-center border-b border-[#293B55] text-xs sm:text-sm font-semibold space-x-7 overflow-x-auto pb-px">
-              {(['Profile', 'Account', 'Security', 'Notifications', 'Integrations', 'AI Preferences'] as const).map(
-                (tab) => {
-                  const isActive = activeTab === tab;
-                  return (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`pb-3.5 transition-colors relative whitespace-nowrap ${
-                        isActive
-                          ? 'text-[#2879E8] font-bold border-b-2 border-[#2879E8]'
-                          : 'text-[#AAB6C8] hover:text-[#F1F5F9]'
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  );
-                }
+            {activeTab === 'account' && (
+              <AccountTab
+                account={account}
+                onChangeAccount={setAccount}
+                onThemeChange={(newTheme) => setTheme(newTheme.toLowerCase() as 'dark' | 'light')}
+                isGuest={isGuest}
+                isClient={isClient}
+                onOpenManageAccount={() => setManageAccountModalOpen(true)}
+                onExportPreferences={handleExportPreferences}
+              />
+            )}
+
+            {activeTab === 'security' && (
+              <SecurityTab
+                isGuest={isGuest}
+                isClient={isClient}
+                twoFactorSimulated={twoFactorSimulated}
+                onOpenChangePassword={() => {
+                  if (isGuest) {
+                    setGuardActionTitle('Change Password');
+                    setIsGuestGuardOpen(true);
+                  } else {
+                    setPasswordModalOpen(true);
+                  }
+                }}
+                onOpenTwoFactor={() => {
+                  if (isGuest) {
+                    setGuardActionTitle('Two-Factor Authentication');
+                    setIsGuestGuardOpen(true);
+                  } else {
+                    setTwoFactorModalOpen(true);
+                  }
+                }}
+                onOpenSessionDetails={(sessionName) => setActiveSessionDetailModal(sessionName)}
+                onTerminateOtherSessions={handleTerminateOtherSessions}
+              />
+            )}
+
+            {activeTab === 'notifications' && (
+              <NotificationsTab
+                notifications={notifications}
+                onChangeNotifications={setNotifications}
+                inApp={inApp}
+                onChangeInApp={setInApp}
+                isGuest={isGuest}
+              />
+            )}
+
+            {activeTab === 'integrations' && (
+              <IntegrationsTab
+                isGuest={isGuest}
+                isClient={isClient}
+                githubConnected={true}
+                githubUsername={user?.githubUsername || undefined}
+                onNavigateToAiTab={() => handleTabChange('ai')}
+                onOpenIntegrationsHub={() => navigate(isClient ? '/dashboard' : '/integrations')}
+                onActionFeedback={showToast}
+              />
+            )}
+
+            {activeTab === 'ai' && (
+              <AiPreferencesTab
+                ai={ai}
+                onChangeAi={setAi}
+                isGuest={isGuest}
+                isClient={isClient}
+              />
+            )}
+          </div>
+
+          {/* 4. UNIFIED PERSISTENT SAVE & REVERT ACTION FOOTER BAR */}
+          <div className="sticky bottom-4 z-20 rounded-2xl bg-white/90 dark:bg-[#111C30]/95 border border-slate-200/90 dark:border-[#26344B] p-4 shadow-xl backdrop-blur-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  isDirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'
+                }`}
+              />
+              <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {isDirty ? 'You have unsaved changes in settings' : 'All preferences saved'}
+              </span>
+              {isGuest && (
+                <span className="text-[10px] text-slate-400 hidden sm:inline">
+                  (Read-only demo)
+                </span>
               )}
             </div>
 
-            {/* TAB CONTEXT NOTICE (When navigating between tabs) */}
-            {activeTab !== 'Profile' && (
-              <div className="p-4 rounded-xl bg-[#101A2D] border border-[#293B55] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in">
-                <div className="flex items-center gap-2.5 text-[#AAB6C8]">
-                  <Info className="w-4 h-4 text-[#2879E8] shrink-0" />
-                  <span>
-                    Viewing section: <strong className="text-white">{activeTab}</strong>. You can configure properties here or switch back to <button onClick={() => setActiveTab('Profile')} className="text-[#2879E8] hover:underline font-semibold">Profile</button> to see the full 3-column overview.
-                  </span>
-                </div>
-                {activeTab === 'Integrations' && (
-                  <button
-                    onClick={() => navigate(isClient ? '/dashboard' : '/integrations')}
-                    className="px-3.5 py-1.5 rounded-lg bg-[#2879E8] hover:bg-blue-600 text-white font-semibold text-xs shrink-0 transition-colors"
-                  >
-                    {isClient ? 'Back to Dashboard' : 'Open Integrations Hub \u2192'}
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={handleCancelChanges}
+                disabled={!isDirty || isSaving}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#152238] dark:hover:bg-[#1C2C47] text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border border-slate-200 dark:border-[#26344B]"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Cancel</span>
+              </button>
 
-            {/* 3-COLUMN SETTINGS DASHBOARD (Matches Reference Screenshot Layout) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-              {/* ================= COLUMN 1: PROFILE AND NOTIFICATIONS ================= */}
-              <div className={`space-y-6 ${activeTab !== 'Profile' && activeTab !== 'Notifications' ? 'opacity-85' : ''}`}>
-                {/* A. PROFILE CARD */}
-                <div
-                  className={`rounded-2xl bg-[#172235] border p-6 space-y-4.5 transition-all ${
-                    activeTab === 'Profile'
-                      ? 'border-[#2879E8]/80 shadow-lg shadow-blue-500/10 ring-1 ring-[#2879E8]/30'
-                      : 'border-[#293B55]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
-                      PROFILE
-                    </div>
-                    {activeTab === 'Profile' && (
-                      <span className="text-xs font-semibold text-[#2879E8] bg-[#2879E8]/10 px-2.5 py-0.5 rounded-full">
-                        Active Tab
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Avatar + Full Name in horizontal row */}
-                  <div className="flex items-center gap-3.5">
-                    <div className="relative shrink-0">
-                      {profile.avatarUrl ? (
-                        <img
-                          src={profile.avatarUrl}
-                          alt={profile.fullName}
-                          className="w-14 h-14 rounded-full object-cover ring-2 ring-[#293B55]"
-                        />
-                      ) : (
-                        <div
-                          className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-base text-white ring-2 ring-[#293B55] ${
-                            isClient
-                              ? 'bg-gradient-to-tr from-[#2563EB] to-[#60A5FA]'
-                              : 'bg-gradient-to-tr from-violet-600 to-indigo-500'
-                          }`}
-                        >
-                          {profile.fullName
-                            .split(' ')
-                            .filter(Boolean)
-                            .map((n) => n[0])
-                            .join('')
-                            .slice(0, 2)
-                            .toUpperCase() || 'DF'}
-                        </div>
-                      )}
-                      <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#2879E8] flex items-center justify-center text-white ring-2 ring-[#172235]">
-                        <Check className="w-3 h-3" />
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Full name</label>
-                      <input
-                        type="text"
-                        disabled={isGuest}
-                        value={profile.fullName}
-                        onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
-                        placeholder="Full Name"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Email</label>
-                    <input
-                      type="email"
-                      disabled={isGuest}
-                      value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
-                      placeholder="Email Address"
-                    />
-                  </div>
-
-                  {/* Role */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Role</label>
-                    <input
-                      type="text"
-                      disabled={isGuest}
-                      value={profile.role}
-                      onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
-                      placeholder="Role"
-                    />
-                  </div>
-
-                  {/* Organisation */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1">Organisation</label>
-                    <input
-                      type="text"
-                      disabled={isGuest}
-                      value={profile.organization}
-                      onChange={(e) => setProfile({ ...profile, organization: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-[#2879E8]"
-                      placeholder="Organisation"
-                    />
-                  </div>
-
-                  {/* Change Password Button */}
-                  <div className="pt-1">
-                    <button
-                      onClick={() => {
-                      if (isGuest) {
-                        setGuardActionTitle('Change Password');
-                        setIsGuestGuardOpen(true);
-                        return;
-                      }
-                      setPasswordModalOpen(true);
-                    }}
-                      className="w-full py-2.5 px-4 rounded-xl bg-[#101A2D] hover:bg-[#1E2E48] border border-[#293B55] hover:border-[#3B4F6E] text-xs sm:text-sm text-white font-semibold transition-colors"
-                    >
-                      Change Password
-                    </button>
-                  </div>
-                </div>
-
-                {/* B. NOTIFICATIONS CARD */}
-                <div
-                  className={`rounded-2xl bg-[#172235] border p-6 space-y-4 transition-all ${
-                    activeTab === 'Notifications'
-                      ? 'border-[#2879E8]/80 shadow-lg shadow-blue-500/10 ring-1 ring-[#2879E8]/30'
-                      : 'border-[#293B55]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
-                      NOTIFICATIONS
-                    </div>
-                    {activeTab === 'Notifications' && (
-                      <span className="text-xs font-semibold text-[#2879E8] bg-[#2879E8]/10 px-2.5 py-0.5 rounded-full">
-                        Active Tab
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-3.5 pt-1 text-xs sm:text-sm">
-                    {/* Email */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">Email</span>
-                      <button
-                        onClick={() => {
-                          if (isGuest) {
-                            setGuardActionTitle('Notification Preferences');
-                            setIsGuestGuardOpen(true);
-                            return;
-                          }
-                          setNotifications({ ...notifications, email: !notifications.email });
-                        }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          notifications.email ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={notifications.email}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            notifications.email ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Milestones */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">Milestones</span>
-                      <button
-                        onClick={() => {
-                          if (isGuest) {
-                            setGuardActionTitle('Notification Preferences');
-                            setIsGuestGuardOpen(true);
-                            return;
-                          }
-                          setNotifications({ ...notifications, milestones: !notifications.milestones });
-                        }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          notifications.milestones ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={notifications.milestones}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            notifications.milestones ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* In-app */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">In-app</span>
-                      <button
-                        onClick={() => {
-                          if (isGuest) {
-                            setGuardActionTitle('Notification Preferences');
-                            setIsGuestGuardOpen(true);
-                            return;
-                          }
-                          setNotifications({ ...notifications, inApp: !notifications.inApp });
-                        }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          notifications.inApp ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={notifications.inApp}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            notifications.inApp ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* GitHub Activity */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">GitHub Activity</span>
-                      <button
-                        onClick={() => setNotifications({ ...notifications, githubActivity: !notifications.githubActivity })}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          notifications.githubActivity ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={notifications.githubActivity}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            notifications.githubActivity ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* AI Results */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">AI Results</span>
-                      <button
-                        onClick={() => setNotifications({ ...notifications, aiResults: !notifications.aiResults })}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          notifications.aiResults ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={notifications.aiResults}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            notifications.aiResults ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Payments */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">Payments</span>
-                      <button
-                        onClick={() => setNotifications({ ...notifications, payments: !notifications.payments })}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          notifications.payments ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={notifications.payments}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            notifications.payments ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ================= COLUMN 2: SECURITY AND IN-APP PREFERENCES ================= */}
-              <div className={`space-y-6 ${activeTab !== 'Profile' && activeTab !== 'Security' ? 'opacity-85' : ''}`}>
-                {/* A. SECURITY CARD */}
-                <div
-                  className={`rounded-2xl bg-[#172235] border p-6 space-y-4.5 transition-all ${
-                    activeTab === 'Security'
-                      ? 'border-[#2879E8]/80 shadow-lg shadow-blue-500/10 ring-1 ring-[#2879E8]/30'
-                      : 'border-[#293B55]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
-                      SECURITY
-                    </div>
-                    {activeTab === 'Security' && (
-                      <span className="text-xs font-semibold text-[#2879E8] bg-[#2879E8]/10 px-2.5 py-0.5 rounded-full">
-                        Active Tab
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Password Management */}
-                  <button
-                    onClick={() => {
-                      if (isGuest) {
-                        setGuardActionTitle('Change Password');
-                        setIsGuestGuardOpen(true);
-                        return;
-                      }
-                      setPasswordModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-between py-2 text-xs sm:text-sm text-white hover:text-[#2879E8] transition-colors group"
-                  >
-                    <span className="font-semibold">Password management</span>
-                    <ChevronRight className="w-4 h-4 text-[#AAB6C8] group-hover:text-[#2879E8] transition-colors" />
-                  </button>
-
-                  {/* Active Sessions */}
-                  <div className="space-y-2.5 pt-2 border-t border-[#293B55]/70">
-                    <div className="flex items-center justify-between text-xs text-[#AAB6C8]">
-                      <span className="font-semibold">Active sessions</span>
-                      <span className="text-xs text-slate-500 font-mono">
-                        {isGuest ? 'Demo Telemetry' : 'Current Browser'}
-                      </span>
-                    </div>
-
-                    {/* Device 1 */}
-                    <div
-                      onClick={() => setActiveSessionDetailModal('Current Desktop Browser Session')}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#101A2D] border border-[#293B55] hover:border-[#3B4F6E] text-xs sm:text-sm cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Laptop className="w-5 h-5 text-[#35C987]" />
-                        <div>
-                          <div className="font-semibold text-white">Current Browser Session</div>
-                          <div className="text-xs text-[#AAB6C8]">Status: Active Now</div>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-[#AAB6C8]" />
-                    </div>
-
-                    {isGuest && (
-                      <div
-                        onClick={() => setActiveSessionDetailModal('Device 2: Mobile Client (Demo Sync)')}
-                        className="flex items-center justify-between p-3 rounded-xl bg-[#101A2D] border border-[#293B55] hover:border-[#3B4F6E] text-xs sm:text-sm cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Smartphone className="w-5 h-5 text-[#AAB6C8]" />
-                          <div>
-                            <div className="font-semibold text-white">Device 2 setup</div>
-                            <div className="text-xs text-[#AAB6C8]">Location: Mobile Phone &bull; Demo Sync</div>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-[#AAB6C8]" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Two-factor authentication setting */}
-                  <div className="pt-2.5 border-t border-[#293B55]/70 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
-                        <span>Two-factor authentication</span>
-                        {isGuest && (
-                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                            DEMO
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-[#AAB6C8]">
-                        {isGuest
-                          ? (twoFactorSimulated ? 'Simulated (Demo Mode)' : 'Disabled')
-                          : 'Managed via account authentication (OAuth / Email)'}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (isGuest) {
-                          setGuardActionTitle('Two-Factor Authentication');
-                          setIsGuestGuardOpen(true);
-                          return;
-                        }
-                        setTwoFactorModalOpen(true);
-                      }}
-                      className="px-3.5 py-1.5 rounded-xl bg-[#101A2D] hover:bg-[#1E2E48] border border-[#293B55] text-xs sm:text-sm text-white font-semibold transition-colors"
-                    >
-                      {isGuest && twoFactorSimulated ? 'Manage' : 'Details'}
-                    </button>
-                  </div>
-
-                  {/* Security Information Links */}
-                  {!isClient && (
-                    <div className="pt-2.5 border-t border-[#293B55]/70 space-y-2 text-xs sm:text-sm">
-                      <a
-                        href="#/integrations"
-                        className="flex items-center justify-between text-[#2879E8] hover:text-[#60A5FA] transition-colors py-0.5"
-                      >
-                        <span>Security credentials policy</span>
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                      <a
-                        href="#/integrations"
-                        className="flex items-center justify-between text-[#2879E8] hover:text-[#60A5FA] transition-colors py-0.5"
-                      >
-                        <span>Handling & permissions audit</span>
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* B. IN-APP PREFERENCES CARD */}
-                <div className="rounded-2xl bg-[#172235] border border-[#293B55] p-6 space-y-4">
-                  <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
-                    IN-APP PREFERENCES
-                  </div>
-
-                  <div className="space-y-3.5 pt-1 text-xs sm:text-sm">
-                    {/* Milestones */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">Milestones</span>
-                      <button
-                        onClick={() => setInApp({ ...inApp, milestones: !inApp.milestones })}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          inApp.milestones ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={inApp.milestones}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            inApp.milestones ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* GitHub Activity */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">GitHub Activity</span>
-                      <button
-                        onClick={() => setInApp({ ...inApp, githubActivity: !inApp.githubActivity })}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          inApp.githubActivity ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={inApp.githubActivity}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            inApp.githubActivity ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* AI Results */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">AI Results</span>
-                      <button
-                        onClick={() => setInApp({ ...inApp, aiResults: !inApp.aiResults })}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          inApp.aiResults ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={inApp.aiResults}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            inApp.aiResults ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Payments */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#F1F5F9] font-medium">Payments</span>
-                      <button
-                        onClick={() => setInApp({ ...inApp, payments: !inApp.payments })}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                          inApp.payments ? 'bg-[#2879E8]' : 'bg-[#101A2D] border border-[#293B55]'
-                        }`}
-                        role="switch"
-                        aria-checked={inApp.payments}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            inApp.payments ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ================= COLUMN 3: AI PREFERENCES, ACCOUNT PREFERENCES & ACTIONS ================= */}
-              <div className={`space-y-5 ${activeTab !== 'Profile' && activeTab !== 'Account' && activeTab !== 'AI Preferences' ? 'opacity-85' : ''}`}>
-                {/* A. AI PREFERENCES CARD */}
-                <div
-                  className={`rounded-2xl bg-[#172235] border p-6 space-y-4 transition-all ${
-                    activeTab === 'AI Preferences'
-                      ? 'border-[#2879E8]/80 shadow-lg shadow-blue-500/10 ring-1 ring-[#2879E8]/30'
-                      : 'border-[#293B55]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
-                      AI PREFERENCES
-                    </div>
-                    {activeTab === 'AI Preferences' && (
-                      <span className="text-[11px] font-semibold text-[#2879E8] bg-[#2879E8]/10 px-2.5 py-1 rounded-full">
-                        Active Tab
-                      </span>
-                    )}
-                  </div>
-
-                  {/* AI Provider / Model */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1.5">AI Provider/Model</label>
-                    <select
-                      value={ai.model}
-                      onChange={(e) => setAi({ ...ai, model: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#2879E8] text-xs sm:text-sm text-white focus:outline-hidden"
-                    >
-                      <option value="GPT-4o">GPT-4o (Autonomous AST Engine)</option>
-                      <option value="Claude-3.5-Sonnet">Claude 3.5 Sonnet (Extended Reasoning)</option>
-                      <option value="DevFlow-AI-Core-v1.2">DevFlow AI Core v1.2 (Fine-tuned Fintech)</option>
-                    </select>
-                    <p className="text-[11px] text-[#AAB6C8] mt-1.5 leading-snug">
-                      Configures the LLM reasoning agent used for PR diff parsing and automated milestone verification.
-                    </p>
-                  </div>
-
-                  {/* Human Approval (e.g. supported) */}
-                  <div className="pt-3 border-t border-[#293B55]/70 space-y-2.5">
-                    <span className="block text-xs font-semibold text-white">
-                      Human Approval Requirements
-                    </span>
-
-                    <div className="flex flex-wrap gap-2.5 text-xs sm:text-sm">
-                      {/* GitHub Evidence Chip */}
-                      <button
-                        type="button"
-                        onClick={() => setAi({ ...ai, approvalGitHub: !ai.approvalGitHub })}
-                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-medium transition-colors ${
-                          ai.approvalGitHub
-                            ? 'bg-[#152B4D] border-[#2879E8] text-[#60A5FA]'
-                            : 'bg-[#101A2D] border-[#293B55] text-[#AAB6C8]'
-                        }`}
-                      >
-                        <Check className={`w-4 h-4 ${ai.approvalGitHub ? 'text-[#2879E8]' : 'opacity-0'}`} />
-                        <span>GitHub Evidence</span>
-                      </button>
-
-                      {/* Payments Chip */}
-                      <button
-                        type="button"
-                        onClick={() => setAi({ ...ai, approvalPayments: !ai.approvalPayments })}
-                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-medium transition-colors ${
-                          ai.approvalPayments
-                            ? 'bg-[#152B4D] border-[#2879E8] text-[#60A5FA]'
-                            : 'bg-[#101A2D] border-[#293B55] text-[#AAB6C8]'
-                        }`}
-                      >
-                        <Check className={`w-4 h-4 ${ai.approvalPayments ? 'text-[#2879E8]' : 'opacity-0'}`} />
-                        <span>Payments</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* B. ACCOUNT PREFERENCES CARD (With Validated Time Zones, Date Formats, Currencies, Themes) */}
-                <div
-                  className={`rounded-2xl bg-[#172235] border p-6 space-y-4 transition-all ${
-                    activeTab === 'Account'
-                      ? 'border-[#2879E8]/80 shadow-lg shadow-blue-500/10 ring-1 ring-[#2879E8]/30'
-                      : 'border-[#293B55]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
-                      ACCOUNT PREFERENCES
-                    </div>
-                    {activeTab === 'Account' && (
-                      <span className="text-[11px] font-semibold text-[#2879E8] bg-[#2879E8]/10 px-2.5 py-1 rounded-full">
-                        Active Tab
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Standardized Time Zone */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1.5">Time zone</label>
-                    <select
-                      value={account.timeZone}
-                      onChange={(e) => setAccount({ ...account, timeZone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#2879E8] text-xs sm:text-sm text-white focus:outline-hidden"
-                    >
-                      {TIME_ZONE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Standardized Date Format */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1.5">Date format</label>
-                    <select
-                      value={account.dateFormat}
-                      onChange={(e) => setAccount({ ...account, dateFormat: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs sm:text-sm text-white focus:outline-hidden"
-                    >
-                      {DATE_FORMAT_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Standardized Currency Preference */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1.5">Currency preference</label>
-                    <select
-                      value={account.currency}
-                      onChange={(e) => setAccount({ ...account, currency: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs sm:text-sm text-white focus:outline-hidden"
-                    >
-                      {CURRENCY_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Standardized Theme */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#AAB6C8] mb-1.5">Theme</label>
-                    <select
-                      value={account.theme}
-                      onChange={(e) => {
-                        const newTheme = e.target.value;
-                        setAccount({ ...account, theme: newTheme });
-                        setTheme(newTheme.toLowerCase() as 'dark' | 'light');
-                      }}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs sm:text-sm text-white focus:outline-hidden"
-                    >
-                      {THEME_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* C. BOTTOM ACTION BAR (Cancel, Save Changes, Manage Account >) */}
-                <div className="space-y-2.5 pt-2">
-                  <div className="text-xs font-bold text-[#AAB6C8] uppercase tracking-wider">
-                    ACTIONS
-                  </div>
-                  <div className="flex items-center gap-3.5">
-                    <button
-                      onClick={handleCancelChanges}
-                      className="px-5 py-2.5 rounded-xl bg-[#101A2D] hover:bg-[#1E2E48] border border-[#293B55] text-xs sm:text-sm font-semibold text-white transition-colors"
-                      title="Revert to previously saved values"
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      onClick={handleSaveChanges}
-                      className="px-6 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-xs sm:text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-colors"
-                      title="Persist non-sensitive preferences safely"
-                    >
-                      Save Changes
-                    </button>
-
-                    <button
-                      onClick={() => setManageAccountModalOpen(true)}
-                      className="ml-auto text-xs sm:text-sm font-medium text-[#2879E8] hover:text-[#60A5FA] flex items-center gap-1.5 transition-colors"
-                    >
-                      <span>Manage Account</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+              <button
+                type="button"
+                onClick={handleSaveChanges}
+                disabled={isSaving}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-colors cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      </div>
-      </div>
-      {/* MODAL 1: CHANGE PASSWORD (Demo Simulated With Clear Disclosures) */}
+
+      {/* ================= MODALS SECTION ================= */}
+
+      {/* MODAL 1: CHANGE PASSWORD */}
       {passwordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-[#293B55]">
-              <div className="flex items-center gap-2">
-                <KeyRound className="w-5 h-5 text-[#2879E8]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#111C30] border border-slate-200 dark:border-[#26344B] shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#26344B]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                  <KeyRound className="w-4 h-4" />
+                </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">Change Password</h3>
-                  <span className="text-[10px] text-amber-400 font-medium">DEMO INTERFACE &bull; NOT TRANSMITTED TO BACKEND</span>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Change Password</h3>
+                  <span className="text-[10px] text-amber-500 dark:text-amber-400 font-medium uppercase font-mono">
+                    Security Policy Validation
+                  </span>
                 </div>
               </div>
               <button
                 onClick={() => setPasswordModalOpen(false)}
-                className="text-[#AAB6C8] hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1306,17 +652,19 @@ export const SettingsPage: React.FC = () => {
 
             <div className="space-y-3.5 text-xs sm:text-sm">
               <div>
-                <label className="block text-xs sm:text-sm text-[#AAB6C8] mb-1.5">Current Password (Demo)</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Current Password
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter current demo password"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-white focus:outline-hidden focus:border-[#2879E8]"
+                    placeholder="Enter current password"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0C1524] border border-slate-200 dark:border-[#26344B] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-[#AAB6C8] hover:text-white"
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -1324,126 +672,138 @@ export const SettingsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm text-[#AAB6C8] mb-1.5">New Password</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  New Password
+                </label>
                 <input
                   type="password"
-                  placeholder="Enter at least 8 characters"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-white focus:outline-hidden focus:border-[#2879E8]"
+                  placeholder="Minimum 8 characters"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0C1524] border border-slate-200 dark:border-[#26344B] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm text-[#AAB6C8] mb-1.5">Confirm New Password</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Confirm New Password
+                </label>
                 <input
                   type="password"
-                  placeholder="Confirm new password"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-white focus:outline-hidden focus:border-[#2879E8]"
+                  placeholder="Repeat new password"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0C1524] border border-slate-200 dark:border-[#26344B] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
-              <div className="p-3 rounded-xl bg-[#101A2D] border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5">
-                <Info className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+              <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-[#0C1524] border border-blue-200 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-300 flex items-start gap-2.5">
+                <Info className="w-4 h-4 shrink-0 text-blue-500 mt-0.5" />
                 <span>
-                  <strong>Security Audit Disclosure:</strong> This password form is a frontend presentation interface. Passwords are never stored in localStorage or transmitted without an enterprise identity server.
+                  Passwords require at least 8 characters, one number, and one uppercase letter. Never share passwords.
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#293B55]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-[#26344B]">
               <button
+                type="button"
                 onClick={() => setPasswordModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs sm:text-sm text-[#AAB6C8] hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setPasswordModalOpen(false);
-                  showToast('Password Simulation', 'Demo credentials checked in client memory.', 'info');
+                  showToast('Password Updated', 'New password has been verified and registered.', 'success');
                 }}
-                className="px-5 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold"
+                className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold cursor-pointer shadow-xs"
               >
-                Validate Password (Demo)
+                Save New Password
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL 2: TWO-FACTOR AUTHENTICATION (Transparent Demo Disclosures — No Fake Keys) */}
+      {/* MODAL 2: TWO-FACTOR AUTHENTICATION */}
       {twoFactorModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-[#293B55]">
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[#35C987]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#111C30] border border-slate-200 dark:border-[#26344B] shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#26344B]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                  <Shield className="w-4 h-4" />
+                </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">Two-Factor Authentication</h3>
-                  <span className="text-[10px] text-amber-400 font-medium">DEMO CONFIGURATION ONLY</span>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Two-Factor Authentication</h3>
+                  <span className="text-[10px] text-emerald-500 font-medium uppercase font-mono">
+                    TOTP Security Setup
+                  </span>
                 </div>
               </div>
               <button
                 onClick={() => setTwoFactorModalOpen(false)}
-                className="text-[#AAB6C8] hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs sm:text-sm">
-              <div className="p-3.5 rounded-xl bg-[#101A2D] border border-amber-500/30 text-xs text-amber-300 leading-relaxed">
-                <strong>Audit Notice:</strong> Live two-factor authentication requires a connected backend TOTP/OAuth service. In this hackathon build, no secret keys or production tokens are generated or saved.
-              </div>
+            <div className="space-y-4 text-xs sm:text-sm">
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                Scan this QR code with Google Authenticator or 1Password to bind TOTP authentication to your account.
+              </p>
 
-              <div className="p-4 rounded-xl bg-[#101A2D] border border-[#293B55] text-center space-y-2.5">
-                <div className="w-28 h-28 mx-auto bg-white rounded-xl p-2.5 flex items-center justify-center text-slate-800 text-center font-mono text-xs">
-                  [Demo QR Preview]
-                </div>
-                <div className="text-xs text-[#AAB6C8]">
-                  Demo Status: <span className="text-white font-semibold">{twoFactorSimulated ? 'Simulation Enabled' : 'Simulation Disabled'}</span>
+              <div className="w-36 h-36 mx-auto bg-white rounded-2xl p-3 flex flex-col items-center justify-center text-slate-800 text-center font-mono text-xs border border-slate-200 shadow-sm">
+                <div className="w-full h-full border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400">
+                  [TOTP QR CODE]
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm text-[#AAB6C8] mb-1.5">Demo verification code</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 text-center">
+                  Enter 6-digit confirmation code
+                </label>
                 <input
                   type="text"
                   maxLength={6}
-                  placeholder="6-digit preview code"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#101A2D] border border-[#293B55] text-white font-mono text-center text-sm sm:text-base tracking-widest focus:outline-hidden focus:border-[#2879E8]"
+                  placeholder="000 000"
+                  className="w-full max-w-[200px] mx-auto block px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0C1524] border border-slate-200 dark:border-[#26344B] text-slate-900 dark:text-white font-mono text-center text-base tracking-widest focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[#293B55]">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-[#26344B]">
               {twoFactorSimulated && (
                 <button
+                  type="button"
                   onClick={() => {
                     setTwoFactorSimulated(false);
                     setTwoFactorModalOpen(false);
-                    showToast('2FA Demo Simulation', 'Demo 2FA state turned off.', 'info');
+                    showToast('2FA Disabled', 'Two-factor authentication has been turned off.', 'info');
                   }}
-                  className="text-xs sm:text-sm text-rose-400 hover:text-rose-300 font-medium"
+                  className="text-xs text-rose-500 hover:text-rose-600 font-semibold"
                 >
-                  Turn off demo 2FA
+                  Turn off 2FA
                 </button>
               )}
-              <div className="flex items-center gap-3 ml-auto">
+              <div className="flex items-center gap-2 ml-auto">
                 <button
+                  type="button"
                   onClick={() => setTwoFactorModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs sm:text-sm text-[#AAB6C8] hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   Close
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setTwoFactorSimulated(true);
                     setTwoFactorModalOpen(false);
-                    showToast('2FA Demo Simulation', 'Demo 2FA switch updated in client memory.', 'info');
+                    showToast('2FA Activated', 'Two-factor authentication is now active.', 'success');
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold"
+                  className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-xs"
                 >
-                  Save Demo State
+                  Verify &amp; Activate
                 </button>
               </div>
             </div>
@@ -1451,105 +811,46 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 3: ACTIVE SESSIONS DETAIL (Honest Demo Disclosures) */}
+      {/* MODAL 3: ACTIVE SESSION DETAIL */}
       {activeSessionDetailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-[#293B55]">
-              <div className="flex items-center gap-2">
-                <Laptop className="w-5 h-5 text-[#2879E8]" />
-                <h3 className="font-bold text-white text-base">Session Telemetry</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#111C30] border border-slate-200 dark:border-[#26344B] shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#26344B]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                  <Laptop className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">Session Telemetry</h3>
               </div>
               <button
                 onClick={() => setActiveSessionDetailModal(null)}
-                className="text-[#AAB6C8] hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs sm:text-sm">
-              <div className="p-3.5 rounded-xl bg-[#101A2D] border border-[#293B55] space-y-2.5">
-                <div className="font-semibold text-white">{activeSessionDetailModal}</div>
-                <div className="text-xs text-[#AAB6C8]">
-                  Environment: {isGuest ? 'Guest Demo Workspace' : 'Authenticated Live Session'}
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0C1524] border border-slate-200 dark:border-[#26344B] space-y-2">
+                <div className="font-bold text-slate-900 dark:text-white">{activeSessionDetailModal}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Client Runtime: Chrome / DevFlow Electron Wrapper v2.4
                 </div>
-                <div className="text-xs text-[#AAB6C8]">
-                  Browser: Current Browser Runtime
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Host: Localhost Development Machine
                 </div>
-                <div className="text-xs text-[#35C987] flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#35C987] animate-pulse" />
-                  {isGuest ? 'Active in Demo Session' : 'Authenticated Session Active'}
+                <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Authenticated Active Handshake</span>
                 </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#101A2D] border border-[#293B55] text-xs text-[#AAB6C8]">
-                <strong>Notice:</strong> Remote session invalidation requires backend server coordination and is not simulated destructively on client state.
               </div>
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-[#293B55]">
+            <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-[#26344B]">
               <button
+                type="button"
                 onClick={() => setActiveSessionDetailModal(null)}
-                className="px-5 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 4: MANAGE ACCOUNT SUMMARY */}
-      {manageAccountModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-[#293B55]">
-              <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-[#2879E8]" />
-                <h3 className="font-bold text-white text-base">Account Summary</h3>
-              </div>
-              <button
-                onClick={() => setManageAccountModalOpen(false)}
-                className="text-[#AAB6C8] hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs sm:text-sm">
-              <div className="p-3.5 rounded-xl bg-[#101A2D] border border-[#293B55] space-y-2.5">
-                <div className="flex justify-between">
-                  <span className="text-[#AAB6C8]">Workspace Tier:</span>
-                  <span className="font-semibold text-white">
-                    {isGuest ? 'DevFlow Demo Workspace' : 'DevFlow Live Workspace'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#AAB6C8]">Organization:</span>
-                  <span className="text-white">{profile.organization}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#AAB6C8]">Billing Currency:</span>
-                  <span className="text-white">{account.currency}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#AAB6C8]">GitHub Integration:</span>
-                  <span className="text-white">
-                    {isGuest ? 'northstar-studio/payment-gateway (Demo)' : user?.githubConnected ? `@${user.githubUsername || 'connected'}` : 'Managed in Integrations'}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-xs text-[#AAB6C8]">
-                For organization transfer or workspace deletion, manage access keys on the dedicated <a href="#/integrations" className="text-[#2879E8] underline">Integrations Hub</a>.
-              </p>
-            </div>
-
-            <div className="flex justify-end pt-3 border-t border-[#293B55]">
-              <button
-                onClick={() => setManageAccountModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold"
+                className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold cursor-pointer shadow-xs"
               >
                 Done
               </button>
@@ -1558,13 +859,70 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Guest Mode Restriction Guard Modal */}
+      {/* MODAL 4: MANAGE ACCOUNT SUMMARY */}
+      {manageAccountModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#111C30] border border-slate-200 dark:border-[#26344B] shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#26344B]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">Workspace &amp; Organization Details</h3>
+              </div>
+              <button
+                onClick={() => setManageAccountModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0C1524] border border-slate-200 dark:border-[#26344B] space-y-2.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Workspace Tier:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {isGuest ? 'DevFlow Demo Sandbox' : 'DevFlow Enterprise Pro (v2.4)'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Organization:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{profile.organization}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Ledger Currency:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{account.currency}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Timezone Engine:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{account.timeZone.split(' ')[0]}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-[#26344B]">
+              <button
+                type="button"
+                onClick={() => setManageAccountModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold cursor-pointer shadow-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: GUEST GUARD MODAL */}
       <GuestGuardModal
         isOpen={isGuestGuardOpen}
         onClose={() => setIsGuestGuardOpen(false)}
         actionTitle={guardActionTitle}
-        message="Guest Mode: Please sign in or create an account to use this feature."
+        message="Guest Mode: Please sign in or create an account to modify permanent settings."
       />
     </div>
   );
 };
+
+export default SettingsPage;

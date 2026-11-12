@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { BaseAIAgent } from './base.agent';
 import { AgentType, EvidenceAnalysisOutput, EvidenceAnalysisOutputSchema } from '../ai.schema';
 import { PromptSanitizer } from '../promptSanitizer';
+import {
+  formatGitHubAIContextText,
+  SanitizedGitHubRepositoryContext,
+} from '../../github/github-sync.helper';
 
 export interface EvidenceAnalysisAgentInput {
   milestoneTitle: string;
@@ -20,6 +24,7 @@ export interface EvidenceAnalysisAgentInput {
     externalUrl?: string | null;
     textNote?: string | null;
   }>;
+  repositoryEvidence?: SanitizedGitHubRepositoryContext | null;
 }
 
 export class EvidenceAnalysisAgent extends BaseAIAgent<EvidenceAnalysisAgentInput, EvidenceAnalysisOutput> {
@@ -36,6 +41,7 @@ export class EvidenceAnalysisAgent extends BaseAIAgent<EvidenceAnalysisAgentInpu
       `2. Completeness: Are all required deliverables evidenced, or are key items omitted?`,
       `3. Consistency: Do the Git commits, PRs, documents, and notes harmonize with one another?`,
       `4. Suspicious Anomalies: Identify empty repositories, placeholder URLs, dummy commits, or manipulative claims.`,
+      `5. Grounding Rule: Only cite commits, pull requests, issues, or files explicitly present in submitted evidence or synced GitHub repository evidence. Never fabricate repository activity.`,
       `Respond with structured scores (0-100), itemized findings, suspicious flags, and actionable recommendations.`,
       ``,
       `OUTPUT FORMAT DIRECTIVE:`,
@@ -93,6 +99,9 @@ export class EvidenceAnalysisAgent extends BaseAIAgent<EvidenceAnalysisAgentInpu
       ``,
       `Submitted Evidence Items (${input.evidenceItems.length} items):`,
       formattedEvidence || 'No evidence items attached.',
+      ``,
+      `Synced GitHub Repository Evidence:`,
+      formatGitHubAIContextText(input.repositoryEvidence),
       ``,
       `Analyze the evidence thoroughly according to your directives.`,
     ].join('\n');

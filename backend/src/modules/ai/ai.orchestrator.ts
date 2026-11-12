@@ -23,6 +23,7 @@ import {
 } from './agents/opportunityRefinement.agent';
 import { activityService } from '../../services/activity.service';
 import { notificationService } from '../../services/notification.service';
+import { buildSanitizedGitHubAIContext } from '../github/github-sync.helper';
 import { NotFoundError, BadRequestError } from '../../utils/errors';
 import logger from '../../utils/logger';
 
@@ -149,7 +150,13 @@ export class AIOrchestrationService {
       throw new NotFoundError(`Milestone with ID ${milestoneId} not found`);
     }
 
-    if (milestone.evidence.length === 0) {
+    const repositoryEvidence = buildSanitizedGitHubAIContext(milestone.project);
+    const hasRepoActivity = Boolean(
+      repositoryEvidence &&
+        (repositoryEvidence.commits.length > 0 || repositoryEvidence.pullRequests.length > 0)
+    );
+
+    if (milestone.evidence.length === 0 && !hasRepoActivity) {
       throw new BadRequestError('Cannot run AI verification pipeline on a milestone with no attached evidence.');
     }
 
@@ -161,6 +168,7 @@ export class AIOrchestrationService {
         milestoneDescription: milestone.description,
         milestoneRequirements: milestone.requirements,
         evidenceItems: milestone.evidence,
+        repositoryEvidence,
       });
 
       // 2. Milestone Verification Agent
@@ -171,6 +179,7 @@ export class AIOrchestrationService {
         requirements: milestone.requirements,
         evidenceAnalysisFindings: evidenceResult.data,
         evidenceItems: milestone.evidence,
+        repositoryEvidence,
       });
 
       // 3. Risk Detection Agent
@@ -185,6 +194,7 @@ export class AIOrchestrationService {
         recentActivitySummary: milestone.project.activityLogs,
         evidenceFindings: evidenceResult.data,
         verificationFindings: verificationResult.data,
+        repositoryEvidence,
       });
 
       // 4. Payment Coordination Agent
@@ -372,6 +382,7 @@ export class AIOrchestrationService {
     }
 
     const monitoringAgent = this.getAgent(AgentType.PROJECT_MONITORING);
+    const repositoryEvidence = buildSanitizedGitHubAIContext(project);
 
     const executeWork = async () => {
       const result = await this.executeWithRetry(monitoringAgent, {
@@ -391,6 +402,7 @@ export class AIOrchestrationService {
         })),
         membersCount: project.members.length,
         recentActivities: project.activityLogs,
+        repositoryEvidence,
       });
 
       // Save AIAnalysis record linked to project

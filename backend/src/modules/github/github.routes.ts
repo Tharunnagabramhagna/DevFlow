@@ -5,6 +5,11 @@ import { EvidenceType, Role } from '@prisma/client';
 import { authenticate, requireNonGuest, assertVerifiedUser, VerifiedAccountUser } from '../../middleware/auth';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import { authService } from '../auth/auth.service';
+import {
+  GITHUB_APP_INSTALL_STATE_COOKIE,
+  githubAppInstallService,
+} from './github-app-install.service';
+import { githubAppWebhookService } from './github-app-webhook.service';
 import { githubService } from './github.service';
 
 export const githubRouter = Router();
@@ -260,6 +265,151 @@ githubRouter.get('/pulls', authenticate, requireNonGuest, async (req: Request, r
     }));
 
     res.status(200).json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/github/app/install — Initiate GitHub App installation flow for an authenticated Developer/Admin
+githubRouter.post('/app/install', authenticate, requireNonGuest, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = assertVerifiedUser(req);
+    const returnPath = typeof req.body?.returnPath === 'string' ? req.body.returnPath : '/dashboard';
+    const { installUrl, rawState } = await githubAppInstallService.initiateInstallation(user, returnPath);
+
+    res.cookie(GITHUB_APP_INSTALL_STATE_COOKIE, rawState, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 10 * 60 * 1000,
+    });
+
+    res.status(200).json({ installUrl });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/github/app/setup — GitHub App Setup URL callback verifying state, App ID, allowlist, ownership & reconciling repos
+githubRouter.get('/app/setup', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const rawCookieState = req.cookies?.[GITHUB_APP_INSTALL_STATE_COOKIE] as string | undefined;
+    res.clearCookie(GITHUB_APP_INSTALL_STATE_COOKIE, { path: '/' });
+
+    const state = typeof req.query.state === 'string' ? req.query.state : undefined;
+    const installationId =
+      typeof req.query.installation_id === 'string' ? req.query.installation_id : undefined;
+    const setupAction =
+      typeof req.query.setup_action === 'string' ? req.query.setup_action : undefined;
+
+    const result = await githubAppInstallService.handleSetupCallback({
+      state,
+      rawCookieState,
+      installationId,
+      setupAction,
+    });
+
+    const accept = req.headers.accept || '';
+    if (accept.includes('application/json') && !accept.includes('text/html')) {
+      res.status(200).json({
+        connected: true,
+        installation: result.installation,
+        reconciledRepoCount: result.reconciledRepoCount,
+        returnPath: result.returnPath,
+      });
+      return;
+    }
+
+    res.redirect(
+      `${env.CLIENT_URL}/#${result.returnPath}?github_app=connected&installation_id=${result.installation.installationId}`
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/github/app/repositories — List repositories accessible to the user's active GitHub App installation
+githubRouter.get('/app/repositories', authenticate, requireNonGuest, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = assertVerifiedUser(req);
+    const page = typeof req.query.page === 'string' ? Number.parseInt(req.query.page, 10) || 1 : 1;
+    const perPage = typeof req.query.perPage === 'string' ? Number.parseInt(req.query.perPage, 10) || 50 : 50;
+    const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+
+    const result = await githubAppInstallService.listUserInstallationRepositories(user, {
+      page,
+      perPage,
+      q,
+    });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/github/app/projects/:projectId/connect — Bind a repository from the user's active GitHub App installation to a project
+githubRouter.post('/app/projects/:projectId/connect', authenticate, requireNonGuest, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = assertVerifiedUser(req);
+    const result = await githubAppInstallService.connectProjectWithInstallation(
+      req.params.projectId,
+      user,
+      (req.body || {}) as {
+        githubRepoId?: number | string;
+        repoFullName?: string;
+        owner?: string;
+        repo?: string;
+      }
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/github/app/projects/:projectId/sync — Sync commits, PRs, issues, and safe changed files via installation access token
+githubRouter.post('/app/projects/:projectId/sync', authenticate, requireNonGuest, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = assertVerifiedUser(req);
+    const force = req.body?.force === true || req.query.force === 'true';
+    const result = await githubAppInstallService.syncProjectWithInstallation(
+      req.params.projectId,
+      user,
+      force
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/github/app/webhooks — Dedicated HMAC-SHA256 verified GitHub App webhook receiver
+githubRouter.post('/app/webhooks', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+    const signatureHeader = req.header('x-hub-signature-256');
+    const eventType = req.header('x-github-event');
+    const deliveryId = req.header('x-github-delivery');
+    const result = await githubAppWebhookService.handleWebhook({
+      rawBody,
+      signatureHeader,
+      eventType,
+      deliveryId,
+      payload: (req.body || {}) as Record<string, unknown>,
+    });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/github/app/projects/:projectId/status — Inspect project GitHub App sync status and linked repository metadata
+githubRouter.get('/app/projects/:projectId/status', authenticate, requireNonGuest, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = assertVerifiedUser(req);
+    const result = await githubAppInstallService.getProjectAppSyncStatus(req.params.projectId, user);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }

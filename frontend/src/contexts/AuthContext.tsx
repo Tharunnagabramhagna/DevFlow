@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { AuthSession, AuthUser, EffectiveRole, UserRole } from '@/types';
 import { authService } from '@/services/auth';
+import { API_BASE_URL } from '@/config/api';
 import {
   clearDevOfflineVault,
   isOfflineAuthSimulationEnabled,
@@ -220,17 +221,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     let active = true;
-    fetch('/api/github/status', {
+    fetch(`${API_BASE_URL}/github/status`, {
       headers: { Authorization: `Bearer ${session.accessToken}` },
       signal: AbortSignal.timeout(5000),
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (active && data && typeof data.connected === 'boolean') {
+        if (active && data && (typeof data.connected === 'boolean' || typeof data.appInstalled === 'boolean')) {
+          const isConnected = Boolean(data.connected || data.appInstalled);
           updateGitHubConnectionState(
-            data.connected,
-            data.username ?? null,
-            data.connectedAt ?? null
+            isConnected,
+            data.username ?? data.appInstallation?.accountLogin ?? null,
+            data.connectedAt ?? data.appInstallation?.installedAt ?? null
           );
         }
       })

@@ -7,9 +7,17 @@ import {
   isOfflineAuthSimulationEnabled,
 } from './devOfflineAuth';
 
-const BASE_URL = '/api/auth';
+import { API_BASE_URL } from '@/config/api';
+
+const BASE_URL = `${API_BASE_URL}/auth`;
 const AUTH_MUTATION_TIMEOUT_MS = 15000;
 const oauthExchangeInFlight = new Map<string, Promise<AuthSession>>();
+
+const getBackendUnreachableMessage = () => {
+  return import.meta.env.DEV
+    ? 'Authentication server timed out or is unreachable. Ensure the backend server (port 3001) and database are running, and open DevFlow on http://localhost:3000.'
+    : 'Authentication server timed out or is unreachable. Please verify your backend API deployment status.';
+};
 
 function extractApiErrorMessage(errJson: any): string | null {
   const details = errJson?.error?.details;
@@ -178,9 +186,7 @@ export const authService = {
       if (isOfflineAuthSimulationEnabled()) {
         return devOfflineRegister(data);
       }
-      throw new Error(
-        'Authentication server timed out or is unreachable. Ensure the backend server (port 3001) and database are running, and open DevFlow on http://localhost:3000.'
-      );
+      throw new Error(getBackendUnreachableMessage());
     }
 
     throw new Error('Registration failed. Please try again.');
@@ -238,9 +244,7 @@ export const authService = {
       if (isOfflineAuthSimulationEnabled()) {
         return devOfflineLogin(credentials);
       }
-      throw new Error(
-        'Authentication server timed out or is unreachable. Ensure the backend server (port 3001) and database are running, and open DevFlow on http://localhost:3000.'
-      );
+      throw new Error(getBackendUnreachableMessage());
     }
 
     throw new Error('Login failed. Please check your credentials and try again.');
@@ -353,7 +357,9 @@ export const authService = {
 
       if (isNetworkOrTimeoutError(err)) {
         throw new Error(
-          `Could not reach the DevFlow authentication server to start ${providerLabel} sign-in. Ensure the backend server (port 3001) and database are running.`
+          import.meta.env.DEV
+            ? `Could not reach the DevFlow authentication server to start ${providerLabel} sign-in. Ensure the backend server (port 3001) and database are running.`
+            : `Could not reach the DevFlow authentication server to start ${providerLabel} sign-in. Please verify backend API deployment status.`
         );
       }
 

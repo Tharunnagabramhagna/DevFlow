@@ -8,9 +8,68 @@ dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const emptyToUndefined = (val: unknown) => (typeof val === 'string' && val.trim() === '' ? undefined : val);
 
+const PEM_PRIVATE_KEY_PATTERN =
+  /^-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----\n[\s\S]+\n-----END (?:[A-Z0-9 ]+ )?PRIVATE KEY-----$/;
+
+/**
+ * Normalizes a PEM private key string from environment configuration by unwrapping
+ * optional quotes and converting literal `\n` / `\r\n` sequences to real newlines.
+ */
+export const normalizePemPrivateKey = (val: unknown): string | undefined => {
+  const cleaned = emptyToUndefined(val);
+  if (typeof cleaned !== 'string') {
+    return undefined;
+  }
+
+  let normalized = cleaned.trim();
+  if (
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
+  ) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+
+  normalized = normalized.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\r\n/g, '\n').trim();
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+const isValidBase64PemPrivateKey = (val: string): boolean => {
+  const compact = val.replace(/\s+/g, '');
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(compact) || compact.length % 4 !== 0) {
+    return false;
+  }
+  const decoded = normalizePemPrivateKey(Buffer.from(compact, 'base64').toString('utf8'));
+  return Boolean(decoded && PEM_PRIVATE_KEY_PATTERN.test(decoded));
+};
+
+const isHttpOrHttpsUrl = (val: string): boolean => {
+  try {
+    const parsed = new URL(val);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+export const parseTrustProxySetting = (val?: string): boolean | number | string => {
+  if (!val || val === 'false' || val === '0') {
+    return false;
+  }
+  if (/^[1-5]$/.test(val)) {
+    return Number.parseInt(val, 10);
+  }
+  return val;
+};
+
 export const CombinedEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3001),
+  TRUST_PROXY: z.preprocess(
+    emptyToUndefined,
+    z
+      .enum(['false', '0', '1', '2', '3', '4', '5', 'loopback', 'linklocal', 'uniquelocal'])
+      .optional()
+  ),
   DATABASE_URL: z.string().url(),
   JWT_SECRET: z.preprocess(
     (val) => val || process.env.JWT_ACCESS_SECRET,
@@ -34,6 +93,63 @@ export const CombinedEnvSchema = z.object({
   GITHUB_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
   GITHUB_CALLBACK_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
   GITHUB_WEBHOOK_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
+
+  // GitHub App Configuration (DevFlowWebsite)
+  GITHUB_APP_ID: z.preprocess(
+    emptyToUndefined,
+    z.string().regex(/^[1-9]\d*$/, 'GITHUB_APP_ID must be a positive numeric GitHub App ID').optional()
+  ),
+  GITHUB_APP_SLUG: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .regex(/^[a-zA-Z0-9-]+$/, 'GITHUB_APP_SLUG must contain only letters, numbers, and hyphens')
+      .optional()
+  ),
+  GITHUB_APP_PRIVATE_KEY: z.preprocess(
+    normalizePemPrivateKey,
+    z
+      .string()
+      .regex(
+        PEM_PRIVATE_KEY_PATTERN,
+        'GITHUB_APP_PRIVATE_KEY must be a valid PEM-encoded private key'
+      )
+      .optional()
+  ),
+  GITHUB_APP_PRIVATE_KEY_BASE64: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .refine(
+        isValidBase64PemPrivateKey,
+        'GITHUB_APP_PRIVATE_KEY_BASE64 must base64-decode to a valid PEM-encoded private key'
+      )
+      .optional()
+  ),
+  GITHUB_APP_ALLOWED_ACCOUNT_ID: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .regex(/^[1-9]\d*$/, 'GITHUB_APP_ALLOWED_ACCOUNT_ID must be a positive numeric GitHub account ID')
+      .optional()
+  ),
+  GITHUB_APP_WEBHOOK_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  GITHUB_APP_WEBHOOK_URL: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .url()
+      .refine(isHttpOrHttpsUrl, 'GITHUB_APP_WEBHOOK_URL must use http or https protocol')
+      .optional()
+  ),
+  GITHUB_APP_SETUP_URL: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .url()
+      .refine(isHttpOrHttpsUrl, 'GITHUB_APP_SETUP_URL must use http or https protocol')
+      .optional()
+  ),
 
   // Email / SMTP Configuration
   EMAIL_HOST: z.preprocess(emptyToUndefined, z.string().optional()),
@@ -109,6 +225,23 @@ export const CombinedEnvSchema = z.object({
 });
 
 export type ValidatedEnv = z.infer<typeof CombinedEnvSchema>;
+
+/**
+ * Resolves the normalized GitHub App PEM private key from either
+ * GITHUB_APP_PRIVATE_KEY or GITHUB_APP_PRIVATE_KEY_BASE64.
+ */
+export const resolveGitHubAppPrivateKey = (
+  config: Pick<ValidatedEnv, 'GITHUB_APP_PRIVATE_KEY' | 'GITHUB_APP_PRIVATE_KEY_BASE64'> = env
+): string | undefined => {
+  if (config.GITHUB_APP_PRIVATE_KEY) {
+    return normalizePemPrivateKey(config.GITHUB_APP_PRIVATE_KEY);
+  }
+  if (config.GITHUB_APP_PRIVATE_KEY_BASE64) {
+    const compact = config.GITHUB_APP_PRIVATE_KEY_BASE64.replace(/\s+/g, '');
+    return normalizePemPrivateKey(Buffer.from(compact, 'base64').toString('utf8'));
+  }
+  return undefined;
+};
 
 export const validateEnv = (config: Record<string, unknown> = process.env): ValidatedEnv => {
   const result = CombinedEnvSchema.safeParse(config);

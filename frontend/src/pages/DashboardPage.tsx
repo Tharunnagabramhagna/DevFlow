@@ -1639,6 +1639,7 @@ export const DashboardPage: React.FC = () => {
       <GitHubConnectModal
         open={manualConnectModalOpen || shouldShowGitHubOnboarding}
         oauthConfigured={telemetry?.integrations?.github?.oauthConfigured ?? true}
+        appInstalled={Boolean(telemetry?.integrations?.github?.appInstalled)}
         onSkip={() => {
           setManualConnectModalOpen(false);
           dismissGitHubOnboardingForSession();

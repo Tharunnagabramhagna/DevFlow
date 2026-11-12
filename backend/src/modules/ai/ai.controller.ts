@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { aiOrchestrator } from './ai.orchestrator';
 import { AgentType, ExecuteAgentOptionsSchema } from './ai.schema';
 import { prisma } from '../../config/database';
+import { buildSanitizedGitHubAIContext } from '../github/github-sync.helper';
 import { NotFoundError, BadRequestError } from '../../utils/errors';
 
 export class AIController {
@@ -28,11 +29,19 @@ export class AIController {
       const milestoneId = req.params.milestoneId || req.params.id;
       const milestone = await prisma.milestone.findUnique({
         where: { id: milestoneId },
-        include: { evidence: { where: { isDeleted: false } } },
+        include: { evidence: { where: { isDeleted: false } }, project: true },
       });
 
       if (!milestone) throw new NotFoundError(`Milestone ${milestoneId} not found`);
-      if (milestone.evidence.length === 0) throw new BadRequestError('Milestone has no attached evidence');
+
+      const repositoryEvidence = buildSanitizedGitHubAIContext(milestone.project);
+      const hasRepoActivity = Boolean(
+        repositoryEvidence &&
+          (repositoryEvidence.commits.length > 0 || repositoryEvidence.pullRequests.length > 0)
+      );
+      if (milestone.evidence.length === 0 && !hasRepoActivity) {
+        throw new BadRequestError('Milestone has no attached evidence');
+      }
 
       const agent = aiOrchestrator.getAgent(AgentType.EVIDENCE_ANALYSIS);
       const result = await aiOrchestrator.executeWithRetry(agent, {
@@ -40,6 +49,7 @@ export class AIController {
         milestoneDescription: milestone.description,
         milestoneRequirements: milestone.requirements,
         evidenceItems: milestone.evidence,
+        repositoryEvidence,
       });
 
       res.status(200).json(result);
@@ -56,17 +66,19 @@ export class AIController {
       const milestoneId = req.params.milestoneId || req.params.id;
       const milestone = await prisma.milestone.findUnique({
         where: { id: milestoneId },
-        include: { evidence: { where: { isDeleted: false } } },
+        include: { evidence: { where: { isDeleted: false } }, project: true },
       });
 
       if (!milestone) throw new NotFoundError(`Milestone ${milestoneId} not found`);
 
+      const repositoryEvidence = buildSanitizedGitHubAIContext(milestone.project);
       const agent = aiOrchestrator.getAgent(AgentType.MILESTONE_VERIFICATION);
       const result = await aiOrchestrator.executeWithRetry(agent, {
         milestoneTitle: milestone.title,
         milestoneDescription: milestone.description,
         requirements: milestone.requirements,
         evidenceItems: milestone.evidence,
+        repositoryEvidence,
       });
 
       res.status(200).json(result);
@@ -99,6 +111,7 @@ export class AIController {
         projectBudget: milestone.project.budget ? Number(milestone.project.budget) : null,
         milestoneStatus: milestone.status,
         recentActivitySummary: milestone.project.activityLogs,
+        repositoryEvidence: buildSanitizedGitHubAIContext(milestone.project),
       });
 
       res.status(200).json(result);

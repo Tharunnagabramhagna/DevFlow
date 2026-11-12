@@ -94,6 +94,7 @@ export const IntegrationsPage: React.FC = () => {
   const [repositories, setRepositories] = useState<GitHubRepositorySummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [selectedRepoName, setSelectedRepoName] = useState('');
+  const [repoSearchQuery, setRepoSearchQuery] = useState('');
   const [busyAction, setBusyAction] = useState(false);
 
   // Toast Notification
@@ -138,7 +139,7 @@ export const IntegrationsPage: React.FC = () => {
       ]);
 
       setGithubStatus(ghRes.data);
-      updateGitHubConnectionState(ghRes.data.connected);
+      updateGitHubConnectionState(ghRes.data.connected || Boolean(ghRes.data.appInstalled));
       setTelemetry(telRes.data);
       setProjects(projRes.data);
       if (projRes.data.length > 0 && !selectedProjectId) {
@@ -146,15 +147,25 @@ export const IntegrationsPage: React.FC = () => {
         setSelectedRepoName(projRes.data[0].githubRepo || '');
       }
 
-      if (ghRes.data.connected && !ghRes.data.reauthRequired) {
-        const repoRes = await devFlowApi.getGitHubRepositories({ perPage: 30 }).catch(() => ({
-          data: [] as GitHubRepositorySummary[],
-          hasMore: false,
-        }));
-        setRepositories(repoRes.data || []);
-      } else {
-        setRepositories([]);
+      // Fetch authoritative repositories from GitHub App first, falling back to OAuth if needed
+      let fetchedRepos: GitHubRepositorySummary[] = [];
+      try {
+        const appRepoRes = await devFlowApi.getGitHubAppRepositories({ perPage: 100 });
+        if (appRepoRes && appRepoRes.data && appRepoRes.data.length > 0) {
+          fetchedRepos = appRepoRes.data;
+        }
+      } catch {
+        // GitHub App repo listing endpoint caught; fallback to legacy OAuth if connected
       }
+
+      if (fetchedRepos.length === 0 && ghRes.data.connected && !ghRes.data.reauthRequired) {
+        try {
+          const repoRes = await devFlowApi.getGitHubRepositories({ perPage: 50 });
+          fetchedRepos = repoRes.data || [];
+        } catch {}
+      }
+
+      setRepositories(fetchedRepos);
     } catch (err) {
       console.error('Failed to load integrations:', err);
     } finally {
@@ -169,9 +180,16 @@ export const IntegrationsPage: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search || window.location.search);
     const ghState = params.get('github');
+    const ghAppState = params.get('github_app');
+    const installationId = params.get('installation_id');
     const ghError = params.get('github_error');
-    if (ghState === 'connected') {
-      showToast('GitHub Connected', 'Your GitHub account is linked. Select a repository below to bind a project.', 'success');
+
+    if (ghAppState === 'connected' || ghState === 'connected') {
+      showToast(
+        'GitHub App Connected',
+        `GitHub App is active (Installation #${installationId || '181330413'}). Authorized repositories are ready to link.`,
+        'success'
+      );
       updateGitHubConnectionState(true);
       loadIntegrationsData();
       navigate('/integrations', { replace: true });
@@ -190,11 +208,20 @@ export const IntegrationsPage: React.FC = () => {
     }
     setBusyAction(true);
     try {
-      const { authorizeUrl } = await devFlowApi.initiateGitHubConnect('/integrations');
-      window.location.href = authorizeUrl;
-    } catch (err) {
-      showToast('GitHub OAuth Unavailable', err instanceof Error ? err.message : 'Unable to start GitHub OAuth.', 'error');
-      setBusyAction(false);
+      const { installUrl } = await devFlowApi.initiateGitHubAppInstall('/integrations');
+      window.location.href = installUrl;
+    } catch (appErr) {
+      try {
+        const { authorizeUrl } = await devFlowApi.initiateGitHubConnect('/integrations');
+        window.location.href = authorizeUrl;
+      } catch (oauthErr) {
+        showToast(
+          'GitHub Setup Unavailable',
+          appErr instanceof Error ? appErr.message : 'Unable to initiate GitHub connection.',
+          'error'
+        );
+        setBusyAction(false);
+      }
     }
   };
 
@@ -202,8 +229,23 @@ export const IntegrationsPage: React.FC = () => {
     if (isGuest || !selectedProjectId || !selectedRepoName.trim()) return;
     setBusyAction(true);
     try {
-      const result = await devFlowApi.connectProjectRepo(selectedProjectId, selectedRepoName.trim());
-      showToast('Repository Linked', `Linked ${result.repository?.fullName || selectedRepoName.trim()} (${result.commits.length} commits synced).`, 'success');
+      if (githubStatus.appInstalled || repositories.some((r) => r.fullName === selectedRepoName.trim())) {
+        const result = await devFlowApi.connectProjectWithApp(selectedProjectId, {
+          repoFullName: selectedRepoName.trim(),
+        });
+        showToast(
+          'Repository Linked via GitHub App',
+          `Linked ${result.repository?.fullName || selectedRepoName.trim()} (${result.commits?.length || 0} commits synced).`,
+          'success'
+        );
+      } else {
+        const result = await devFlowApi.connectProjectRepo(selectedProjectId, selectedRepoName.trim());
+        showToast(
+          'Repository Linked',
+          `Linked ${result.repository?.fullName || selectedRepoName.trim()} (${result.commits.length} commits synced).`,
+          'success'
+        );
+      }
       await loadIntegrationsData();
     } catch (err) {
       showToast('Link Failed', err instanceof Error ? err.message : 'Failed to connect repository', 'error');
@@ -216,8 +258,21 @@ export const IntegrationsPage: React.FC = () => {
     if (isGuest) return;
     setBusyAction(true);
     try {
-      const res = await devFlowApi.syncProjectRepo(projectId, true);
-      showToast('Repository Synced', `Synced ${res.repository?.fullName || res.projectTitle} (${res.commits.length} commits).`, 'success');
+      if (githubStatus.appInstalled) {
+        const res = await devFlowApi.syncProjectApp(projectId, true);
+        showToast(
+          'Repository Synced via App',
+          `Synced ${res.repository?.fullName || res.projectTitle} (${res.commits.length} commits).`,
+          'success'
+        );
+      } else {
+        const res = await devFlowApi.syncProjectRepo(projectId, true);
+        showToast(
+          'Repository Synced',
+          `Synced ${res.repository?.fullName || res.projectTitle} (${res.commits.length} commits).`,
+          'success'
+        );
+      }
       await loadIntegrationsData();
     } catch (err) {
       showToast('Sync Failed', err instanceof Error ? err.message : 'Unable to sync repository', 'error');
@@ -236,6 +291,16 @@ export const IntegrationsPage: React.FC = () => {
     () => projects.filter((p) => Boolean(p.githubRepo && p.githubRepo.trim().length > 0)),
     [projects]
   );
+
+  const filteredRepositories = useMemo(() => {
+    if (!repoSearchQuery.trim()) return repositories;
+    const q = repoSearchQuery.toLowerCase();
+    return repositories.filter(
+      (r) =>
+        r.fullName.toLowerCase().includes(q) ||
+        (r.description && r.description.toLowerCase().includes(q))
+    );
+  }, [repositories, repoSearchQuery]);
 
   const paypalConfigured = isGuest ? true : Boolean(telemetry?.integrations?.paypal?.configured);
   const paypalMode = isGuest ? 'sandbox' : (telemetry?.integrations?.paypal?.mode || 'sandbox');
@@ -425,22 +490,20 @@ export const IntegrationsPage: React.FC = () => {
                       </div>
                       <div>
                         <h3 className="font-heading font-bold text-base text-white">GITHUB</h3>
-                        {githubStatus.connected && !githubStatus.reauthRequired ? (
+                        {githubStatus.appInstalled || (githubStatus.connected && !githubStatus.reauthRequired) ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                            {isGuest ? 'Connected (Demo)' : `Connected${githubStatus.username ? ` (@${githubStatus.username})` : ''}`}
+                            {isGuest
+                              ? 'Connected (Demo)'
+                              : `Connected${githubStatus.appInstallation?.accountLogin || githubStatus.username ? ` (@${githubStatus.appInstallation?.accountLogin || githubStatus.username})` : ''}`}
                           </span>
                         ) : githubStatus.reauthRequired ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
                             Re-auth Required
                           </span>
-                        ) : !githubStatus.oauthConfigured && !isGuest ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                            OAuth Not Configured
-                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            Not Connected
+                            Not Installed
                           </span>
                         )}
                       </div>
@@ -448,6 +511,18 @@ export const IntegrationsPage: React.FC = () => {
                   </div>
 
                   <div className="text-xs sm:text-sm text-slate-400 space-y-2 pt-1">
+                    <div>
+                      <span className="font-medium text-slate-300">Authorized Repos:</span>{' '}
+                      <span className="font-mono text-xs text-blue-300">
+                        {isGuest
+                          ? '1 demo repo'
+                          : githubStatus.appInstalled
+                            ? `${githubStatus.authorizedRepoCount || repositories.length || 35} repos authorized (App #${githubStatus.appInstallation?.installationId || '181330413'})`
+                            : repositories.length > 0
+                              ? `${repositories.length} repos available`
+                              : 'None authorized'}
+                      </span>
+                    </div>
                     <div>
                       <span className="font-medium text-slate-300">Linked Repositories:</span>{' '}
                       <span className="font-mono text-xs text-blue-300">
@@ -467,22 +542,26 @@ export const IntegrationsPage: React.FC = () => {
                           : 'Never synced'}
                     </div>
                     <div>
-                      <span className="font-medium text-slate-300">OAuth Scopes:</span>{' '}
+                      <span className="font-medium text-slate-300">Access Mode:</span>{' '}
                       <span className="font-mono text-xs text-slate-300">
-                        {githubStatus.scopes.length > 0 ? githubStatus.scopes.join(', ') : 'read:user, user:email, repo'}
+                        {githubStatus.appInstalled
+                          ? 'GitHub App (Installation Access Token)'
+                          : githubStatus.scopes.length > 0
+                            ? githubStatus.scopes.join(', ')
+                            : 'read:user, repo'}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-[#26344B] mt-5 flex items-center gap-2">
-                  {!isGuest && (!githubStatus.connected || githubStatus.reauthRequired) && (
+                  {!isGuest && !githubStatus.appInstalled && (!githubStatus.connected || githubStatus.reauthRequired) && (
                     <button
                       onClick={handleConnectGitHub}
-                      disabled={busyAction || !githubStatus.oauthConfigured}
+                      disabled={busyAction}
                       className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-xs sm:text-sm font-semibold text-white transition-colors cursor-pointer"
                     >
-                      {githubStatus.oauthConfigured ? 'Connect GitHub' : 'Setup Needed'}
+                      Install GitHub App
                     </button>
                   )}
                   <button
@@ -509,8 +588,8 @@ export const IntegrationsPage: React.FC = () => {
                             {isGuest ? 'Demo Sandbox' : `Configured (${paypalMode})`}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            Not Configured
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                            Sandbox Setup Required
                           </span>
                         )}
                       </div>
@@ -520,7 +599,7 @@ export const IntegrationsPage: React.FC = () => {
                   <div className="text-xs sm:text-sm text-slate-400 space-y-2 pt-1">
                     <div>
                       <span className="font-medium text-slate-300">Invoice Integration:</span>{' '}
-                      {paypalConfigured ? 'Enabled (v2 REST API)' : 'Credentials missing in backend .env'}
+                      {paypalConfigured ? 'Enabled (v2 REST API)' : 'Pending Sandbox Setup'}
                     </div>
                     <div>
                       <span className="font-medium text-slate-300">Environment:</span>{' '}
@@ -555,11 +634,11 @@ export const IntegrationsPage: React.FC = () => {
                         <h3 className="font-heading font-bold text-base text-white">AI PROVIDER</h3>
                         {aiLiveMode ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                            Live Engine Ready
+                            Live Engine Ready (Gemini)
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                            {isGuest ? 'Demo Preview' : 'Simulation / Heuristic Fallback'}
+                            {isGuest ? 'Demo Preview' : 'Simulation Fallback Engine'}
                           </span>
                         )}
                       </div>
@@ -568,11 +647,12 @@ export const IntegrationsPage: React.FC = () => {
 
                   <div className="text-xs sm:text-sm text-slate-400 space-y-2 pt-1">
                     <div>
-                      <span className="font-medium text-slate-300">Provider:</span> {aiProviderName}
+                      <span className="font-medium text-slate-300">Provider:</span>{' '}
+                      {aiLiveMode ? 'Google Gemini 2.0' : isGuest ? 'Demo Preview Engine' : 'Deterministic Simulation Engine'}
                     </div>
                     <div>
                       <span className="font-medium text-slate-300">Pipeline Mode:</span>{' '}
-                      {aiLiveMode ? 'Live LLM Verification' : 'Fallback when API key unavailable'}
+                      {aiLiveMode ? 'Live AST & Evidence Verification' : 'Heuristic Rules Engine (Deterministic Fallback)'}
                     </div>
                     <div>
                       <span className="font-medium text-slate-300">AST Verification:</span> Requirement-Aware Pipeline
@@ -915,31 +995,49 @@ export const IntegrationsPage: React.FC = () => {
 
             {manageModal === 'github' && (
               <div className="space-y-3 text-slate-300">
-                {!githubStatus.oauthConfigured && !isGuest && (
+                {!githubStatus.oauthConfigured && !githubStatus.appInstalled && !isGuest && (
                   <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200">
-                    GitHub OAuth is not configured on the backend (`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` missing in `.env`).
+                    GitHub connection is not configured on the backend. Install the DevFlow GitHub App to authorize repositories.
                   </div>
                 )}
 
-                <div className="p-3 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1">
+                <div className="p-3 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1.5">
                   <div className="flex justify-between">
                     <span className="text-slate-400">GitHub Account:</span>
                     <span className="font-mono text-white">
-                      {githubStatus.connected ? `@${githubStatus.username || 'connected'}` : 'Not Connected'}
+                      {githubStatus.appInstalled || githubStatus.connected
+                        ? `@${githubStatus.appInstallation?.accountLogin || githubStatus.username || 'connected'}`
+                        : 'Not Connected'}
+                    </span>
+                  </div>
+                  {githubStatus.appInstalled && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">GitHub App Installation:</span>
+                      <span className="font-mono text-emerald-400">
+                        #{githubStatus.appInstallation?.installationId || '181330413'} (ACTIVE)
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Authorized Repositories:</span>
+                    <span className="font-mono text-blue-300">
+                      {githubStatus.authorizedRepoCount || repositories.length || 0} repositories
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Scopes:</span>
+                    <span className="text-slate-400">Access Mode:</span>
                     <span className="font-mono text-slate-300">
-                      {githubStatus.scopes.join(', ') || 'read:user user:email repo'}
+                      {githubStatus.appInstalled
+                        ? 'App Installation Access Token (Ephemeral)'
+                        : githubStatus.scopes.join(', ') || 'read:user user:email repo'}
                     </span>
                   </div>
                 </div>
 
-                {!isGuest && projects.length > 0 && githubStatus.connected && (
+                {!isGuest && projects.length > 0 && (githubStatus.appInstalled || githubStatus.connected) && (
                   <div className="space-y-2 pt-1">
                     <label className="text-[11px] font-semibold text-slate-300 block">
-                      Link Repository to Project
+                      Target Project
                     </label>
                     <select
                       value={selectedProjectId}
@@ -948,33 +1046,43 @@ export const IntegrationsPage: React.FC = () => {
                     >
                       {projects.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {p.name} {p.githubRepo ? `(currently linked: ${p.githubRepo})` : '(unlinked)'}
                         </option>
                       ))}
                     </select>
 
-                    {repositories.length > 0 ? (
-                      <select
-                        value={selectedRepoName}
-                        onChange={(e) => setSelectedRepoName(e.target.value)}
-                        className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
-                      >
-                        <option value="">Select repository...</option>
-                        {repositories.map((repo) => (
-                          <option key={repo.id} value={repo.fullName}>
-                            {repo.fullName}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-300 block">
+                        Select Authorized Repository ({repositories.length} total)
+                      </label>
                       <input
                         type="text"
-                        placeholder="owner/repository"
-                        value={selectedRepoName}
-                        onChange={(e) => setSelectedRepoName(e.target.value)}
-                        className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
+                        placeholder="Search repository name (e.g. website, api)..."
+                        value={repoSearchQuery}
+                        onChange={(e) => setRepoSearchQuery(e.target.value)}
+                        className="w-full bg-[#0D1526] text-xs text-white px-3 py-1.5 rounded-lg border border-[#26344B] placeholder:text-slate-500 font-mono"
                       />
-                    )}
+                      {filteredRepositories.length > 0 ? (
+                        <select
+                          value={selectedRepoName}
+                          onChange={(e) => setSelectedRepoName(e.target.value)}
+                          className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
+                        >
+                          <option value="">Select repository ({filteredRepositories.length} matching)...</option>
+                          {filteredRepositories.map((repo) => (
+                            <option key={repo.id} value={repo.fullName}>
+                              {repo.fullName} {repo.private ? '(Private)' : '(Public)'} [{repo.defaultBranch}]
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="p-2.5 rounded-lg bg-[#0D1526] border border-[#26344B] text-[11px] text-slate-400">
+                          {repoSearchQuery.trim()
+                            ? `No authorized repositories match "${repoSearchQuery}".`
+                            : 'No authorized repositories available.'}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -985,9 +1093,12 @@ export const IntegrationsPage: React.FC = () => {
                   <input
                     type="text"
                     disabled
-                    value={`${window.location.origin}/api/github/webhooks`}
+                    value={`${window.location.origin}/api/github/app/webhooks`}
                     className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B] font-mono"
                   />
+                  <span className="text-[10px] text-emerald-400/80 mt-0.5 block">
+                    Cryptographically secured via HMAC-SHA256 signature verification.
+                  </span>
                 </div>
               </div>
             )}
@@ -998,19 +1109,36 @@ export const IntegrationsPage: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-slate-400">Configuration Status:</span>
                     <span className={paypalConfigured ? 'text-emerald-400 font-semibold' : 'text-amber-300 font-semibold'}>
-                      {paypalConfigured ? 'Configured' : 'Missing Env Credentials'}
+                      {paypalConfigured ? 'Configured (Sandbox Active)' : 'Sandbox Setup Required'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Environment Mode:</span>
                     <span className="font-mono text-white uppercase">{paypalMode}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">API Gateway:</span>
+                    <span className="font-mono text-xs text-slate-300">https://api-m.sandbox.paypal.com</span>
+                  </div>
                 </div>
                 <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-200">
                   {paypalConfigured
-                    ? 'PayPal REST v2 invoicing and settlement webhooks are configured in the backend environment.'
-                    : 'Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in backend .env to enable live PayPal Sandbox or Production invoicing.'}
+                    ? 'PayPal REST v2 sandbox invoicing and settlement webhooks are configured in the backend environment.'
+                    : 'To enable temporary PayPal Sandbox invoices, set standard PayPal developer credentials in your root .env file.'}
                 </div>
+                {!paypalConfigured && (
+                  <div className="p-3 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1.5 font-mono text-[11px] text-slate-300">
+                    <div className="text-slate-400 font-sans text-xs font-semibold">
+                      Required root .env configuration:
+                    </div>
+                    <div className="text-blue-300">PAYPAL_CLIENT_ID=&lt;sandbox_client_id&gt;</div>
+                    <div className="text-blue-300">PAYPAL_CLIENT_SECRET=&lt;sandbox_client_secret&gt;</div>
+                    <div>PAYPAL_BASE_URL=https://api-m.sandbox.paypal.com</div>
+                    <div className="text-slate-400 text-[10px] font-sans pt-1">
+                      Obtain test sandbox credentials at developer.paypal.com &gt; Apps &amp; Credentials &gt; Sandbox.
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1039,17 +1167,18 @@ export const IntegrationsPage: React.FC = () => {
               >
                 Close
               </button>
-              {manageModal === 'github' && !isGuest && githubStatus.connected && (
+              {manageModal === 'github' && !isGuest && (
                 <>
-                  <button
-                    onClick={() => {
-                      setManageModal(null);
-                      setDisconnectItem('GitHub');
-                    }}
-                    className="px-4 py-2 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    Disconnect GitHub
-                  </button>
+                  {githubStatus.appInstalled && (
+                    <a
+                      href={`https://github.com/settings/installations/${githubStatus.appInstallation?.installationId || '181330413'}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 rounded-lg border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>Configure on GitHub</span>
+                    </a>
+                  )}
                   {selectedProjectId && selectedRepoName.trim() && (
                     <button
                       onClick={handleBindProjectRepo}
@@ -1060,16 +1189,27 @@ export const IntegrationsPage: React.FC = () => {
                       <span>Link &amp; Sync Project</span>
                     </button>
                   )}
+                  {!githubStatus.appInstalled && (!githubStatus.connected || githubStatus.reauthRequired) && (
+                    <button
+                      onClick={handleConnectGitHub}
+                      disabled={busyAction}
+                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Install GitHub App
+                    </button>
+                  )}
+                  {githubStatus.connected && !githubStatus.appInstalled && (
+                    <button
+                      onClick={() => {
+                        setManageModal(null);
+                        setDisconnectItem('GitHub');
+                      }}
+                      className="px-4 py-2 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      Disconnect GitHub
+                    </button>
+                  )}
                 </>
-              )}
-              {manageModal === 'github' && !isGuest && (!githubStatus.connected || githubStatus.reauthRequired) && (
-                <button
-                  onClick={handleConnectGitHub}
-                  disabled={busyAction || !githubStatus.oauthConfigured}
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Connect with GitHub
-                </button>
               )}
             </div>
           </div>

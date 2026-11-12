@@ -164,7 +164,7 @@ telemetryRouter.get('/', authenticate, requireNonGuest, async (req: Request, res
     }
 
     const effectiveProjectWhere = projectScope || { isArchived: false };
-    const [financials, projects, aiAnalyses, activityLogs, userRow] = await Promise.all([
+    const [financials, projects, aiAnalyses, activityLogs, userRow, appInstallationRow] = await Promise.all([
       computeFinancialSummary(effectiveProjectWhere, range),
       prisma.project.findMany({
         where: effectiveProjectWhere,
@@ -225,6 +225,17 @@ telemetryRouter.get('/', authenticate, requireNonGuest, async (req: Request, res
           githubConnectedAt: true,
         },
       }),
+      typeof (prisma as any).gitHubAppInstallation?.findFirst === 'function'
+        ? (prisma as any).gitHubAppInstallation
+            .findFirst({
+              where: { userId: user.id },
+              orderBy: { updatedAt: 'desc' },
+              include: {
+                _count: { select: { authorizedRepos: true } },
+              },
+            })
+            .catch(() => null)
+        : Promise.resolve(null),
     ]);
 
     let totalMilestones = 0;
@@ -366,10 +377,20 @@ telemetryRouter.get('/', authenticate, requireNonGuest, async (req: Request, res
       integrations: {
         github: {
           oauthConfigured: Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
-          webhookConfigured: Boolean(env.GITHUB_WEBHOOK_SECRET),
-          connected: Boolean(userRow?.githubId && userRow?.githubAccessToken),
-          username: userRow?.githubUsername ?? null,
-          connectedAt: userRow?.githubConnectedAt?.toISOString() ?? null,
+          webhookConfigured: Boolean(env.GITHUB_WEBHOOK_SECRET || env.GITHUB_APP_WEBHOOK_SECRET),
+          connected: Boolean(
+            (userRow?.githubId && userRow?.githubAccessToken) ||
+            (appInstallationRow && appInstallationRow.status === 'ACTIVE')
+          ),
+          username: userRow?.githubUsername ?? appInstallationRow?.accountLogin ?? null,
+          connectedAt:
+            userRow?.githubConnectedAt?.toISOString() ??
+            appInstallationRow?.createdAt?.toISOString() ??
+            null,
+          appInstalled: Boolean(appInstallationRow && appInstallationRow.status === 'ACTIVE'),
+          appInstallationId: appInstallationRow ? appInstallationRow.installationId : null,
+          appAccountLogin: appInstallationRow ? appInstallationRow.accountLogin : null,
+          authorizedRepoCount: appInstallationRow ? (appInstallationRow._count?.authorizedRepos ?? 0) : 0,
         },
         paypal: {
           configured: Boolean(env.PAYPAL_CLIENT_ID && env.PAYPAL_CLIENT_SECRET),

@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { env } from './config/env';
+import { env, parseTrustProxySetting } from './config/env';
 import { prisma } from './config/database';
 import { generalRateLimiter, authRateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
@@ -24,6 +24,11 @@ import logger from './utils/logger';
 
 export const createApp = (): Express => {
   const app = express();
+
+  const trustProxy = parseTrustProxySetting(env.TRUST_PROXY);
+  if (trustProxy !== false) {
+    app.set('trust proxy', trustProxy);
+  }
 
   // Shift-Left Security Middleware
   app.use(helmet());

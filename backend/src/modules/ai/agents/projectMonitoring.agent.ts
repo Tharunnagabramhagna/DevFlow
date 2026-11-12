@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { BaseAIAgent } from './base.agent';
 import { AgentType, ProjectMonitoringOutput, ProjectMonitoringOutputSchema } from '../ai.schema';
 import { PromptSanitizer } from '../promptSanitizer';
+import {
+  formatGitHubAIContextText,
+  SanitizedGitHubRepositoryContext,
+} from '../../github/github-sync.helper';
 
 export interface ProjectMonitoringAgentInput {
   projectId: string;
@@ -23,6 +27,7 @@ export interface ProjectMonitoringAgentInput {
     action: string;
     createdAt: Date | string;
   }>;
+  repositoryEvidence?: SanitizedGitHubRepositoryContext | null;
 }
 
 export class ProjectMonitoringAgent extends BaseAIAgent<
@@ -41,7 +46,7 @@ export class ProjectMonitoringAgent extends BaseAIAgent<
       `1. Overall completion percentage and project health category (EXCELLENT, GOOD, AT_RISK, CRITICAL).`,
       `2. Milestones breakdown: pending, in-progress, submitted, approved, paid, and overdue.`,
       `3. Bottlenecks: Highlight tasks stalled in review, unassigned milestones, or overdue delivery.`,
-      `4. Produce an executive summary for stakeholders with concrete recommended actions.`,
+      `4. Produce an executive summary for stakeholders with concrete recommended actions, incorporating synced GitHub repository activity when provided without fabricating unrecorded commits or PRs.`,
       ``,
       `OUTPUT FORMAT DIRECTIVE:`,
       `You MUST respond strictly with a valid JSON object matching this structure:`,
@@ -112,6 +117,9 @@ export class ProjectMonitoringAgent extends BaseAIAgent<
     return [
       `Analyze the overall project health and execution status:`,
       PromptSanitizer.wrapUntrustedContent(untrustedData, 'project_monitoring_data'),
+      ``,
+      `Synced GitHub Repository Evidence:`,
+      formatGitHubAIContextText(input.repositoryEvidence),
       ``,
       `Provide a comprehensive status assessment and summary.`,
     ].join('\n');

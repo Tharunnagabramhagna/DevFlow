@@ -773,6 +773,44 @@ export const PaymentsPage: React.FC = () => {
             </div>
           </div>
 
+          {/* PAYPAL SANDBOX STATUS BANNER */}
+          <div className="rounded-xl border border-[#26344B] bg-[#111C30] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                <PayPalIcon className="w-4 h-4 text-blue-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-white">PayPal Invoicing Gateway</span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      financials.paypalConfigured
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                    }`}
+                  >
+                    {isGuest
+                      ? 'Demo Sandbox'
+                      : financials.paypalConfigured
+                        ? `Sandbox Active (${financials.paypalMode})`
+                        : 'Sandbox Setup Required'}
+                  </span>
+                </div>
+                <p className="text-slate-400 text-[11px] mt-0.5">
+                  {financials.paypalConfigured
+                    ? 'Connected to PayPal REST v2 Sandbox API for automated invoice generation & webhook settlement.'
+                    : 'Backend PayPal Sandbox credentials not yet configured. Live invoice issuance is paused until PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET are provided.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/integrations')}
+              className="text-xs text-blue-400 hover:text-blue-300 font-medium underline underline-offset-2 shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              Configure in Integrations &rarr;
+            </button>
+          </div>
+
           {/* PHASE 5: FINANCIAL SUMMARY (4 KPI CARDS) */}
           <div className="space-y-2">
             <span className="font-heading text-xs font-bold text-slate-400 uppercase tracking-wider block">

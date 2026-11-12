@@ -174,6 +174,12 @@ enum ActivityAction {
   GITHUB_REPO_SYNCED
 }
 
+enum GitHubInstallationStatus {
+  ACTIVE
+  SUSPENDED
+  UNINSTALLED
+}
+
 enum NotificationType {
   INVITATION_RECEIVED
   INVITATION_ACCEPTED
@@ -192,63 +198,64 @@ enum NotificationType {
 }
 
 model User {
-  id                 String       @id @default(uuid())
-  email              String       @unique
-  passwordHash       String?
-  name               String
-  avatarUrl          String?
-  bio                String?
-  role               Role         @default(FREELANCER)
-  githubId           String?      @unique
-  githubAccessToken  String?      // AES-256-GCM encrypted
-  githubUsername     String?
-  githubConnectedAt  DateTime?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String?
+  name              String
+  avatarUrl         String?
+  bio               String?
+  role              Role      @default(FREELANCER)
+  githubId          String?   @unique
+  githubAccessToken String? // AES-256-GCM encrypted
+  githubUsername    String?
+  githubConnectedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  createdProjects    Project[]    @relation("ProjectCreator")
-  clientProjects     Project[]    @relation("ProjectClient")
-  developerProjects  Project[]    @relation("ProjectLeadDeveloper")
-  memberships        ProjectMember[]
-  assignedMilestones Milestone[]  @relation("AssignedDeveloper")
-  submittedMilestones Milestone[] @relation("SubmittedBy")
-  approvals          MilestoneApproval[]
-  evidences          Evidence[]
-  sentInvitations    ProjectInvitation[] @relation("InvitationSender")
-  createdPayments    Payment[]    @relation("PaymentCreator")
-  authorizedPayouts  PayoutRecord[] @relation("AdminAuthorizedPayouts")
-  refreshTokens      RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-  oauthExchangeCodes OAuthExchangeCode[]
+  createdProjects          Project[]                 @relation("ProjectCreator")
+  clientProjects           Project[]                 @relation("ProjectClient")
+  developerProjects        Project[]                 @relation("ProjectLeadDeveloper")
+  memberships              ProjectMember[]
+  assignedMilestones       Milestone[]               @relation("AssignedDeveloper")
+  submittedMilestones      Milestone[]               @relation("SubmittedBy")
+  approvals                MilestoneApproval[]
+  evidences                Evidence[]
+  sentInvitations          ProjectInvitation[]       @relation("InvitationSender")
+  createdPayments          Payment[]                 @relation("PaymentCreator")
+  authorizedPayouts        PayoutRecord[]            @relation("AdminAuthorizedPayouts")
+  refreshTokens            RefreshToken[]
+  passwordResetTokens      PasswordResetToken[]
+  oauthExchangeCodes       OAuthExchangeCode[]
   accountLinkingChallenges AccountLinkingChallenge[]
-  notifications      Notification[]
-  activityLogs       ActivityLog[]
+  notifications            Notification[]
+  activityLogs             ActivityLog[]
 
   // Resume Studio & Talent Marketplace Relations
-  developerProfile       DeveloperProfile?
-  resumes                DeveloperResume[]
-  resumeFiles            ResumeFile[]
-  clientOpportunities    MarketplaceOpportunity[] @relation("ClientOpportunities")
+  developerProfile        DeveloperProfile?
+  resumes                 DeveloperResume[]
+  resumeFiles             ResumeFile[]
+  clientOpportunities     MarketplaceOpportunity[] @relation("ClientOpportunities")
   opportunityApplications OpportunityApplication[] @relation("DeveloperApplications")
-  savedOpportunities     SavedOpportunity[]
-  talentMatches          TalentMatchResult[]      @relation("ClientTalentMatches")
+  savedOpportunities      SavedOpportunity[]
+  talentMatches           TalentMatchResult[]      @relation("ClientTalentMatches")
+  githubAppInstallations  GitHubAppInstallation[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id                 String       @id @default(uuid())
-  familyId           String       @db.Uuid
-  tokenHash          String       @unique // SHA-256
-  userId             String
-  replacedByTokenId  String?      @unique
-  revokedAt          DateTime?
-  expiresAt          DateTime
-  createdAt          DateTime     @default(now())
+  id                String    @id @default(uuid())
+  familyId          String    @db.Uuid
+  tokenHash         String    @unique // SHA-256
+  userId            String
+  replacedByTokenId String?   @unique
+  revokedAt         DateTime?
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
 
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  replacedBy         RefreshToken? @relation("TokenRotation", fields: [replacedByTokenId], references: [id])
-  replaces           RefreshToken? @relation("TokenRotation")
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replacedBy RefreshToken? @relation("TokenRotation", fields: [replacedByTokenId], references: [id])
+  replaces   RefreshToken? @relation("TokenRotation")
 
   @@index([userId])
   @@index([familyId])
@@ -256,43 +263,43 @@ model RefreshToken {
 }
 
 model PasswordResetToken {
-  id                 String       @id @default(uuid())
-  tokenHash          String       @unique // SHA-256
-  userId             String
-  expiresAt          DateTime
-  usedAt             DateTime?
-  createdAt          DateTime     @default(now())
+  id        String    @id @default(uuid())
+  tokenHash String    @unique // SHA-256
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("password_reset_tokens")
 }
 
 model OAuthState {
-  id                 String       @id @default(uuid())
-  stateHash          String       @unique // SHA-256
-  pkceVerifier       String?      // AES-256-GCM encrypted
-  initiatingUserId   String?
-  purpose            String?      @default("LOGIN")
-  returnPath         String?
-  expiresAt          DateTime
-  usedAt             DateTime?
-  createdAt          DateTime     @default(now())
+  id               String    @id @default(uuid())
+  stateHash        String    @unique // SHA-256
+  pkceVerifier     String? // AES-256-GCM encrypted
+  initiatingUserId String?
+  purpose          String?   @default("LOGIN")
+  returnPath       String?
+  expiresAt        DateTime
+  usedAt           DateTime?
+  createdAt        DateTime  @default(now())
 
   @@index([stateHash])
   @@map("oauth_states")
 }
 
 model OAuthExchangeCode {
-  id                 String       @id @default(uuid())
-  codeHash           String       @unique // SHA-256
-  userId             String
-  expiresAt          DateTime
-  usedAt             DateTime?
-  createdAt          DateTime     @default(now())
+  id        String    @id @default(uuid())
+  codeHash  String    @unique // SHA-256
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([codeHash])
   @@index([userId])
@@ -300,21 +307,21 @@ model OAuthExchangeCode {
 }
 
 model AccountLinkingChallenge {
-  id                     String       @id @default(uuid())
-  challengeHash          String       @unique // SHA-256
-  userId                 String
-  githubId               String
-  encryptedGithubToken   String?
-  otpHash                String?      // SHA-256 of 6-digit OTP for passwordless
-  otpAttempts            Int          @default(0)
-  maxOtpAttempts         Int          @default(5)
-  otpSentAt              DateTime?
-  resendCooldownSeconds  Int          @default(60)
-  expiresAt              DateTime
-  usedAt                 DateTime?
-  createdAt              DateTime     @default(now())
+  id                    String    @id @default(uuid())
+  challengeHash         String    @unique // SHA-256
+  userId                String
+  githubId              String
+  encryptedGithubToken  String?
+  otpHash               String? // SHA-256 of 6-digit OTP for passwordless
+  otpAttempts           Int       @default(0)
+  maxOtpAttempts        Int       @default(5)
+  otpSentAt             DateTime?
+  resendCooldownSeconds Int       @default(60)
+  expiresAt             DateTime
+  usedAt                DateTime?
+  createdAt             DateTime  @default(now())
 
-  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([challengeHash])
   @@index([userId])
@@ -322,62 +329,65 @@ model AccountLinkingChallenge {
 }
 
 model Project {
-  id                 String          @id @default(uuid())
-  title              String
-  description        String?
-  brief              String?
-  budget             Decimal?        @db.Decimal(12, 2)
-  currency           String          @default("USD") @db.VarChar(3)
-  status             ProjectStatus   @default(DRAFT)
-  createdById        String
-  clientId           String?
-  leadDeveloperId    String?
-  githubRepoOwner         String?
-  githubRepoName          String?
-  githubDefaultBranch     String?
-  githubVisibility        String?
-  githubSyncedAt          DateTime?
-  githubSyncStatus        String?
-  githubSyncError         String?
-  githubLastCommitSha     String?
-  githubLastCommitMessage String?
-  githubLastCommitAt      DateTime?
-  githubCachedData        Json?
-  isArchived              Boolean         @default(false)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  id                         String        @id @default(uuid())
+  title                      String
+  description                String?
+  brief                      String?
+  budget                     Decimal?      @db.Decimal(12, 2)
+  currency                   String        @default("USD") @db.VarChar(3)
+  status                     ProjectStatus @default(DRAFT)
+  createdById                String
+  clientId                   String?
+  leadDeveloperId            String?
+  githubRepoOwner            String?
+  githubRepoName             String?
+  githubDefaultBranch        String?
+  githubVisibility           String?
+  githubSyncedAt             DateTime?
+  githubSyncStatus           String?
+  githubSyncError            String?
+  githubLastCommitSha        String?
+  githubLastCommitMessage    String?
+  githubLastCommitAt         DateTime?
+  githubCachedData           Json?
+  githubInstallationRecordId String?
+  isArchived                 Boolean       @default(false)
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
 
-  createdBy          User            @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  client             User?           @relation("ProjectClient", fields: [clientId], references: [id], onDelete: Restrict)
-  leadDeveloper      User?           @relation("ProjectLeadDeveloper", fields: [leadDeveloperId], references: [id], onDelete: Restrict)
-  members            ProjectMember[]
-  invitations        ProjectInvitation[]
-  milestones         Milestone[]
-  aiAnalyses         AIAnalysis[]
-  activityLogs       ActivityLog[]
+  createdBy                User                     @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  client                   User?                    @relation("ProjectClient", fields: [clientId], references: [id], onDelete: Restrict)
+  leadDeveloper            User?                    @relation("ProjectLeadDeveloper", fields: [leadDeveloperId], references: [id], onDelete: Restrict)
+  githubInstallation       GitHubAppInstallation?   @relation(fields: [githubInstallationRecordId], references: [id], onDelete: SetNull)
+  members                  ProjectMember[]
+  invitations              ProjectInvitation[]
+  milestones               Milestone[]
+  aiAnalyses               AIAnalysis[]
+  activityLogs             ActivityLog[]
   marketplaceOpportunities MarketplaceOpportunity[]
 
   @@index([createdById])
   @@index([clientId])
   @@index([leadDeveloperId])
   @@index([githubRepoOwner, githubRepoName])
+  @@index([githubInstallationRecordId])
   @@map("projects")
 }
 
 model ProjectInvitation {
-  id                 String                @id @default(uuid())
-  projectId          String
-  invitedById        String
-  email              String
-  role               ProjectInvitationRole
-  tokenHash          String                @unique // SHA-256
-  status             InvitationStatus      @default(PENDING)
-  expiresAt          DateTime
-  acceptedAt         DateTime?
-  createdAt          DateTime              @default(now())
+  id          String                @id @default(uuid())
+  projectId   String
+  invitedById String
+  email       String
+  role        ProjectInvitationRole
+  tokenHash   String                @unique // SHA-256
+  status      InvitationStatus      @default(PENDING)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime              @default(now())
 
-  project            Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  invitedBy          User                  @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedBy User    @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
 
   @@index([email])
   @@index([projectId, email, status])
@@ -385,14 +395,14 @@ model ProjectInvitation {
 }
 
 model ProjectMember {
-  id                 String            @id @default(uuid())
-  projectId          String
-  userId             String
-  role               ProjectMemberRole
-  joinedAt           DateTime          @default(now())
+  id        String            @id @default(uuid())
+  projectId String
+  userId    String
+  role      ProjectMemberRole
+  joinedAt  DateTime          @default(now())
 
-  project            Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
   @@index([userId])
@@ -400,34 +410,34 @@ model ProjectMember {
 }
 
 model Milestone {
-  id                   String             @id @default(uuid())
-  projectId            String
-  assignedDeveloperId  String?
-  submittedById        String?
-  title                String
-  description          String?
-  requirements         String[]
-  paymentAmount        Decimal            @db.Decimal(12, 2)
-  currency             String             @default("USD") @db.VarChar(3)
-  status               MilestoneStatus    @default(PENDING)
-  verificationStatus   VerificationStatus @default(UNVERIFIED)
-  publicToken          String?            @unique
-  isPubliclyVisible    Boolean            @default(false)
-  orderIndex           Int                @default(0)
-  dueDate              DateTime?
-  submittedAt          DateTime?
-  approvedAt           DateTime?
-  paidAt               DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  id                  String             @id @default(uuid())
+  projectId           String
+  assignedDeveloperId String?
+  submittedById       String?
+  title               String
+  description         String?
+  requirements        String[]
+  paymentAmount       Decimal            @db.Decimal(12, 2)
+  currency            String             @default("USD") @db.VarChar(3)
+  status              MilestoneStatus    @default(PENDING)
+  verificationStatus  VerificationStatus @default(UNVERIFIED)
+  publicToken         String?            @unique
+  isPubliclyVisible   Boolean            @default(false)
+  orderIndex          Int                @default(0)
+  dueDate             DateTime?
+  submittedAt         DateTime?
+  approvedAt          DateTime?
+  paidAt              DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
-  project              Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  assignedDeveloper    User?              @relation("AssignedDeveloper", fields: [assignedDeveloperId], references: [id], onDelete: SetNull)
-  submittedBy          User?              @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
-  approvals            MilestoneApproval[]
-  evidence             Evidence[]
-  verificationResult   VerificationResult?
-  payments             Payment[]
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  assignedDeveloper  User?               @relation("AssignedDeveloper", fields: [assignedDeveloperId], references: [id], onDelete: SetNull)
+  submittedBy        User?               @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  approvals          MilestoneApproval[]
+  evidence           Evidence[]
+  verificationResult VerificationResult?
+  payments           Payment[]
 
   @@index([projectId])
   @@index([assignedDeveloperId])
@@ -436,78 +446,78 @@ model Milestone {
 }
 
 model MilestoneApproval {
-  id                   String        @id @default(uuid())
-  milestoneId          String
-  approvedById         String
-  decision             String        // "APPROVED" or "REJECTED"
-  feedback             String?
-  createdAt            DateTime      @default(now())
+  id           String   @id @default(uuid())
+  milestoneId  String
+  approvedById String
+  decision     String // "APPROVED" or "REJECTED"
+  feedback     String?
+  createdAt    DateTime @default(now())
 
-  milestone            Milestone     @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
-  approvedBy           User          @relation(fields: [approvedById], references: [id], onDelete: Restrict)
+  milestone  Milestone @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  approvedBy User      @relation(fields: [approvedById], references: [id], onDelete: Restrict)
 
   @@index([milestoneId])
   @@map("milestone_approvals")
 }
 
 model Evidence {
-  id                   String        @id @default(uuid())
-  milestoneId          String
-  uploadedById         String
-  type                 EvidenceType
-  title                String
-  description          String?
-  fileKey              String?       // Local disk path or object storage key
-  fileName             String?
-  fileSize             Int?
-  mimeType             String?
-  githubCommitSha      String?
-  githubPrNumber       Int?
-  githubRepoOwner      String?
-  githubRepoName       String?
-  externalUrl          String?
-  textNote             String?
-  isDeleted            Boolean       @default(false)
-  createdAt            DateTime      @default(now())
+  id              String       @id @default(uuid())
+  milestoneId     String
+  uploadedById    String
+  type            EvidenceType
+  title           String
+  description     String?
+  fileKey         String? // Local disk path or object storage key
+  fileName        String?
+  fileSize        Int?
+  mimeType        String?
+  githubCommitSha String?
+  githubPrNumber  Int?
+  githubRepoOwner String?
+  githubRepoName  String?
+  externalUrl     String?
+  textNote        String?
+  isDeleted       Boolean      @default(false)
+  createdAt       DateTime     @default(now())
 
-  milestone            Milestone     @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
-  uploadedBy           User          @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  milestone  Milestone @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  uploadedBy User      @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
 
   @@index([milestoneId])
   @@map("evidence")
 }
 
 model VerificationResult {
-  id                   String             @id @default(uuid())
-  milestoneId          String             @unique
-  status               VerificationStatus @default(UNVERIFIED)
-  overallScore         Int                @default(0) // 0-100
-  summary              String?
-  checklistResults     Json               @default("[]")
-  riskAssessment       Json?
-  recommendations      String[]
-  modelName            String             @default("gemini-2.0-flash")
-  analyzedAt           DateTime           @default(now())
+  id               String             @id @default(uuid())
+  milestoneId      String             @unique
+  status           VerificationStatus @default(UNVERIFIED)
+  overallScore     Int                @default(0) // 0-100
+  summary          String?
+  checklistResults Json               @default("[]")
+  riskAssessment   Json?
+  recommendations  String[]
+  modelName        String             @default("gemini-2.0-flash")
+  analyzedAt       DateTime           @default(now())
 
-  milestone            Milestone          @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
-  analyses             AIAnalysis[]
+  milestone Milestone    @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  analyses  AIAnalysis[]
 
   @@index([milestoneId])
   @@map("verification_results")
 }
 
 model AIAnalysis {
-  id                   String              @id @default(uuid())
+  id                   String   @id @default(uuid())
   verificationResultId String?
   projectId            String?
-  agentType            String              // "EVIDENCE_ANALYSIS", "MILESTONE_VERIFICATION", "RISK_DETECTION", "PROJECT_MONITORING", "PAYMENT_COORDINATION"
+  agentType            String // "EVIDENCE_ANALYSIS", "MILESTONE_VERIFICATION", "RISK_DETECTION", "PROJECT_MONITORING", "PAYMENT_COORDINATION"
   promptTokens         Int?
   completionTokens     Int?
   rawResponse          String?
-  createdAt            DateTime            @default(now())
+  createdAt            DateTime @default(now())
 
-  verificationResult   VerificationResult? @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
-  project              Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  verificationResult VerificationResult? @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
+  project            Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([verificationResultId])
   @@index([projectId])
@@ -515,38 +525,38 @@ model AIAnalysis {
 }
 
 model Payment {
-  id                   String              @id @default(uuid())
-  milestoneId          String
-  createdById          String
-  invoiceVersion       Int                 @default(1)
-  paypalInvoiceId      String?             @unique
-  paypalInvoiceUrl     String?
-  status               PaymentStatus       @default(PENDING)
-  payoutStatus         PaymentPayoutStatus @default(AWAITING_PAYMENT)
-  snapshotAmount       Decimal             @db.Decimal(12, 2)
-  settledAmount        Decimal             @default(0) @db.Decimal(12, 2) // Gross fiat captured
-  netReceivedAmount    Decimal             @default(0) @db.Decimal(12, 2) // Gross - verified fees
-  feeAmount            Decimal             @default(0) @db.Decimal(12, 2) // Verified fees - verified reversals
-  refundedAmount       Decimal             @default(0) @db.Decimal(12, 2) // Confirmed gross refunds
-  netRefundDeducted    Decimal             @default(0) @db.Decimal(12, 2) // Gross - feeReversals
-  snapshotCurrency     String              @default("USD") @db.VarChar(3)
-  payerEmail           String
-  beneficiaryEmail     String
-  paidAt               DateTime?
-  errorMessage         String?
-  lastReconciledAt     DateTime?
-  reconciliationNotes  String?
-  idempotencyKey       String              @unique @db.VarChar(128)
-  referenceId          String              @unique @db.VarChar(128)
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
+  id                  String              @id @default(uuid())
+  milestoneId         String
+  createdById         String
+  invoiceVersion      Int                 @default(1)
+  paypalInvoiceId     String?             @unique
+  paypalInvoiceUrl    String?
+  status              PaymentStatus       @default(PENDING)
+  payoutStatus        PaymentPayoutStatus @default(AWAITING_PAYMENT)
+  snapshotAmount      Decimal             @db.Decimal(12, 2)
+  settledAmount       Decimal             @default(0) @db.Decimal(12, 2) // Gross fiat captured
+  netReceivedAmount   Decimal             @default(0) @db.Decimal(12, 2) // Gross - verified fees
+  feeAmount           Decimal             @default(0) @db.Decimal(12, 2) // Verified fees - verified reversals
+  refundedAmount      Decimal             @default(0) @db.Decimal(12, 2) // Confirmed gross refunds
+  netRefundDeducted   Decimal             @default(0) @db.Decimal(12, 2) // Gross - feeReversals
+  snapshotCurrency    String              @default("USD") @db.VarChar(3)
+  payerEmail          String
+  beneficiaryEmail    String
+  paidAt              DateTime?
+  errorMessage        String?
+  lastReconciledAt    DateTime?
+  reconciliationNotes String?
+  idempotencyKey      String              @unique @db.VarChar(128)
+  referenceId         String              @unique @db.VarChar(128)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
-  milestone            Milestone           @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
-  createdBy            User                @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  captures             PaymentCapture[]
-  refunds              PaymentRefund[]
-  webhookEvents        WebhookEvent[]
-  payoutRecords        PayoutRecord[]
+  milestone     Milestone        @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+  createdBy     User             @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  captures      PaymentCapture[]
+  refunds       PaymentRefund[]
+  webhookEvents WebhookEvent[]
+  payoutRecords PayoutRecord[]
 
   @@unique([milestoneId, invoiceVersion])
   @@index([milestoneId])
@@ -555,22 +565,22 @@ model Payment {
 }
 
 model PaymentCapture {
-  id                 String           @id @default(uuid())
-  paymentId          String           @map("payment_id")
-  paypalCaptureId    String           @unique @db.VarChar(128) @map("paypal_capture_id")
-  status             CaptureStatus    @default(PENDING)
-  grossAmount        Decimal          @db.Decimal(12, 2) @map("gross_amount")
-  feeAmount          Decimal?         @db.Decimal(12, 2) @map("fee_amount")
-  netAmount          Decimal?         @db.Decimal(12, 2) @map("net_amount")
-  currency           String           @db.VarChar(3)
-  feeStatus          CaptureFeeStatus @default(PENDING_CONFIRMATION) @map("fee_status")
-  capturedAt         DateTime         @map("captured_at")
-  rawResponse        Json             @map("raw_response")
-  createdAt          DateTime         @default(now()) @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
+  id              String           @id @default(uuid())
+  paymentId       String           @map("payment_id")
+  paypalCaptureId String           @unique @map("paypal_capture_id") @db.VarChar(128)
+  status          CaptureStatus    @default(PENDING)
+  grossAmount     Decimal          @map("gross_amount") @db.Decimal(12, 2)
+  feeAmount       Decimal?         @map("fee_amount") @db.Decimal(12, 2)
+  netAmount       Decimal?         @map("net_amount") @db.Decimal(12, 2)
+  currency        String           @db.VarChar(3)
+  feeStatus       CaptureFeeStatus @default(PENDING_CONFIRMATION) @map("fee_status")
+  capturedAt      DateTime         @map("captured_at")
+  rawResponse     Json             @map("raw_response")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
 
-  payment            Payment          @relation(fields: [paymentId], references: [id], onDelete: Restrict)
-  refunds            PaymentRefund[]
+  payment Payment         @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  refunds PaymentRefund[]
 
   @@unique([paymentId, id], name: "payment_capture_ownership_idx")
   @@index([paymentId])
@@ -578,26 +588,26 @@ model PaymentCapture {
 }
 
 model PaymentRefund {
-  id                 String                  @id @default(uuid())
-  paymentId          String                  @map("payment_id")
-  captureId          String                  @map("capture_id")
-  paypalRefundId     String?                 @unique @db.VarChar(128) @map("paypal_refund_id")
-  idempotencyKey     String                  @unique @db.VarChar(128) @map("idempotency_key")
-  status             RefundStatus            @default(PENDING)
-  grossAmount        Decimal                 @db.Decimal(12, 2) @map("gross_amount")
-  feeReversalStatus  RefundFeeReversalStatus @default(PENDING_CONFIRMATION) @map("fee_reversal_status")
-  feeReversalAmount  Decimal?                @db.Decimal(12, 2) @map("fee_reversal_amount")
-  netDeductedAmount  Decimal?                @db.Decimal(12, 2) @map("net_deducted_amount")
-  currency           String                  @db.VarChar(3)
-  reason             String?
-  rawResponse        Json?                   @map("raw_response")
-  requestedAt        DateTime                @default(now()) @map("requested_at")
-  refundedAt         DateTime?               @map("refunded_at")
-  createdAt          DateTime                @default(now()) @map("created_at")
-  updatedAt          DateTime                @updatedAt @map("updated_at")
+  id                String                  @id @default(uuid())
+  paymentId         String                  @map("payment_id")
+  captureId         String                  @map("capture_id")
+  paypalRefundId    String?                 @unique @map("paypal_refund_id") @db.VarChar(128)
+  idempotencyKey    String                  @unique @map("idempotency_key") @db.VarChar(128)
+  status            RefundStatus            @default(PENDING)
+  grossAmount       Decimal                 @map("gross_amount") @db.Decimal(12, 2)
+  feeReversalStatus RefundFeeReversalStatus @default(PENDING_CONFIRMATION) @map("fee_reversal_status")
+  feeReversalAmount Decimal?                @map("fee_reversal_amount") @db.Decimal(12, 2)
+  netDeductedAmount Decimal?                @map("net_deducted_amount") @db.Decimal(12, 2)
+  currency          String                  @db.VarChar(3)
+  reason            String?
+  rawResponse       Json?                   @map("raw_response")
+  requestedAt       DateTime                @default(now()) @map("requested_at")
+  refundedAt        DateTime?               @map("refunded_at")
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
 
-  payment            Payment                 @relation(fields: [paymentId], references: [id], onDelete: Restrict)
-  capture            PaymentCapture          @relation(fields: [captureId], references: [id], onDelete: Restrict)
+  payment Payment        @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  capture PaymentCapture @relation(fields: [captureId], references: [id], onDelete: Restrict)
 
   @@index([paymentId])
   @@index([captureId])
@@ -605,30 +615,30 @@ model PaymentRefund {
 }
 
 model PayoutRecord {
-  id                     String             @id @default(uuid())
-  paymentId              String             @map("payment_id")
-  provider               PayoutProvider     @default(PAYPAL_PAYOUTS)
-  providerPayoutBatchId  String?            @db.VarChar(128) @map("provider_payout_batch_id")
-  providerItemId         String?            @unique @db.VarChar(128) @map("provider_item_id")
-  amount                 Decimal            @db.Decimal(12, 2)
-  currency               String             @default("USD") @db.VarChar(3)
-  beneficiaryEmail       String             @map("beneficiary_email")
-  status                 PayoutRecordStatus @default(INITIATED)
-  idempotencyKey         String             @unique @db.VarChar(128) @map("idempotency_key")
-  transferReference      String?            @db.VarChar(255) @map("transfer_reference")
-  adminUserId            String             @map("admin_user_id")
-  evidenceDocumentUrl    String?            @map("evidence_document_url")
-  failureReason          String?            @map("failure_reason")
-  reconciliationHistory  Json               @default("[]") @map("reconciliation_history")
-  rawResponse            Json?              @map("raw_response")
-  initiatedAt            DateTime           @default(now()) @map("initiated_at")
-  disbursedAt            DateTime?          @map("disbursed_at")
-  cancelledAt            DateTime?          @map("cancelled_at")
-  createdAt              DateTime           @default(now()) @map("created_at")
-  updatedAt              DateTime           @updatedAt @map("updated_at")
+  id                    String             @id @default(uuid())
+  paymentId             String             @map("payment_id")
+  provider              PayoutProvider     @default(PAYPAL_PAYOUTS)
+  providerPayoutBatchId String?            @map("provider_payout_batch_id") @db.VarChar(128)
+  providerItemId        String?            @unique @map("provider_item_id") @db.VarChar(128)
+  amount                Decimal            @db.Decimal(12, 2)
+  currency              String             @default("USD") @db.VarChar(3)
+  beneficiaryEmail      String             @map("beneficiary_email")
+  status                PayoutRecordStatus @default(INITIATED)
+  idempotencyKey        String             @unique @map("idempotency_key") @db.VarChar(128)
+  transferReference     String?            @map("transfer_reference") @db.VarChar(255)
+  adminUserId           String             @map("admin_user_id")
+  evidenceDocumentUrl   String?            @map("evidence_document_url")
+  failureReason         String?            @map("failure_reason")
+  reconciliationHistory Json               @default("[]") @map("reconciliation_history")
+  rawResponse           Json?              @map("raw_response")
+  initiatedAt           DateTime           @default(now()) @map("initiated_at")
+  disbursedAt           DateTime?          @map("disbursed_at")
+  cancelledAt           DateTime?          @map("cancelled_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
 
-  payment                Payment            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
-  adminUser              User               @relation("AdminAuthorizedPayouts", fields: [adminUserId], references: [id], onDelete: Restrict)
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  adminUser User    @relation("AdminAuthorizedPayouts", fields: [adminUserId], references: [id], onDelete: Restrict)
 
   @@index([paymentId])
   @@index([adminUserId])
@@ -636,20 +646,20 @@ model PayoutRecord {
 }
 
 model WebhookEvent {
-  id                   String        @id @default(uuid())
-  provider             String        @default("PAYPAL")
-  eventId              String
-  eventType            String
-  summary              String?
-  resourceId           String?
-  payload              Json
-  status               String        @default("RECEIVED")
-  processedAt          DateTime?
-  errorMessage         String?
-  createdAt            DateTime      @default(now())
+  id           String    @id @default(uuid())
+  provider     String    @default("PAYPAL")
+  eventId      String
+  eventType    String
+  summary      String?
+  resourceId   String?
+  payload      Json
+  status       String    @default("RECEIVED")
+  processedAt  DateTime?
+  errorMessage String?
+  createdAt    DateTime  @default(now())
 
-  paymentId            String?
-  payment              Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   @@unique([provider, eventId])
   @@index([resourceId])
@@ -657,33 +667,33 @@ model WebhookEvent {
 }
 
 model Notification {
-  id                   String           @id @default(uuid())
-  userId               String
-  type                 NotificationType
-  title                String
-  message              String
-  linkUrl              String?
-  isRead               Boolean          @default(false)
-  createdAt            DateTime         @default(now())
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  linkUrl   String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
 
-  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@map("notifications")
 }
 
 model ActivityLog {
-  id                   String         @id @default(uuid())
-  projectId            String
-  userId               String?
-  action               ActivityAction
-  entityType           String
-  entityId             String
-  details              Json           @default("{}")
-  createdAt            DateTime       @default(now())
+  id         String         @id @default(uuid())
+  projectId  String
+  userId     String?
+  action     ActivityAction
+  entityType String
+  entityId   String
+  details    Json           @default("{}")
+  createdAt  DateTime       @default(now())
 
-  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user                 User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([projectId, createdAt(sort: Desc)])
   @@map("activity_logs")
@@ -749,42 +759,42 @@ model DeveloperProfile {
   createdAt                 DateTime              @default(now())
   updatedAt                 DateTime              @updatedAt
 
-  user                      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resumes                   DeveloperResume[]
-  skills                    DeveloperSkill[]
-  portfolioProjects         PortfolioProject[]
-  applications              OpportunityApplication[]
-  talentMatches             TalentMatchResult[]
+  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumes           DeveloperResume[]
+  skills            DeveloperSkill[]
+  portfolioProjects PortfolioProject[]
+  applications      OpportunityApplication[]
+  talentMatches     TalentMatchResult[]
 
   @@index([visibility, availability])
   @@map("developer_profiles")
 }
 
 model DeveloperResume {
-  id                    String            @id @default(uuid())
-  profileId             String
-  userId                String
-  versionNumber         Int               @default(1)
-  isPrimary             Boolean           @default(false)
-  isArchived            Boolean           @default(false)
-  parseStatus           ResumeParseStatus @default(PENDING)
-  parseError            String?
-  parserMethod          String?
-  aiModelName           String?
-  extractionConfidence  Int               @default(0)
-  lowConfidenceFields   String[]          @default([])
-  extractedTextExcerpt  String?
-  extractedData         Json?
-  approvedData          Json?
-  reviewedByDeveloper   Boolean           @default(false)
-  reviewedAt            DateTime?
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  id                   String            @id @default(uuid())
+  profileId            String
+  userId               String
+  versionNumber        Int               @default(1)
+  isPrimary            Boolean           @default(false)
+  isArchived           Boolean           @default(false)
+  parseStatus          ResumeParseStatus @default(PENDING)
+  parseError           String?
+  parserMethod         String?
+  aiModelName          String?
+  extractionConfidence Int               @default(0)
+  lowConfidenceFields  String[]          @default([])
+  extractedTextExcerpt String?
+  extractedData        Json?
+  approvedData         Json?
+  reviewedByDeveloper  Boolean           @default(false)
+  reviewedAt           DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
-  profile               DeveloperProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  file                  ResumeFile?
-  applications          OpportunityApplication[]
+  profile      DeveloperProfile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  user         User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file         ResumeFile?
+  applications OpportunityApplication[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([profileId, isPrimary])
@@ -792,41 +802,41 @@ model DeveloperResume {
 }
 
 model ResumeFile {
-  id               String          @id @default(uuid())
-  resumeId         String          @unique
+  id               String   @id @default(uuid())
+  resumeId         String   @unique
   userId           String
-  storageKey       String          @unique
+  storageKey       String   @unique
   originalName     String
   detectedMimeType String
   declaredMimeType String
-  fileExtension    String          @db.VarChar(16)
+  fileExtension    String   @db.VarChar(16)
   sizeBytes        Int
-  sha256Hash       String          @db.VarChar(64)
-  createdAt        DateTime        @default(now())
+  sha256Hash       String   @db.VarChar(64)
+  createdAt        DateTime @default(now())
 
-  resume           DeveloperResume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume DeveloperResume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, sha256Hash])
   @@map("resume_files")
 }
 
 model DeveloperSkill {
-  id             String           @id @default(uuid())
+  id             String      @id @default(uuid())
   profileId      String
   name           String
   normalizedName String
-  category       String           @default("general")
-  source         SkillSource      @default(SELF_DECLARED)
+  category       String      @default("general")
+  source         SkillSource @default(SELF_DECLARED)
   yearsUsed      Int?
   proficiency    String?
   confidence     Int?
-  needsReview    Boolean          @default(false)
-  isApproved     Boolean          @default(true)
+  needsReview    Boolean     @default(false)
+  isApproved     Boolean     @default(true)
   sourceExcerpt  String?
-  createdAt      DateTime         @default(now())
+  createdAt      DateTime    @default(now())
 
-  profile        DeveloperProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile DeveloperProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, normalizedName, source])
   @@index([normalizedName])
@@ -834,23 +844,23 @@ model DeveloperSkill {
 }
 
 model PortfolioProject {
-  id           String           @id @default(uuid())
+  id           String   @id @default(uuid())
   profileId    String
   title        String
   role         String?
   summary      String
-  technologies String[]         @default([])
+  technologies String[] @default([])
   projectUrl   String?
   repoFullName String?
   startDate    String?
   endDate      String?
-  source       String           @default("MANUAL")
-  isPublic     Boolean          @default(true)
-  displayOrder Int              @default(0)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  source       String   @default("MANUAL")
+  isPublic     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  profile      DeveloperProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile DeveloperProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId, isPublic])
   @@map("portfolio_projects")
@@ -914,12 +924,12 @@ model MarketplaceOpportunity {
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
 
-  client                User                  @relation("ClientOpportunities", fields: [clientId], references: [id], onDelete: Restrict)
-  linkedProject         Project?              @relation(fields: [linkedProjectId], references: [id], onDelete: SetNull)
-  skills                OpportunitySkill[]
-  applications          OpportunityApplication[]
-  savedBy               SavedOpportunity[]
-  talentMatches         TalentMatchResult[]
+  client        User                     @relation("ClientOpportunities", fields: [clientId], references: [id], onDelete: Restrict)
+  linkedProject Project?                 @relation(fields: [linkedProjectId], references: [id], onDelete: SetNull)
+  skills        OpportunitySkill[]
+  applications  OpportunityApplication[]
+  savedBy       SavedOpportunity[]
+  talentMatches TalentMatchResult[]
 
   @@index([clientId, status])
   @@index([visibility, status, createdAt(sort: Desc)])
@@ -934,7 +944,7 @@ model OpportunitySkill {
   category         String                @default("general")
   requirementLevel SkillRequirementLevel @default(MANDATORY)
 
-  opportunity      MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  opportunity MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@unique([opportunityId, normalizedName])
   @@index([normalizedName])
@@ -942,30 +952,30 @@ model OpportunitySkill {
 }
 
 model OpportunityApplication {
-  id                   String                 @id @default(uuid())
+  id                   String            @id @default(uuid())
   opportunityId        String
   developerId          String
   profileId            String?
   resumeId             String?
-  status               ApplicationStatus      @default(SUBMITTED)
+  status               ApplicationStatus @default(SUBMITTED)
   proposal             String
-  proposedBudget       Decimal?               @db.Decimal(12, 2)
-  currency             String                 @default("USD") @db.VarChar(3)
+  proposedBudget       Decimal?          @db.Decimal(12, 2)
+  currency             String            @default("USD") @db.VarChar(3)
   estimatedTimeline    String?
-  selectedPortfolioIds String[]               @default([])
-  allowResumeDownload  Boolean                @default(false)
+  selectedPortfolioIds String[]          @default([])
+  allowResumeDownload  Boolean           @default(false)
   clientNotes          String?
   matchScoreSnapshot   Int?
   matchSummarySnapshot Json?
-  submittedAt          DateTime               @default(now())
+  submittedAt          DateTime          @default(now())
   reviewedAt           DateTime?
   withdrawnAt          DateTime?
-  updatedAt            DateTime               @updatedAt
+  updatedAt            DateTime          @updatedAt
 
-  opportunity          MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  developer            User                   @relation("DeveloperApplications", fields: [developerId], references: [id], onDelete: Restrict)
-  profile              DeveloperProfile?      @relation(fields: [profileId], references: [id], onDelete: SetNull)
-  resume               DeveloperResume?       @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  opportunity MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  developer   User                   @relation("DeveloperApplications", fields: [developerId], references: [id], onDelete: Restrict)
+  profile     DeveloperProfile?      @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  resume      DeveloperResume?       @relation(fields: [resumeId], references: [id], onDelete: SetNull)
 
   @@unique([opportunityId, developerId])
   @@index([developerId, status])
@@ -974,37 +984,79 @@ model OpportunityApplication {
 }
 
 model SavedOpportunity {
-  id            String                 @id @default(uuid())
+  id            String   @id @default(uuid())
   userId        String
   opportunityId String
-  createdAt     DateTime               @default(now())
+  createdAt     DateTime @default(now())
 
-  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  opportunity   MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, opportunityId])
   @@map("saved_opportunities")
 }
 
 model TalentMatchResult {
-  id               String                  @id @default(uuid())
+  id               String   @id @default(uuid())
   clientId         String
   opportunityId    String?
   profileId        String
   queryText        String
   matchScore       Int?
-  insufficientData Boolean                 @default(false)
+  insufficientData Boolean  @default(false)
   explanation      String
-  matchedSkills    Json                    @default("[]")
-  missingSkills    String[]                @default([])
+  matchedSkills    Json     @default("[]")
+  missingSkills    String[] @default([])
   aiModelName      String?
-  createdAt        DateTime                @default(now())
+  createdAt        DateTime @default(now())
 
-  client           User                    @relation("ClientTalentMatches", fields: [clientId], references: [id], onDelete: Cascade)
-  opportunity      MarketplaceOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  profile          DeveloperProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  client      User                    @relation("ClientTalentMatches", fields: [clientId], references: [id], onDelete: Cascade)
+  opportunity MarketplaceOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  profile     DeveloperProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([clientId, createdAt(sort: Desc)])
   @@index([opportunityId, profileId])
   @@map("talent_match_results")
+}
+
+model GitHubAppInstallation {
+  id                  String                   @id @default(uuid())
+  installationId      Int                      @unique
+  userId              String
+  accountId           Int
+  accountLogin        String
+  accountType         String
+  repositorySelection String                   @default("selected")
+  status              GitHubInstallationStatus @default(ACTIVE)
+  permissionsSnapshot Json?
+  suspendedAt         DateTime?
+  uninstalledAt       DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authorizedRepos GitHubAuthorizedRepo[]
+  projects        Project[]
+
+  @@index([userId, status])
+  @@index([accountId])
+  @@map("github_app_installations")
+}
+
+model GitHubAuthorizedRepo {
+  id                   String   @id @default(uuid())
+  installationRecordId String
+  githubRepoId         Int
+  fullName             String
+  defaultBranch        String?
+  isPrivate            Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  installation GitHubAppInstallation @relation(fields: [installationRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([installationRecordId, githubRepoId])
+  @@index([installationRecordId, fullName])
+  @@index([fullName])
+  @@map("github_authorized_repos")
 }

@@ -7,6 +7,10 @@ import {
   EvidenceAnalysisOutput,
 } from '../ai.schema';
 import { PromptSanitizer } from '../promptSanitizer';
+import {
+  formatGitHubAIContextText,
+  SanitizedGitHubRepositoryContext,
+} from '../../github/github-sync.helper';
 
 export interface MilestoneVerificationAgentInput {
   milestoneTitle: string;
@@ -23,6 +27,7 @@ export interface MilestoneVerificationAgentInput {
     externalUrl?: string | null;
     textNote?: string | null;
   }>;
+  repositoryEvidence?: SanitizedGitHubRepositoryContext | null;
 }
 
 export class MilestoneVerificationAgent extends BaseAIAgent<
@@ -42,7 +47,7 @@ export class MilestoneVerificationAgent extends BaseAIAgent<
       `2. Reference specific evidence IDs or artifacts that support the claim.`,
       `3. For any unmet or partially met criteria, state concrete gap analysis.`,
       `4. Determine an advisory decision: RECOMMEND_APPROVAL (if all requirements met with score >= 80), RECOMMEND_REJECTION (if core deliverables missing or score < 50), or MANUAL_REVIEW_REQUIRED.`,
-      `CRITICAL RULE: Your recommendation is strictly advisory for the authorized human client. You cannot approve the milestone.`,
+      `CRITICAL RULE: Your recommendation is strictly advisory for the authorized human client. You cannot approve the milestone, trigger payments, or write to repositories. Never report PASSED or RECOMMEND_APPROVAL without verifiable evidence, and never fabricate commits or pull requests.`,
       ``,
       `OUTPUT FORMAT DIRECTIVE:`,
       `You MUST respond strictly with a valid JSON object matching this structure:`,
@@ -104,6 +109,9 @@ export class MilestoneVerificationAgent extends BaseAIAgent<
       ``,
       `Evidence Items Submitted:`,
       formattedEvidence || 'No evidence items attached.',
+      ``,
+      `Synced GitHub Repository Evidence:`,
+      formatGitHubAIContextText(input.repositoryEvidence),
       ``,
       `Evaluate each requirement individually and produce verification results.`,
     ].join('\n');

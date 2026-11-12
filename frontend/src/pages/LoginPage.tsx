@@ -7,6 +7,7 @@ import { AuthDemoModeSection } from '@/components/auth/AuthDemoModeSection';
 import { AuthCheckbox } from '@/components/auth/AuthCheckbox';
 import { RoleWelcomeSelector } from '@/components/auth/RoleWelcomeSelector';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 import { EffectiveRole, UserRole } from '@/types';
 import {
   Eye,
@@ -167,7 +168,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
     setError(null);
     setFieldErrors({});
     try {
-      await fetch('/api/auth/forgot-password', {
+      await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailTrimmed }),
@@ -185,7 +186,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
     : 'focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30';
 
   return (
-    <AuthPageShell width={selectedRole ? 'narrow' : 'wide'}>
+    <AuthPageShell width={selectedRole ? 'narrow' : 'medium'}>
       {!selectedRole ? (
         <RoleWelcomeSelector
           title="Welcome Back to DevFlow"
@@ -193,9 +194,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
           error={error}
           isGuestSelectOpen={isGuestSelectOpen}
           guestLoading={guestLoading}
-          bottomPromptText="Don't have an account yet?"
-          bottomLinkLabel="Sign Up"
-          bottomLinkTo="/signup"
+          showBottomPrompt={false}
+          showGuestCard={false}
           onSelectRole={handleSelectRole}
           onToggleGuestSelect={(open) => {
             setError(null);
@@ -204,8 +204,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
           onContinueAsGuest={handleContinueAsGuest}
           clientTitle="Client Account"
           clientBadge="CLIENT ACCOUNT"
+          clientDescription="Hire developers, define project milestones, review evidence, approve deliverables and manage payments."
+          clientCta="Continue as Client"
           developerTitle="Developer Account"
           developerBadge="DEVELOPER ACCOUNT"
+          developerDescription="Create projects, connect GitHub repositories, submit deliverable evidence and manage development milestones."
+          developerCta="Continue as Developer"
         />
       ) : (
         <div className="space-y-5">
@@ -343,7 +347,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
             <button
               type="submit"
               disabled={loading || guestLoading}
-              className="w-full py-2.5 px-4 rounded-lg bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-xs transition-all shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 mt-2 cursor-pointer"
+              className={`w-full py-2.5 px-4 rounded-lg disabled:opacity-50 text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer ${
+                isClient
+                  ? 'bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/25'
+                  : 'bg-purple-600 hover:bg-purple-500 shadow-md shadow-purple-600/25'
+              }`}
             >
               {loading ? (
                 <>
@@ -368,7 +376,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialRole }) => {
             <span>Don't have an account? </span>
             <Link
               to={isClient ? '/signup/client' : '/signup/developer'}
-              className="text-[#2563EB] hover:text-blue-600 dark:text-[#60A5FA] dark:hover:text-blue-300 font-semibold underline underline-offset-4"
+              className={`font-semibold underline underline-offset-4 ${
+                isClient
+                  ? 'text-blue-500 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300'
+                  : 'text-purple-500 hover:text-purple-400 dark:text-purple-400 dark:hover:text-purple-300'
+              }`}
             >
               Create account
             </Link>

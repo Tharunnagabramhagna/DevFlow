@@ -13,6 +13,18 @@ import {
 import { VerifiedAccountUser } from '../../middleware/auth';
 import logger from '../../utils/logger';
 
+export interface GitHubAppInstallationInfo {
+  id: string;
+  installationId: string;
+  accountLogin: string;
+  accountType: string;
+  status: string;
+  repositorySelection: string;
+  installedAt: string;
+  updatedAt: string;
+  authorizedRepoCount: number;
+}
+
 export interface GitHubConnectionStatus {
   oauthConfigured: boolean;
   webhookConfigured: boolean;
@@ -25,6 +37,9 @@ export interface GitHubConnectionStatus {
   scopes: string[];
   hasRepoScope: boolean;
   githubApiReachable: boolean;
+  appInstalled?: boolean;
+  appInstallation?: GitHubAppInstallationInfo | null;
+  authorizedRepoCount?: number;
   message?: string;
 }
 
@@ -199,19 +214,63 @@ export class GitHubService {
     const oauthConfigured = Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
     const webhookConfigured = Boolean(env.GITHUB_WEBHOOK_SECRET);
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        githubId: true,
-        githubAccessToken: true,
-        githubUsername: true,
-        githubConnectedAt: true,
-        avatarUrl: true,
-      },
-    });
+    const [user, activeAppInstallation] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          githubId: true,
+          githubAccessToken: true,
+          githubUsername: true,
+          githubConnectedAt: true,
+          avatarUrl: true,
+        },
+      }),
+      (prisma as any).gitHubAppInstallation?.findFirst
+        ? prisma.gitHubAppInstallation.findFirst({
+            where: { userId, status: 'ACTIVE' },
+            include: { authorizedRepos: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    const appInstalled = Boolean(activeAppInstallation);
+    const authorizedRepoCount = activeAppInstallation?.authorizedRepos?.length ?? 0;
+    const appInstallation: GitHubAppInstallationInfo | null = activeAppInstallation
+      ? {
+          id: activeAppInstallation.id,
+          installationId: activeAppInstallation.installationId.toString(),
+          accountLogin: activeAppInstallation.accountLogin,
+          accountType: activeAppInstallation.accountType,
+          status: activeAppInstallation.status,
+          repositorySelection: activeAppInstallation.repositorySelection,
+          installedAt: activeAppInstallation.createdAt.toISOString(),
+          updatedAt: activeAppInstallation.updatedAt.toISOString(),
+          authorizedRepoCount,
+        }
+      : null;
 
     if (!user?.githubId || !user?.githubAccessToken) {
+      if (appInstalled && activeAppInstallation) {
+        return {
+          oauthConfigured,
+          webhookConfigured,
+          connected: true,
+          reauthRequired: false,
+          username: user?.githubUsername || activeAppInstallation.accountLogin,
+          githubId: user?.githubId || activeAppInstallation.accountId.toString(),
+          avatarUrl: user?.avatarUrl || null,
+          connectedAt: activeAppInstallation.createdAt.toISOString(),
+          scopes: ['read:user', 'repo'],
+          hasRepoScope: true,
+          githubApiReachable: true,
+          appInstalled: true,
+          appInstallation,
+          authorizedRepoCount,
+          message: 'GitHub App installed with authorized repository access.',
+        };
+      }
+
       return {
         oauthConfigured,
         webhookConfigured,
@@ -224,6 +283,9 @@ export class GitHubService {
         scopes: [],
         hasRepoScope: false,
         githubApiReachable: true,
+        appInstalled: false,
+        appInstallation: null,
+        authorizedRepoCount: 0,
         message: oauthConfigured
           ? 'No GitHub account is connected yet.'
           : 'GitHub OAuth is not configured on this server (GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET missing).',
@@ -246,6 +308,9 @@ export class GitHubService {
         scopes: [],
         hasRepoScope: false,
         githubApiReachable: true,
+        appInstalled,
+        appInstallation,
+        authorizedRepoCount,
         message: 'GitHub credentials expired or invalid. Please reconnect GitHub.',
       };
     }
@@ -270,6 +335,9 @@ export class GitHubService {
           scopes: [],
           hasRepoScope: false,
           githubApiReachable: true,
+          appInstalled,
+          appInstallation,
+          authorizedRepoCount,
           message: 'GitHub access token was revoked or expired. Please reconnect your GitHub account.',
         };
       }
@@ -287,6 +355,9 @@ export class GitHubService {
           scopes: result.scopes,
           hasRepoScope: result.scopes.includes('repo') || result.scopes.includes('public_repo'),
           githubApiReachable: false,
+          appInstalled,
+          appInstallation,
+          authorizedRepoCount,
           message: result.rateLimited
             ? 'GitHub API rate limit temporarily exceeded.'
             : 'GitHub is linked, but live verification with GitHub API is temporarily unavailable.',
@@ -316,6 +387,9 @@ export class GitHubService {
         scopes: result.scopes,
         hasRepoScope,
         githubApiReachable: true,
+        appInstalled,
+        appInstallation,
+        authorizedRepoCount,
         ...(hasRepoScope
           ? {}
           : {
@@ -340,6 +414,9 @@ export class GitHubService {
         scopes: [],
         hasRepoScope: false,
         githubApiReachable: false,
+        appInstalled,
+        appInstallation,
+        authorizedRepoCount,
         message: 'Unable to reach GitHub API right now; showing saved connection status.',
       };
     }
@@ -864,7 +941,7 @@ export class GitHubService {
     return this.formatProjectActivityResponse(project, evidences);
   }
 
-  private formatProjectActivityResponse(
+  public formatProjectActivityResponse(
     project: {
       id: string;
       title: string;

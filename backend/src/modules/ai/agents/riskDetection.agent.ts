@@ -8,6 +8,10 @@ import {
   MilestoneVerificationOutput,
 } from '../ai.schema';
 import { PromptSanitizer } from '../promptSanitizer';
+import {
+  formatGitHubAIContextText,
+  SanitizedGitHubRepositoryContext,
+} from '../../github/github-sync.helper';
 
 export interface RiskDetectionAgentInput {
   projectTitle: string;
@@ -23,6 +27,7 @@ export interface RiskDetectionAgentInput {
   }>;
   evidenceFindings?: EvidenceAnalysisOutput | null;
   verificationFindings?: MilestoneVerificationOutput | null;
+  repositoryEvidence?: SanitizedGitHubRepositoryContext | null;
 }
 
 export class RiskDetectionAgent extends BaseAIAgent<RiskDetectionAgentInput, RiskDetectionOutput> {
@@ -39,6 +44,7 @@ export class RiskDetectionAgent extends BaseAIAgent<RiskDetectionAgentInput, Ris
       `2. Technical Risk: Deficient deliverables, unmet requirements, architectural gaps.`,
       `3. Financial Risk: Disproportionate payment amounts relative to project scope or budget, premature payout pressures.`,
       `4. Suspicious Activity: Unusual bursts of activity, suspicious evidence submissions, repeated rejections.`,
+      `5. Grounding Rule: Use only observed project activity and synced GitHub repository evidence. Never fabricate repository activity.`,
       `Provide categorized risk ratings (LOW, MEDIUM, HIGH, CRITICAL) with actionable mitigation strategies.`,
       ``,
       `OUTPUT FORMAT DIRECTIVE:`,
@@ -101,6 +107,9 @@ export class RiskDetectionAgent extends BaseAIAgent<RiskDetectionAgentInput, Ris
     return [
       `Analyze the following project context for risks:`,
       PromptSanitizer.wrapUntrustedContent(untrustedProjectData, 'project_risk_data'),
+      ``,
+      `Synced GitHub Repository Evidence:`,
+      formatGitHubAIContextText(input.repositoryEvidence),
       ``,
       `Evaluate all risk categories and suggest mitigations.`,
     ].join('\n');

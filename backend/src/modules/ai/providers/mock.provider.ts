@@ -18,13 +18,14 @@ export class MockAIProvider implements IAIProvider {
 
     // Check for injection attempts in the prompt
     const injectionCheck = PromptSanitizer.detectInjectionAttempt(prompt);
+    const repoSignals = this.extractRepositorySignals(prompt);
 
     // Candidates for each agent type
     const candidates = [
-      () => this.generateEvidenceAnalysis(injectionCheck.hasInjection),
-      () => this.generateMilestoneVerification(injectionCheck.hasInjection),
-      () => this.generateRiskDetection(injectionCheck.hasInjection),
-      () => this.generateProjectMonitoring(),
+      () => this.generateEvidenceAnalysis(injectionCheck.hasInjection, repoSignals),
+      () => this.generateMilestoneVerification(injectionCheck.hasInjection, repoSignals),
+      () => this.generateRiskDetection(injectionCheck.hasInjection, repoSignals),
+      () => this.generateProjectMonitoring(repoSignals),
       () => this.generatePaymentCoordination(injectionCheck.hasInjection, prompt),
     ];
 
@@ -36,22 +37,22 @@ export class MockAIProvider implements IAIProvider {
       systemInstruction.includes('Evidence Analysis') ||
       systemInstruction.includes(AgentType.EVIDENCE_ANALYSIS)
     ) {
-      successfulResult = this.generateEvidenceAnalysis(injectionCheck.hasInjection);
+      successfulResult = this.generateEvidenceAnalysis(injectionCheck.hasInjection, repoSignals);
     } else if (
       systemInstruction.includes('Milestone Verification') ||
       systemInstruction.includes(AgentType.MILESTONE_VERIFICATION)
     ) {
-      successfulResult = this.generateMilestoneVerification(injectionCheck.hasInjection);
+      successfulResult = this.generateMilestoneVerification(injectionCheck.hasInjection, repoSignals);
     } else if (
       systemInstruction.includes('Risk Detection') ||
       systemInstruction.includes(AgentType.RISK_DETECTION)
     ) {
-      successfulResult = this.generateRiskDetection(injectionCheck.hasInjection);
+      successfulResult = this.generateRiskDetection(injectionCheck.hasInjection, repoSignals);
     } else if (
       systemInstruction.includes('Project Monitoring') ||
       systemInstruction.includes(AgentType.PROJECT_MONITORING)
     ) {
-      successfulResult = this.generateProjectMonitoring();
+      successfulResult = this.generateProjectMonitoring(repoSignals);
     } else if (
       systemInstruction.includes('Payment Coordination') ||
       systemInstruction.includes(AgentType.PAYMENT_COORDINATION)
@@ -110,7 +111,54 @@ export class MockAIProvider implements IAIProvider {
     };
   }
 
-  private generateEvidenceAnalysis(isSuspicious: boolean) {
+  private extractRepositorySignals(prompt: string): {
+    hasLinkedRepo: boolean;
+    repoName: string | null;
+    commitCount: number;
+    prCount: number;
+    issueCount: number;
+    latestCommitHeadline: string | null;
+    hasSubmittedEvidence: boolean;
+    hasSubmittedGitItem: boolean;
+  } {
+    const repoBlockMatch = prompt.match(
+      /<untrusted_user_content type="github_repository_evidence">([\s\S]*?)<\/untrusted_user_content>/i
+    );
+    const block = repoBlockMatch?.[1] || '';
+    const hasLinkedRepo = Boolean(repoBlockMatch);
+    const repoName = block.match(/Repository:\s*([^\s(]+)/)?.[1] || null;
+    const commitCount = Number.parseInt(block.match(/Commits \((\d+)\):/)?.[1] || '0', 10) || 0;
+    const prCount = Number.parseInt(block.match(/Pull Requests \((\d+)\):/)?.[1] || '0', 10) || 0;
+    const issueCount = Number.parseInt(block.match(/Issues \((\d+)\):/)?.[1] || '0', 10) || 0;
+    const latestCommitMatch = block.match(/- \[([a-zA-Z0-9]+)\] "([^"]+)"/);
+    const latestCommitHeadline = latestCommitMatch
+      ? `${latestCommitMatch[1]}: ${latestCommitMatch[2]}`
+      : null;
+
+    const hasZeroSubmitted =
+      prompt.includes('Submitted Evidence Items (0 items)') ||
+      prompt.includes('No evidence items attached.');
+    const hasSubmittedEvidence = !hasZeroSubmitted;
+    const hasSubmittedGitItem = /\[GITHUB_COMMIT\]|\[GITHUB_PR\]|Commit SHA:|Pull Request:/i.test(
+      prompt
+    );
+
+    return {
+      hasLinkedRepo,
+      repoName,
+      commitCount,
+      prCount,
+      issueCount,
+      latestCommitHeadline,
+      hasSubmittedEvidence,
+      hasSubmittedGitItem,
+    };
+  }
+
+  private generateEvidenceAnalysis(
+    isSuspicious: boolean,
+    repo: ReturnType<MockAIProvider['extractRepositorySignals']>
+  ) {
     if (isSuspicious) {
       return {
         relevanceScore: 30,
@@ -141,6 +189,38 @@ export class MockAIProvider implements IAIProvider {
       };
     }
 
+    const hasRepoEvidence = repo.hasLinkedRepo && (repo.commitCount > 0 || repo.prCount > 0);
+    if (!repo.hasSubmittedEvidence && !hasRepoEvidence) {
+      return {
+        relevanceScore: 15,
+        completenessScore: 10,
+        consistencyScore: 50,
+        overallConfidence: 90,
+        findings: [
+          {
+            aspect: 'Evidence Availability',
+            status: 'INCOMPLETE' as const,
+            details: repo.hasLinkedRepo
+              ? `Connected repository ${repo.repoName || ''} has 0 synced commits/PRs and no submitted milestone artifacts.`
+              : 'No submitted milestone evidence items or synced repository activity were provided.',
+          },
+        ],
+        suspiciousFlags: [],
+        missingItems: ['Verified repository commits or pull requests', 'Submitted milestone deliverable artifact'],
+        recommendations: [
+          'Sync active repository commits/PRs or attach concrete deliverable artifacts before requesting verification.',
+        ],
+      };
+    }
+
+    const codeArtifactDetails = hasRepoEvidence
+      ? `Observed ${repo.commitCount} commit(s) and ${repo.prCount} pull request(s) in ${repo.repoName || 'linked repository'}${
+          repo.latestCommitHeadline ? ` (latest: ${repo.latestCommitHeadline})` : ''
+        }.`
+      : repo.hasSubmittedGitItem
+        ? 'Submitted Git commit and pull request references correspond to milestone requirements.'
+        : 'Submitted documentation and deliverable artifacts correspond to milestone requirements.';
+
     return {
       relevanceScore: 92,
       completenessScore: 88,
@@ -150,24 +230,27 @@ export class MockAIProvider implements IAIProvider {
         {
           aspect: 'Code Artifacts',
           status: 'SATISFIED' as const,
-          details: 'Git commits and pull request references directly correspond to milestone requirements.',
+          details: codeArtifactDetails,
         },
         {
           aspect: 'Documentation',
           status: 'SATISFIED' as const,
-          details: 'Technical documentation and test evidence demonstrate expected functionality.',
+          details: 'Available evidence metadata demonstrates expected milestone progress.',
         },
       ],
       suspiciousFlags: [],
       missingItems: [],
       recommendations: [
-        'Evidence is consistent and verified against acceptance criteria.',
+        'Evidence is consistent with observed artifacts and ready for human review.',
         'Proceed to milestone requirement comparison.',
       ],
     };
   }
 
-  private generateMilestoneVerification(isSuspicious: boolean) {
+  private generateMilestoneVerification(
+    isSuspicious: boolean,
+    repo: ReturnType<MockAIProvider['extractRepositorySignals']>
+  ) {
     if (isSuspicious) {
       return {
         verificationStatus: 'FAILED' as const,
@@ -187,6 +270,36 @@ export class MockAIProvider implements IAIProvider {
       };
     }
 
+    const hasRepoEvidence = repo.hasLinkedRepo && (repo.commitCount > 0 || repo.prCount > 0);
+    if (!repo.hasSubmittedEvidence && !hasRepoEvidence) {
+      return {
+        verificationStatus: 'MANUAL_REVIEW_REQUIRED' as const,
+        overallScore: 25,
+        checklistResults: [
+          {
+            requirement: 'Functional Acceptance Criteria',
+            status: 'UNMET' as const,
+            evidenceReference: 'None',
+            gapAnalysis: 'No commits, pull requests, or milestone artifacts are available to verify requirements.',
+          },
+        ],
+        unmetRequirements: ['Verifiable deliverable or synced repository activity missing'],
+        advisoryDecision: 'MANUAL_REVIEW_REQUIRED' as const,
+        summary: 'Verification cannot pass without verifiable milestone or repository evidence.',
+        recommendations: [
+          'Do not approve until repository commits/PRs or deliverable evidence are attached and reviewed.',
+        ],
+      };
+    }
+
+    const evidenceReference = hasRepoEvidence
+      ? `Repository ${repo.repoName || ''} (${repo.commitCount} commits, ${repo.prCount} PRs${
+          repo.latestCommitHeadline ? `, latest ${repo.latestCommitHeadline}` : ''
+        })`
+      : repo.hasSubmittedGitItem
+        ? 'Submitted Git commit/PR evidence'
+        : 'Submitted milestone documentation';
+
     return {
       verificationStatus: 'PASSED' as const,
       overallScore: 95,
@@ -194,24 +307,46 @@ export class MockAIProvider implements IAIProvider {
         {
           requirement: 'Functional Acceptance Criteria',
           status: 'MET' as const,
-          evidenceReference: 'Commit & test documentation',
-          gapAnalysis: 'All declared criteria verified successfully.',
+          evidenceReference,
+          gapAnalysis: 'Evaluated criteria supported by observed evidence.',
         },
       ],
       unmetRequirements: [],
       advisoryDecision: 'RECOMMEND_APPROVAL' as const,
-      summary: 'All milestone acceptance criteria have been verified against submitted evidence.',
+      summary: `Advisory verification passed based on ${evidenceReference}. Human client approval is still required.`,
       recommendations: ['Milestone is ready for client review and final human approval.'],
     };
   }
 
-  private generateRiskDetection(isSuspicious: boolean) {
+  private generateRiskDetection(
+    isSuspicious: boolean,
+    repo: ReturnType<MockAIProvider['extractRepositorySignals']>
+  ) {
+    const emptyRepoRisk =
+      repo.hasLinkedRepo && repo.commitCount === 0 && repo.prCount === 0 && !repo.hasSubmittedEvidence;
+
     return {
-      overallRiskLevel: isSuspicious ? ('HIGH' as const) : ('LOW' as const),
+      overallRiskLevel: isSuspicious
+        ? ('HIGH' as const)
+        : emptyRepoRisk
+          ? ('MEDIUM' as const)
+          : ('LOW' as const),
       deliveryRisk: {
-        level: isSuspicious ? ('HIGH' as const) : ('LOW' as const),
-        factors: isSuspicious ? ['Suspicious evidence submission', 'Unverified deliverables'] : ['Milestones tracking on schedule'],
-        delayLikelihood: isSuspicious ? 75 : 10,
+        level: isSuspicious
+          ? ('HIGH' as const)
+          : emptyRepoRisk
+            ? ('MEDIUM' as const)
+            : ('LOW' as const),
+        factors: isSuspicious
+          ? ['Suspicious evidence submission', 'Unverified deliverables']
+          : emptyRepoRisk
+            ? [`Repository ${repo.repoName || ''} currently shows 0 synced commits and 0 pull requests`]
+            : repo.hasLinkedRepo
+              ? [
+                  `Repository ${repo.repoName || ''} shows ${repo.commitCount} commit(s), ${repo.prCount} PR(s), and ${repo.issueCount} issue(s)`,
+                ]
+              : ['Milestones tracking on schedule'],
+        delayLikelihood: isSuspicious ? 75 : emptyRepoRisk ? 45 : 10,
       },
       technicalRisk: {
         level: isSuspicious ? ('HIGH' as const) : ('LOW' as const),
@@ -237,7 +372,11 @@ export class MockAIProvider implements IAIProvider {
     };
   }
 
-  private generateProjectMonitoring() {
+  private generateProjectMonitoring(repo: ReturnType<MockAIProvider['extractRepositorySignals']>) {
+    const repoNote = repo.hasLinkedRepo
+      ? ` Synced repository ${repo.repoName || ''} reports ${repo.commitCount} commit(s), ${repo.prCount} pull request(s), and ${repo.issueCount} issue(s).`
+      : '';
+
     return {
       projectHealth: 'GOOD' as const,
       completionPercentage: 65,
@@ -252,7 +391,7 @@ export class MockAIProvider implements IAIProvider {
       },
       bottlenecks: [],
       overdueMilestones: [],
-      executiveSummary: 'Project is progressing in accordance with estimated roadmap. 1 milestone approved, 1 currently submitted for client review.',
+      executiveSummary: `Project is progressing in accordance with estimated roadmap. 1 milestone approved, 1 currently submitted for client review.${repoNote}`,
       recommendedActions: [
         'Review submitted milestone evidence.',
         'Keep open communication with developer regarding upcoming milestones.',

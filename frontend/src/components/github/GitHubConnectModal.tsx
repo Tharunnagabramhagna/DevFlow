@@ -13,6 +13,7 @@ import {
 interface GitHubConnectModalProps {
   open: boolean;
   oauthConfigured?: boolean;
+  appInstalled?: boolean;
   onSkip: () => void;
   returnPath?: string;
 }
@@ -20,6 +21,7 @@ interface GitHubConnectModalProps {
 export const GitHubConnectModal: React.FC<GitHubConnectModalProps> = ({
   open,
   oauthConfigured = true,
+  appInstalled = false,
   onSkip,
   returnPath = '/dashboard',
 }) => {
@@ -32,14 +34,20 @@ export const GitHubConnectModal: React.FC<GitHubConnectModalProps> = ({
     setConnecting(true);
     setError(null);
     try {
-      const { authorizeUrl } = await devFlowApi.initiateGitHubConnect(returnPath);
-      window.location.href = authorizeUrl;
-    } catch (err: any) {
-      setError(
-        err?.message ||
-          'Unable to start GitHub OAuth flow. Check backend GitHub credentials.'
-      );
-      setConnecting(false);
+      const { installUrl } = await devFlowApi.initiateGitHubAppInstall(returnPath);
+      window.location.href = installUrl;
+    } catch (appErr: any) {
+      try {
+        const { authorizeUrl } = await devFlowApi.initiateGitHubConnect(returnPath);
+        window.location.href = authorizeUrl;
+      } catch (oauthErr: any) {
+        setError(
+          appErr?.message ||
+            oauthErr?.message ||
+            'Unable to start GitHub connection flow. Please check GitHub App configuration.'
+        );
+        setConnecting(false);
+      }
     }
   };
 
@@ -83,42 +91,42 @@ export const GitHubConnectModal: React.FC<GitHubConnectModalProps> = ({
 
         <div className="px-6 py-5 space-y-4">
           <p className="text-sm text-slate-300 leading-relaxed">
-            Link your GitHub account to import your real public and private repositories, synchronize commits and pull requests, and attach verifiable code evidence to your project milestones.
+            Install the official DevFlow GitHub App to grant granular repository access. Authenticate commits, PRs, and verifiable code evidence on your project milestones with zero broad token access.
           </p>
 
           <div className="rounded-xl border border-[#1E293B] bg-[#0F172A]/80 p-4 space-y-3">
             <div className="flex items-start gap-2.5 text-xs text-slate-300">
               <GitBranch className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold text-white">Repository &amp; Commit Access</span>
+                <span className="font-semibold text-white">Granular Repository Selection</span>
                 <p className="text-slate-400 mt-0.5">
-                  Browse repositories you own or collaborate on and sync real commit SHAs, branches, PRs, and open issues.
+                  Select exact repositories to authorize. Synchronize real commit SHAs, PRs, and verification evidence without exposing entire account access.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-2.5 text-xs text-slate-300">
               <Lock className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold text-white">Encrypted Token Storage</span>
+                <span className="font-semibold text-white">Zero Token Persistence</span>
                 <p className="text-slate-400 mt-0.5">
-                  OAuth tokens are encrypted with AES-256-GCM on the server and are never exposed to browsers or other users.
+                  Uses short-lived GitHub App installation tokens generated in-memory. No long-lived OAuth tokens or private keys are stored.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-2.5 text-xs text-slate-300">
               <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold text-white">Requested Scopes</span>
+                <span className="font-semibold text-white">App Permissions</span>
                 <p className="text-slate-400 mt-0.5">
-                  <code className="text-[11px] text-slate-200 bg-[#1E293B] px-1.5 py-0.5 rounded">read:user</code>{' '}
-                  <code className="text-[11px] text-slate-200 bg-[#1E293B] px-1.5 py-0.5 rounded">user:email</code>{' '}
-                  <code className="text-[11px] text-slate-200 bg-[#1E293B] px-1.5 py-0.5 rounded">repo</code>
+                  <code className="text-[11px] text-slate-200 bg-[#1E293B] px-1.5 py-0.5 rounded">Metadata: Read</code>{' '}
+                  <code className="text-[11px] text-slate-200 bg-[#1E293B] px-1.5 py-0.5 rounded">Contents: Read</code>{' '}
+                  <code className="text-[11px] text-slate-200 bg-[#1E293B] px-1.5 py-0.5 rounded">Pull Requests: Read</code>
                 </p>
               </div>
             </div>
           </div>
 
-          {!oauthConfigured && !error && (
+          {!oauthConfigured && !appInstalled && !error && (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 flex items-start gap-2.5 text-xs text-amber-200">
               <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <div>

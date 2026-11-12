@@ -273,6 +273,25 @@ export interface DashboardProjectSummary {
   githubLastCommitAt: string | null;
 }
 
+export interface GitHubAppInstallationInfo {
+  id: string;
+  installationId: number;
+  accountId: number;
+  accountLogin: string;
+  accountType: string;
+  repositorySelection: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'UNINSTALLED' | string;
+  authorizedRepoCount?: number;
+}
+
+export interface GitHubIntegrationOverview {
+  identityConnected: boolean;
+  identityUsername: string | null;
+  appInstalled: boolean;
+  appInstallation: GitHubAppInstallationInfo | null;
+  authorizedRepoCount: number;
+}
+
 export interface GitHubConnectionStatus {
   oauthConfigured: boolean;
   webhookConfigured: boolean;
@@ -285,6 +304,9 @@ export interface GitHubConnectionStatus {
   scopes: string[];
   hasRepoScope: boolean;
   githubApiReachable: boolean;
+  appInstalled?: boolean;
+  appInstallation?: GitHubAppInstallationInfo | null;
+  authorizedRepoCount?: number;
   message?: string;
 }
 
@@ -405,6 +427,9 @@ export interface DeveloperTelemetry {
       connected: boolean;
       username: string | null;
       connectedAt: string | null;
+      appInstalled?: boolean;
+      appInstallation?: GitHubAppInstallationInfo | null;
+      authorizedRepoCount?: number;
     };
     paypal: {
       configured: boolean;

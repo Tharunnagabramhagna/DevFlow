@@ -28,7 +28,9 @@ import {
   MOCK_PULL_REQUESTS,
 } from './mockData';
 
-const BASE_URL = '/api';
+import { API_BASE_URL } from '@/config/api';
+
+const BASE_URL = API_BASE_URL;
 const AUTH_STORAGE_KEY = 'devflow_auth_session';
 
 function getSessionContext(): { isGuest: boolean; token: string | null } {
@@ -633,8 +635,137 @@ export const devFlowApi = {
   },
 
   /**
-   * Initiate authenticated GitHub OAuth flow returning the provider authorize URL
+   * Initiate authenticated GitHub App installation flow returning the installation URL
    */
+  async initiateGitHubAppInstall(returnPath = '/dashboard'): Promise<{ installUrl: string }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest || !token) {
+      throw new Error('Sign in with a Developer account to connect GitHub App.');
+    }
+
+    const res = await fetch(`${BASE_URL}/github/app/install`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ returnPath }),
+      credentials: 'include',
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (res.ok) {
+      return (await res.json()) as { installUrl: string };
+    }
+
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Unable to initiate GitHub App installation.');
+  },
+
+  /**
+   * List authorized repositories accessible via user's active GitHub App installation
+   */
+  async getGitHubAppRepositories(
+    opts: { q?: string; page?: number; perPage?: number } = {}
+  ): Promise<{
+    data: GitHubRepositorySummary[];
+    totalCount: number;
+    hasMore: boolean;
+    installation?: any;
+    error?: string;
+    code?: string;
+  }> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest || !token) {
+      return { data: [], totalCount: 0, hasMore: false };
+    }
+
+    try {
+      const qs = new URLSearchParams();
+      if (opts.q) qs.set('q', opts.q);
+      if (opts.page) qs.set('page', String(opts.page));
+      if (opts.perPage) qs.set('perPage', String(opts.perPage));
+
+      const res = await fetch(`${BASE_URL}/github/app/repositories?${qs.toString()}`, {
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        return {
+          data: Array.isArray(json.repositories) ? json.repositories : [],
+          totalCount: typeof json.totalCount === 'number' ? json.totalCount : 0,
+          hasMore: Boolean(json.hasMore),
+          installation: json.installation,
+        };
+      }
+
+      const err = await res.json().catch(() => ({}));
+      return {
+        data: [],
+        totalCount: 0,
+        hasMore: false,
+        error: err?.error?.message || `Failed to load GitHub App repositories (${res.status}).`,
+        code: err?.error?.code,
+      };
+    } catch (err: any) {
+      return {
+        data: [],
+        totalCount: 0,
+        hasMore: false,
+        error: err?.message || 'Unable to reach GitHub App repositories endpoint.',
+      };
+    }
+  },
+
+  /**
+   * Connect an authorized repository from GitHub App installation to a project
+   */
+  async connectProjectWithApp(projectId: string, input: { repoFullName: string; githubRepoId?: number }): Promise<ProjectGitHubActivity> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest || !token) {
+      throw new Error('Authentication required to connect a repository.');
+    }
+
+    const res = await fetch(`${BASE_URL}/github/app/projects/${projectId}/connect`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify(input),
+      credentials: 'include',
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (res.ok) {
+      return (await res.json()) as ProjectGitHubActivity;
+    }
+
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Failed to connect GitHub App repository to project.');
+  },
+
+  /**
+   * Sync a project connected via GitHub App
+   */
+  async syncProjectApp(projectId: string, force = true): Promise<ProjectGitHubActivity> {
+    const { isGuest, token } = getSessionContext();
+    if (isGuest || !token) {
+      throw new Error('Authentication required to synchronize a repository.');
+    }
+
+    const res = await fetch(`${BASE_URL}/github/app/projects/${projectId}/sync`, {
+      method: 'POST',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ force }),
+      credentials: 'include',
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (res.ok) {
+      return (await res.json()) as ProjectGitHubActivity;
+    }
+
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Failed to sync GitHub App repository.');
+  },
   async initiateGitHubConnect(returnPath = '/dashboard'): Promise<{ authorizeUrl: string }> {
     const { isGuest, token } = getSessionContext();
     if (isGuest || !token) {

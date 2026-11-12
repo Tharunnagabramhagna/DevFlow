@@ -7,6 +7,7 @@ import { requireProjectRole, requirePaymentRole } from '../../middleware/project
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { ForbiddenError } from '../../utils/errors';
 import { paymentsController } from './payments.controller';
+import { computeFinancialSummary, parseTelemetryRange } from './financialSummary.service';
 import {
   CreateInvoiceSchema,
   CancelInvoiceSchema,
@@ -16,6 +17,45 @@ import {
 
 export const paymentsRouter = Router();
 paymentsRouter.use(authenticate, requireNonGuest);
+
+// Authoritative financial summary endpoint shared across Dashboard, Payments, and Analytics
+paymentsRouter.get('/summary', authenticate, async (req, res, next) => {
+  try {
+    const user = assertVerifiedUser(req);
+    const projectId =
+      typeof req.query.projectId === 'string' && req.query.projectId.trim().length > 0
+        ? req.query.projectId.trim()
+        : undefined;
+    const range = parseTelemetryRange(
+      typeof req.query.range === 'string' ? req.query.range : 'all'
+    );
+
+    const projectScope =
+      user.role === Role.ADMIN
+        ? projectId
+          ? { id: projectId, isArchived: false }
+          : { isArchived: false }
+        : {
+            ...(projectId ? { id: projectId } : {}),
+            isArchived: false,
+            OR: [
+              { createdById: user.id },
+              { clientId: user.id },
+              { leadDeveloperId: user.id },
+              { members: { some: { userId: user.id } } },
+            ],
+          };
+
+    const summary = await computeFinancialSummary(projectScope, range);
+    res.status(200).json({
+      ...summary,
+      paypalConfigured: Boolean(env.PAYPAL_CLIENT_ID && env.PAYPAL_CLIENT_SECRET),
+      paypalMode: env.PAYPAL_BASE_URL.includes('sandbox') ? 'sandbox' : 'live',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Create and dispatch an invoice for a completed milestone
 paymentsRouter.post(
@@ -60,6 +100,9 @@ paymentsRouter.get(
                 },
               },
         include: {
+          payoutRecords: {
+            orderBy: { createdAt: 'desc' },
+          },
           milestone: {
             include: { project: true },
           },
@@ -73,10 +116,25 @@ paymentsRouter.get(
           id: p.id,
           paypalInvoiceId: p.paypalInvoiceId,
           amount: Number(p.snapshotAmount),
+          settledAmount: Number(p.settledAmount),
+          netReceivedAmount: Number(p.netReceivedAmount),
           currency: p.snapshotCurrency,
           status: p.status,
+          payoutStatus: p.payoutStatus,
           createdAt: p.createdAt.toISOString(),
           paidAt: p.paidAt?.toISOString(),
+          payouts: Array.isArray(p.payoutRecords)
+            ? p.payoutRecords.map((po) => ({
+                id: po.id,
+                amount: Number(po.amount),
+                currency: po.currency,
+                status: po.status,
+                provider: po.provider,
+                transferReference: po.transferReference,
+                initiatedAt: po.initiatedAt.toISOString(),
+                disbursedAt: po.disbursedAt?.toISOString() ?? null,
+              }))
+            : [],
         },
       }));
 

@@ -408,7 +408,7 @@ export const SettingsPage: React.FC = () => {
               </div>
 
               {/* Right Side Header Controls */}
-              <div className="flex items-center gap-3 self-end sm:self-auto relative">
+              <div className="flex items-center gap-3 self-end sm:self-auto relative z-30">
                 {/* Notification Bell */}
                 <div className="relative">
                   <button
@@ -439,12 +439,20 @@ export const SettingsPage: React.FC = () => {
                         </button>
                       </div>
                       <div className="py-2.5 space-y-2 text-[#AAB6C8]">
-                        <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
-                          <span className="text-white font-medium">Sprint 8 AST Analysis</span> completed
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
-                          <span className="text-white font-medium">Invoice INV-2026-004</span> settled via PayPal
-                        </div>
+                        {isGuest ? (
+                          <>
+                            <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
+                              <span className="text-white font-medium">Sprint 8 AST Analysis</span> completed (Demo)
+                            </div>
+                            <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
+                              <span className="text-white font-medium">Invoice INV-2026-004</span> settled via PayPal (Demo)
+                            </div>
+                          </>
+                        ) : (
+                          <div className="p-2.5 rounded-xl bg-[#101A2D] text-xs">
+                            View real-time notifications on the Notifications page.
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -494,7 +502,11 @@ export const SettingsPage: React.FC = () => {
 
                   {/* User Profile Popover */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs sm:text-sm animate-in fade-in duration-150">
+                    <div
+                      role="menu"
+                      data-popover="true"
+                      className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs sm:text-sm animate-in fade-in duration-150"
+                    >
                       <div className="px-3.5 py-2.5 border-b border-[#293B55]/70 mb-1.5">
                         <div className="font-semibold text-white">{profile.fullName}</div>
                         <div className="text-xs text-[#AAB6C8] truncate">{profile.email}</div>
@@ -897,49 +909,58 @@ export const SettingsPage: React.FC = () => {
                   <div className="space-y-2.5 pt-2 border-t border-[#293B55]/70">
                     <div className="flex items-center justify-between text-xs text-[#AAB6C8]">
                       <span className="font-semibold">Active sessions</span>
-                      <span className="text-xs text-slate-500 font-mono">Demo Telemetry</span>
+                      <span className="text-xs text-slate-500 font-mono">
+                        {isGuest ? 'Demo Telemetry' : 'Current Browser'}
+                      </span>
                     </div>
 
                     {/* Device 1 */}
                     <div
-                      onClick={() => setActiveSessionDetailModal('Device 1: Current Desktop Browser')}
+                      onClick={() => setActiveSessionDetailModal('Current Desktop Browser Session')}
                       className="flex items-center justify-between p-3 rounded-xl bg-[#101A2D] border border-[#293B55] hover:border-[#3B4F6E] text-xs sm:text-sm cursor-pointer transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <Laptop className="w-5 h-5 text-[#35C987]" />
                         <div>
-                          <div className="font-semibold text-white">Device 1 (Current Session)</div>
-                          <div className="text-xs text-[#AAB6C8]">Location: Desktop &bull; Active Now</div>
+                          <div className="font-semibold text-white">Current Browser Session</div>
+                          <div className="text-xs text-[#AAB6C8]">Status: Active Now</div>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-[#AAB6C8]" />
                     </div>
 
-                    {/* Device 2 */}
-                    <div
-                      onClick={() => setActiveSessionDetailModal('Device 2: Mobile Client (Demo Sync)')}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#101A2D] border border-[#293B55] hover:border-[#3B4F6E] text-xs sm:text-sm cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Smartphone className="w-5 h-5 text-[#AAB6C8]" />
-                        <div>
-                          <div className="font-semibold text-white">Device 2 setup</div>
-                          <div className="text-xs text-[#AAB6C8]">Location: Mobile Phone &bull; Demo Sync</div>
+                    {isGuest && (
+                      <div
+                        onClick={() => setActiveSessionDetailModal('Device 2: Mobile Client (Demo Sync)')}
+                        className="flex items-center justify-between p-3 rounded-xl bg-[#101A2D] border border-[#293B55] hover:border-[#3B4F6E] text-xs sm:text-sm cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Smartphone className="w-5 h-5 text-[#AAB6C8]" />
+                          <div>
+                            <div className="font-semibold text-white">Device 2 setup</div>
+                            <div className="text-xs text-[#AAB6C8]">Location: Mobile Phone &bull; Demo Sync</div>
+                          </div>
                         </div>
+                        <ChevronRight className="w-4 h-4 text-[#AAB6C8]" />
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#AAB6C8]" />
-                    </div>
+                    )}
                   </div>
 
-                  {/* Two-factor authentication setting (Clear DEMO Labeling) */}
+                  {/* Two-factor authentication setting */}
                   <div className="pt-2.5 border-t border-[#293B55]/70 flex items-center justify-between">
                     <div>
                       <div className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
                         <span>Two-factor authentication</span>
-                        <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">DEMO</span>
+                        {isGuest && (
+                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                            DEMO
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-[#AAB6C8]">
-                        {twoFactorSimulated ? 'Simulated (Demo Mode)' : 'Disabled'}
+                        {isGuest
+                          ? (twoFactorSimulated ? 'Simulated (Demo Mode)' : 'Disabled')
+                          : 'Managed via account authentication (OAuth / Email)'}
                       </div>
                     </div>
                     <button
@@ -953,7 +974,7 @@ export const SettingsPage: React.FC = () => {
                       }}
                       className="px-3.5 py-1.5 rounded-xl bg-[#101A2D] hover:bg-[#1E2E48] border border-[#293B55] text-xs sm:text-sm text-white font-semibold transition-colors"
                     >
-                      {twoFactorSimulated ? 'Manage' : 'Enable'}
+                      {isGuest && twoFactorSimulated ? 'Manage' : 'Details'}
                     </button>
                   </div>
 
@@ -1451,14 +1472,14 @@ export const SettingsPage: React.FC = () => {
               <div className="p-3.5 rounded-xl bg-[#101A2D] border border-[#293B55] space-y-2.5">
                 <div className="font-semibold text-white">{activeSessionDetailModal}</div>
                 <div className="text-xs text-[#AAB6C8]">
-                  IP Address: 127.0.0.1 (Localhost / Sandbox Environment)
+                  Environment: {isGuest ? 'Guest Demo Workspace' : 'Authenticated Live Session'}
                 </div>
                 <div className="text-xs text-[#AAB6C8]">
-                  Browser: Current Chromium Runtime
+                  Browser: Current Browser Runtime
                 </div>
                 <div className="text-xs text-[#35C987] flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#35C987] animate-pulse" />
-                  Authenticated in DevFlow Sandbox Session
+                  {isGuest ? 'Active in Demo Session' : 'Authenticated Session Active'}
                 </div>
               </div>
 
@@ -1500,7 +1521,9 @@ export const SettingsPage: React.FC = () => {
               <div className="p-3.5 rounded-xl bg-[#101A2D] border border-[#293B55] space-y-2.5">
                 <div className="flex justify-between">
                   <span className="text-[#AAB6C8]">Workspace Tier:</span>
-                  <span className="font-semibold text-white">DevFlow Enterprise (Sandbox)</span>
+                  <span className="font-semibold text-white">
+                    {isGuest ? 'DevFlow Demo Workspace' : 'DevFlow Live Workspace'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#AAB6C8]">Organization:</span>
@@ -1511,8 +1534,10 @@ export const SettingsPage: React.FC = () => {
                   <span className="text-white">{account.currency}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#AAB6C8]">Monitored Repository:</span>
-                  <span className="text-white truncate max-w-[200px]">northstar-studio/payment-gateway</span>
+                  <span className="text-[#AAB6C8]">GitHub Integration:</span>
+                  <span className="text-white">
+                    {isGuest ? 'northstar-studio/payment-gateway (Demo)' : user?.githubConnected ? `@${user.githubUsername || 'connected'}` : 'Managed in Integrations'}
+                  </span>
                 </div>
               </div>
 

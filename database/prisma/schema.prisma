@@ -170,6 +170,8 @@ enum ActivityAction {
   MANUAL_HOLD_APPLIED
   MANUAL_HOLD_CLEARED
   RECONCILIATION_RESOLVED
+  GITHUB_REPO_CONNECTED
+  GITHUB_REPO_SYNCED
 }
 
 enum NotificationType {
@@ -184,6 +186,9 @@ enum NotificationType {
   PAYMENT_REFUNDED
   PAYOUT_DISBURSED
   SYSTEM_ALERT
+  OPPORTUNITY_APPLIED
+  APPLICATION_STATUS_UPDATED
+  TALENT_INVITATION
 }
 
 model User {
@@ -196,6 +201,8 @@ model User {
   role               Role         @default(FREELANCER)
   githubId           String?      @unique
   githubAccessToken  String?      // AES-256-GCM encrypted
+  githubUsername     String?
+  githubConnectedAt  DateTime?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
@@ -216,6 +223,15 @@ model User {
   accountLinkingChallenges AccountLinkingChallenge[]
   notifications      Notification[]
   activityLogs       ActivityLog[]
+
+  // Resume Studio & Talent Marketplace Relations
+  developerProfile       DeveloperProfile?
+  resumes                DeveloperResume[]
+  resumeFiles            ResumeFile[]
+  clientOpportunities    MarketplaceOpportunity[] @relation("ClientOpportunities")
+  opportunityApplications OpportunityApplication[] @relation("DeveloperApplications")
+  savedOpportunities     SavedOpportunity[]
+  talentMatches          TalentMatchResult[]      @relation("ClientTalentMatches")
 
   @@map("users")
 }
@@ -257,6 +273,9 @@ model OAuthState {
   id                 String       @id @default(uuid())
   stateHash          String       @unique // SHA-256
   pkceVerifier       String?      // AES-256-GCM encrypted
+  initiatingUserId   String?
+  purpose            String?      @default("LOGIN")
+  returnPath         String?
   expiresAt          DateTime
   usedAt             DateTime?
   createdAt          DateTime     @default(now())
@@ -313,9 +332,18 @@ model Project {
   createdById        String
   clientId           String?
   leadDeveloperId    String?
-  githubRepoOwner    String?
-  githubRepoName     String?
-  isArchived         Boolean         @default(false)
+  githubRepoOwner         String?
+  githubRepoName          String?
+  githubDefaultBranch     String?
+  githubVisibility        String?
+  githubSyncedAt          DateTime?
+  githubSyncStatus        String?
+  githubSyncError         String?
+  githubLastCommitSha     String?
+  githubLastCommitMessage String?
+  githubLastCommitAt      DateTime?
+  githubCachedData        Json?
+  isArchived              Boolean         @default(false)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
@@ -327,10 +355,12 @@ model Project {
   milestones         Milestone[]
   aiAnalyses         AIAnalysis[]
   activityLogs       ActivityLog[]
+  marketplaceOpportunities MarketplaceOpportunity[]
 
   @@index([createdById])
   @@index([clientId])
   @@index([leadDeveloperId])
+  @@index([githubRepoOwner, githubRepoName])
   @@map("projects")
 }
 
@@ -657,4 +687,324 @@ model ActivityLog {
 
   @@index([projectId, createdAt(sort: Desc)])
   @@map("activity_logs")
+}
+
+// =========================================================================
+// FEATURE 1: DEVELOPER RESUME STUDIO & CAREER PROFILE
+// =========================================================================
+
+enum ResumeParseStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  NEEDS_REVIEW
+  FAILED
+}
+
+enum ProfileVisibility {
+  PRIVATE
+  MARKETPLACE
+  PUBLIC
+}
+
+enum DeveloperAvailability {
+  AVAILABLE_NOW
+  OPEN_TO_OFFERS
+  PART_TIME
+  UNAVAILABLE
+}
+
+enum SkillSource {
+  SELF_DECLARED
+  RESUME_EXTRACTED
+  GITHUB_OBSERVED
+}
+
+model DeveloperProfile {
+  id                        String                @id @default(uuid())
+  userId                    String                @unique
+  displayName               String
+  headline                  String?
+  summary                   String?
+  yearsOfExperience         Int?
+  availability              DeveloperAvailability @default(OPEN_TO_OFFERS)
+  hourlyRateMin             Decimal?              @db.Decimal(10, 2)
+  hourlyRateMax             Decimal?              @db.Decimal(10, 2)
+  currency                  String                @default("USD") @db.VarChar(3)
+  location                  String?
+  timezone                  String?
+  portfolioUrl              String?
+  linkedinUrl               String?
+  githubProfileUrl          String?
+  visibility                ProfileVisibility     @default(PRIVATE)
+  shareContactEmail         Boolean               @default(false)
+  shareGitHubRepos          Boolean               @default(true)
+  allowClientResumeDownload Boolean               @default(false)
+  activeResumeId            String?
+  selectedTemplateId        String                @default("software-engineer")
+  templateDraftJson         Json?
+  completenessScore         Int                   @default(0)
+  lastReviewedAt            DateTime?
+  publishedAt               DateTime?
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+
+  user                      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumes                   DeveloperResume[]
+  skills                    DeveloperSkill[]
+  portfolioProjects         PortfolioProject[]
+  applications              OpportunityApplication[]
+  talentMatches             TalentMatchResult[]
+
+  @@index([visibility, availability])
+  @@map("developer_profiles")
+}
+
+model DeveloperResume {
+  id                    String            @id @default(uuid())
+  profileId             String
+  userId                String
+  versionNumber         Int               @default(1)
+  isPrimary             Boolean           @default(false)
+  isArchived            Boolean           @default(false)
+  parseStatus           ResumeParseStatus @default(PENDING)
+  parseError            String?
+  parserMethod          String?
+  aiModelName           String?
+  extractionConfidence  Int               @default(0)
+  lowConfidenceFields   String[]          @default([])
+  extractedTextExcerpt  String?
+  extractedData         Json?
+  approvedData          Json?
+  reviewedByDeveloper   Boolean           @default(false)
+  reviewedAt            DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  profile               DeveloperProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file                  ResumeFile?
+  applications          OpportunityApplication[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([profileId, isPrimary])
+  @@map("developer_resumes")
+}
+
+model ResumeFile {
+  id               String          @id @default(uuid())
+  resumeId         String          @unique
+  userId           String
+  storageKey       String          @unique
+  originalName     String
+  detectedMimeType String
+  declaredMimeType String
+  fileExtension    String          @db.VarChar(16)
+  sizeBytes        Int
+  sha256Hash       String          @db.VarChar(64)
+  createdAt        DateTime        @default(now())
+
+  resume           DeveloperResume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sha256Hash])
+  @@map("resume_files")
+}
+
+model DeveloperSkill {
+  id             String           @id @default(uuid())
+  profileId      String
+  name           String
+  normalizedName String
+  category       String           @default("general")
+  source         SkillSource      @default(SELF_DECLARED)
+  yearsUsed      Int?
+  proficiency    String?
+  confidence     Int?
+  needsReview    Boolean          @default(false)
+  isApproved     Boolean          @default(true)
+  sourceExcerpt  String?
+  createdAt      DateTime         @default(now())
+
+  profile        DeveloperProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, normalizedName, source])
+  @@index([normalizedName])
+  @@map("developer_skills")
+}
+
+model PortfolioProject {
+  id           String           @id @default(uuid())
+  profileId    String
+  title        String
+  role         String?
+  summary      String
+  technologies String[]         @default([])
+  projectUrl   String?
+  repoFullName String?
+  startDate    String?
+  endDate      String?
+  source       String           @default("MANUAL")
+  isPublic     Boolean          @default(true)
+  displayOrder Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  profile      DeveloperProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, isPublic])
+  @@map("portfolio_projects")
+}
+
+// =========================================================================
+// FEATURE 2: AI-POWERED TALENT MARKETPLACE
+// =========================================================================
+
+enum OpportunityVisibility {
+  PRIVATE
+  DISCOVERABLE
+  INVITE_ONLY
+}
+
+enum OpportunityStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  FILLED
+  ARCHIVED
+}
+
+enum SkillRequirementLevel {
+  MANDATORY
+  PREFERRED
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEWING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model MarketplaceOpportunity {
+  id                    String                @id @default(uuid())
+  clientId              String
+  linkedProjectId       String?
+  title                 String
+  organizationName      String?
+  description           String
+  deliverablesSummary   String[]              @default([])
+  aiEnhancedDescription String?
+  aiApprovedByClient    Boolean               @default(false)
+  visibility            OpportunityVisibility @default(PRIVATE)
+  status                OpportunityStatus     @default(DRAFT)
+  experienceLevel       String?
+  minYearsExperience    Int?
+  budgetMin             Decimal?              @db.Decimal(12, 2)
+  budgetMax             Decimal?              @db.Decimal(12, 2)
+  currency              String                @default("USD") @db.VarChar(3)
+  expectedDuration      String?
+  locationPreference    String?
+  timezonePreference    String?
+  applicationDeadline   DateTime?
+  publishedAt           DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  client                User                  @relation("ClientOpportunities", fields: [clientId], references: [id], onDelete: Restrict)
+  linkedProject         Project?              @relation(fields: [linkedProjectId], references: [id], onDelete: SetNull)
+  skills                OpportunitySkill[]
+  applications          OpportunityApplication[]
+  savedBy               SavedOpportunity[]
+  talentMatches         TalentMatchResult[]
+
+  @@index([clientId, status])
+  @@index([visibility, status, createdAt(sort: Desc)])
+  @@map("marketplace_opportunities")
+}
+
+model OpportunitySkill {
+  id               String                @id @default(uuid())
+  opportunityId    String
+  name             String
+  normalizedName   String
+  category         String                @default("general")
+  requirementLevel SkillRequirementLevel @default(MANDATORY)
+
+  opportunity      MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, normalizedName])
+  @@index([normalizedName])
+  @@map("opportunity_skills")
+}
+
+model OpportunityApplication {
+  id                   String                 @id @default(uuid())
+  opportunityId        String
+  developerId          String
+  profileId            String?
+  resumeId             String?
+  status               ApplicationStatus      @default(SUBMITTED)
+  proposal             String
+  proposedBudget       Decimal?               @db.Decimal(12, 2)
+  currency             String                 @default("USD") @db.VarChar(3)
+  estimatedTimeline    String?
+  selectedPortfolioIds String[]               @default([])
+  allowResumeDownload  Boolean                @default(false)
+  clientNotes          String?
+  matchScoreSnapshot   Int?
+  matchSummarySnapshot Json?
+  submittedAt          DateTime               @default(now())
+  reviewedAt           DateTime?
+  withdrawnAt          DateTime?
+  updatedAt            DateTime               @updatedAt
+
+  opportunity          MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  developer            User                   @relation("DeveloperApplications", fields: [developerId], references: [id], onDelete: Restrict)
+  profile              DeveloperProfile?      @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  resume               DeveloperResume?       @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+
+  @@unique([opportunityId, developerId])
+  @@index([developerId, status])
+  @@index([opportunityId, status])
+  @@map("opportunity_applications")
+}
+
+model SavedOpportunity {
+  id            String                 @id @default(uuid())
+  userId        String
+  opportunityId String
+  createdAt     DateTime               @default(now())
+
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity   MarketplaceOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, opportunityId])
+  @@map("saved_opportunities")
+}
+
+model TalentMatchResult {
+  id               String                  @id @default(uuid())
+  clientId         String
+  opportunityId    String?
+  profileId        String
+  queryText        String
+  matchScore       Int?
+  insufficientData Boolean                 @default(false)
+  explanation      String
+  matchedSkills    Json                    @default("[]")
+  missingSkills    String[]                @default([])
+  aiModelName      String?
+  createdAt        DateTime                @default(now())
+
+  client           User                    @relation("ClientTalentMatches", fields: [clientId], references: [id], onDelete: Cascade)
+  opportunity      MarketplaceOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  profile          DeveloperProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt(sort: Desc)])
+  @@index([opportunityId, profileId])
+  @@map("talent_match_results")
 }

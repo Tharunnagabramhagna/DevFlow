@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -23,7 +24,15 @@ import {
   Plus,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
-import { GitHubCommitEvidence, GitHubPullRequestEvidence, ChangedFile } from '@/types';
+import {
+  GitHubCommitEvidence,
+  GitHubPullRequestEvidence,
+  ChangedFile,
+  Project,
+  Milestone,
+  ProjectGitHubActivity,
+  GitHubConnectionStatus,
+} from '@/types';
 
 // Octocat GitHub SVG Icon
 const GitHubIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
@@ -124,7 +133,8 @@ export interface UnifiedEvidenceItem {
 }
 
 export const EvidencePage: React.FC = () => {
-  const { isClient } = useAuth();
+  const navigate = useNavigate();
+  const { isClient, isGuest, user } = useAuth();
 
   // Navigation & UI States
   const { openMobileSidebar } = useSidebar();
@@ -136,14 +146,22 @@ export const EvidencePage: React.FC = () => {
 
   // Developer Submission & Client Governance States
   const [submitEvidenceModalOpen, setSubmitEvidenceModalOpen] = useState(false);
-  const [newEvidenceMilestone, setNewEvidenceMilestone] = useState('Alpha Launch v1.0');
+  const [newEvidenceMilestone, setNewEvidenceMilestone] = useState('');
   const [newEvidenceType, setNewEvidenceType] = useState<'Commit' | 'PR'>('PR');
   const [newEvidenceRef, setNewEvidenceRef] = useState('');
   const [newEvidenceNotes, setNewEvidenceNotes] = useState('');
-  const [approvedEvidenceIds, setApprovedEvidenceIds] = useState<string[]>(['commit-1']);
+  const [approvedEvidenceIds, setApprovedEvidenceIds] = useState<string[]>(isGuest ? ['commit-1'] : []);
   const [isReverifying, setIsReverifying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [customSubmissions, setCustomSubmissions] = useState<UnifiedEvidenceItem[]>([]);
+
+  // Workspace / Repository State
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [projectActivity, setProjectActivity] = useState<ProjectGitHubActivity | null>(null);
+  const [ghStatus, setGhStatus] = useState<GitHubConnectionStatus | null>(null);
+  const [syncingRepo, setSyncingRepo] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -171,6 +189,10 @@ export const EvidencePage: React.FC = () => {
 
   const handleSubmitEvidence = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuest) {
+      showToast('Sign in to a Developer workspace to record live evidence deliverables.');
+      return;
+    }
     if (!newEvidenceRef.trim()) return;
 
     const newId = `sub-${Date.now()}`;
@@ -179,27 +201,30 @@ export const EvidencePage: React.FC = () => {
         ? `PR: ${newEvidenceRef.trim()}`
         : `Commit: ${newEvidenceRef.trim().substring(0, 7)}`;
 
+    const targetRepo = activeProject?.githubRepo;
+    const refTrimmed = newEvidenceRef.trim();
+    const resolvedSourceUrl = refTrimmed.startsWith('http')
+      ? refTrimmed
+      : targetRepo
+      ? `https://github.com/${targetRepo}/${newEvidenceType === 'PR' ? 'pull/' : 'commit/'}${refTrimmed.replace(/^#/, '')}`
+      : 'https://github.com';
+
     const newItem: UnifiedEvidenceItem = {
       id: newId,
       type: newEvidenceType === 'PR' ? 'PR' : 'Commit',
       title: newTitle,
-      contributor: 'Alex Morgan',
-      contributorAvatar:
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces',
-      relatedMilestone: newEvidenceMilestone,
+      contributor: user?.name || 'Developer',
+      relatedMilestone: newEvidenceMilestone || milestones[0]?.title || 'Unassigned Milestone',
       timestamp: 'Just now',
-      status: 'Verified',
-      sourceUrl: 'https://github.com/northstar-studio/payment-gateway',
-      sha: newEvidenceRef.trim().substring(0, 12),
+      status: 'Pending Review',
+      sourceUrl: resolvedSourceUrl,
+      sha: refTrimmed.substring(0, 12),
       description:
         newEvidenceNotes.trim() ||
         'Submitted deliverable proof for autonomous AI verification against milestone criteria.',
-      changedFilesCount: 8,
-      aiRelevanceScore: 97,
-      aiConfidence: 'High',
-      aiExplanation:
-        'AST proofs confirmed syntax conformance against requirement acceptance criteria.',
-      relatedRequirements: ['Req 1.1: Secure Login', 'Req 1.2: Token Verification'],
+      changedFilesCount: 0,
+      aiExplanation: 'Awaiting AST verification against milestone requirements.',
+      relatedRequirements: [],
     };
 
     setCustomSubmissions((prev) => [newItem, ...prev]);
@@ -207,12 +232,12 @@ export const EvidencePage: React.FC = () => {
     setSubmitEvidenceModalOpen(false);
     setNewEvidenceRef('');
     setNewEvidenceNotes('');
-    showToast('Evidence deliverable submitted! AST verification confirmed.');
+    showToast('Deliverable reference queued. Run AI Verification on the milestone to score evidence.');
   };
 
   // Data Loading & Live State
-  const [, setCommits] = useState<GitHubCommitEvidence[]>([]);
-  const [, setPulls] = useState<GitHubPullRequestEvidence[]>([]);
+  const [commits, setCommits] = useState<GitHubCommitEvidence[]>([]);
+  const [pulls, setPulls] = useState<GitHubPullRequestEvidence[]>([]);
   const [loading, setLoading] = useState(true);
 
   // SHA copy states
@@ -222,35 +247,150 @@ export const EvidencePage: React.FC = () => {
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All' | 'Commits' | 'Pull Requests' | 'Issues'>('All');
-  const [milestoneFilter, setMilestoneFilter] = useState<string>('Alpha Launch v1.0');
+  const [milestoneFilter, setMilestoneFilter] = useState<string>('All');
   const [contributorFilter, setContributorFilter] = useState<string>('All');
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('This Month');
   const [activeFileTab, setActiveFileTab] = useState(0);
 
-  // Applied Filter Tags (default initialized matching reference image)
-  const [appliedFilters, setAppliedFilters] = useState<string[]>(['PRs', 'main', 'Alex']);
+  // Applied Filter Tags
+  const [appliedFilters, setAppliedFilters] = useState<string[]>(isGuest ? ['PRs', 'main', 'Alex'] : []);
 
-  // Selected Evidence Item (default to PR #102 as depicted in reference)
-  const [selectedId, setSelectedId] = useState<string>('pr-102');
+  // Selected Evidence Item
+  const [selectedId, setSelectedId] = useState<string>(isGuest ? 'pr-102' : '');
 
   // Load telemetry
   useEffect(() => {
+    setApprovedEvidenceIds(isGuest ? ['commit-1'] : []);
+    setAppliedFilters(isGuest ? ['PRs', 'main', 'Alex'] : []);
+    setMilestoneFilter('All');
+    setSelectedId(isGuest ? 'pr-102' : '');
     loadData();
-  }, []);
+  }, [isGuest]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [cRes, pRes] = await Promise.all([
+      const [pRes, mRes, cRes, prRes, statusRes] = await Promise.all([
+        devFlowApi.getProjects(),
+        devFlowApi.getMilestones(),
         devFlowApi.getGitHubCommits(),
         devFlowApi.getGitHubPullRequests(),
+        isGuest ? Promise.resolve({ data: null }) : devFlowApi.getGitHubStatus().catch(() => ({ data: null })),
       ]);
-      setCommits(cRes.data);
-      setPulls(pRes.data);
+      setProjects(pRes.data);
+      setMilestones(mRes.data);
+      setGhStatus(statusRes.data);
+      if (mRes.data.length > 0 && !newEvidenceMilestone) {
+        setNewEvidenceMilestone(mRes.data[0].title);
+      }
+
+      if (!isGuest) {
+        const linkedProj = pRes.data.find((p) => Boolean(p.githubRepo)) || pRes.data[0];
+        if (linkedProj) {
+          setSelectedProjectId((prev) => prev || linkedProj.id);
+          if (linkedProj.githubRepo) {
+            const actRes = await devFlowApi.getProjectGitHubActivity(linkedProj.id);
+            if (actRes.data) {
+              setProjectActivity(actRes.data);
+              setCommits(
+                actRes.data.commits.map((c) => ({
+                  sha: c.sha,
+                  message: c.message,
+                  author: c.author,
+                  authorAvatar: c.authorAvatar || undefined,
+                  date: c.date,
+                  url: c.url,
+                  filesChanged: c.filesChanged,
+                  additions: c.additions,
+                  deletions: c.deletions,
+                }))
+              );
+              setPulls(
+                actRes.data.pullRequests.map((pr) => ({
+                  id: String(pr.id),
+                  number: pr.number,
+                  title: pr.title,
+                  author: pr.author,
+                  authorAvatar: pr.authorAvatar || undefined,
+                  state: pr.state,
+                  url: pr.url,
+                  createdAt: pr.createdAt,
+                  mergedAt: pr.mergedAt || undefined,
+                  headRef: pr.headBranch || undefined,
+                  baseRef: pr.baseBranch || undefined,
+                }))
+              );
+            } else {
+              setProjectActivity(null);
+              setCommits(cRes.data);
+              setPulls(prRes.data);
+            }
+          } else {
+            setProjectActivity(null);
+            setCommits(cRes.data);
+            setPulls(prRes.data);
+          }
+        } else {
+          setProjectActivity(null);
+          setCommits(cRes.data);
+          setPulls(prRes.data);
+        }
+      } else {
+        setProjectActivity(null);
+        setCommits(cRes.data);
+        setPulls(prRes.data);
+      }
     } catch (err) {
       console.error('Failed to load evidence telemetry:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const activeProject = useMemo(
+    () => projects.find((p) => p.id === selectedProjectId) || projects.find((p) => Boolean(p.githubRepo)) || projects[0] || null,
+    [projects, selectedProjectId]
+  );
+
+  const handleSyncActiveRepo = async () => {
+    if (isGuest || !activeProject?.id) return;
+    setSyncingRepo(true);
+    try {
+      const updated = await devFlowApi.syncProjectRepo(activeProject.id, true);
+      setProjectActivity(updated);
+      setCommits(
+        updated.commits.map((c) => ({
+          sha: c.sha,
+          message: c.message,
+          author: c.author,
+          authorAvatar: c.authorAvatar || undefined,
+          date: c.date,
+          url: c.url,
+          filesChanged: c.filesChanged,
+          additions: c.additions,
+          deletions: c.deletions,
+        }))
+      );
+      setPulls(
+        updated.pullRequests.map((pr) => ({
+          id: String(pr.id),
+          number: pr.number,
+          title: pr.title,
+          author: pr.author,
+          authorAvatar: pr.authorAvatar || undefined,
+          state: pr.state,
+          url: pr.url,
+          createdAt: pr.createdAt,
+          mergedAt: pr.mergedAt || undefined,
+          headRef: pr.headBranch || undefined,
+          baseRef: pr.baseBranch || undefined,
+        }))
+      );
+      showToast(`Synced ${updated.repository?.fullName || activeProject.name} (${updated.commits.length} commits).`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Unable to sync repository.');
+    } finally {
+      setSyncingRepo(false);
     }
   };
 
@@ -438,9 +578,50 @@ export const EvidencePage: React.FC = () => {
     },
   ], []);
 
+  const liveEvidence: UnifiedEvidenceItem[] = useMemo(() => {
+    const projectLabel = activeProject?.name || 'Workspace Repository';
+    const prItems: UnifiedEvidenceItem[] = pulls.map((pr, idx) => ({
+      id: pr.id || `pr-${pr.number ?? idx}`,
+      type: 'PR',
+      title: pr.number ? `PR #${pr.number}: ${pr.title}` : pr.title,
+      contributor: pr.author || 'Developer',
+      contributorAvatar: pr.authorAvatar,
+      relatedMilestone: projectLabel,
+      timestamp: (pr.mergedAt || pr.createdAt)
+        ? new Date(pr.mergedAt || pr.createdAt!).toLocaleDateString()
+        : 'Synced',
+      status: pr.state === 'merged' ? 'Verified' : 'Pending Review',
+      sourceUrl: pr.url || (activeProject?.githubRepo ? `https://github.com/${activeProject.githubRepo}/pulls` : 'https://github.com'),
+      description: `${pr.state.toUpperCase()} pull request${pr.headRef && pr.baseRef ? ` (${pr.headRef} -> ${pr.baseRef})` : ''}`,
+      changedFilesCount: undefined,
+      aiExplanation: 'Synced from connected GitHub repository pull requests.',
+      relatedRequirements: [],
+    }));
+
+    const commitItems: UnifiedEvidenceItem[] = commits.map((c, idx) => ({
+      id: `commit-${c.sha || idx}`,
+      type: 'Commit',
+      title: c.message,
+      contributor: c.author || 'Developer',
+      contributorAvatar: c.authorAvatar,
+      relatedMilestone: projectLabel,
+      timestamp: c.date ? new Date(c.date).toLocaleDateString() : 'Synced',
+      status: 'Verified',
+      sourceUrl: c.url || (activeProject?.githubRepo ? `https://github.com/${activeProject.githubRepo}/commit/${c.sha}` : 'https://github.com'),
+      sha: c.sha,
+      description: c.message,
+      changedFilesCount: c.filesChanged ?? c.changedFiles?.length ?? undefined,
+      aiExplanation: 'Synced from connected GitHub repository commits.',
+      relatedRequirements: [],
+      rawCommit: c,
+    }));
+
+    return [...prItems, ...commitItems];
+  }, [pulls, commits, activeProject]);
+
   const allEvidence: UnifiedEvidenceItem[] = useMemo(
-    () => [...customSubmissions, ...defaultEvidence],
-    [customSubmissions, defaultEvidence]
+    () => (isGuest ? [...customSubmissions, ...defaultEvidence] : [...customSubmissions, ...liveEvidence]),
+    [isGuest, customSubmissions, defaultEvidence, liveEvidence]
   );
 
   // Filter evidence based on active filters
@@ -472,14 +653,54 @@ export const EvidencePage: React.FC = () => {
     });
   }, [allEvidence, searchQuery, typeFilter, milestoneFilter, contributorFilter]);
 
-  // Selected item reference
+  // Selected item reference (null-safe for non-guest empty state)
   const selectedItem = useMemo(() => {
+    if (allEvidence.length === 0) return null;
     return (
       allEvidence.find((item) => item.id === selectedId) ||
-      allEvidence[2] || // fallback to PR #102
-      allEvidence[0]
+      (isGuest ? allEvidence[2] : undefined) ||
+      allEvidence[0] ||
+      null
     );
-  }, [allEvidence, selectedId]);
+  }, [allEvidence, selectedId, isGuest]);
+
+  const evidenceMetrics = useMemo(() => {
+    if (isGuest) {
+      return {
+        commitsCount: 142,
+        pullsCount: 28,
+        issuesCount: 17,
+        verifiedReqs: 7,
+        totalReqs: 11,
+        reqPct: 64,
+      };
+    }
+    const allReqs = milestones.flatMap((m) => m.requirements || []);
+    const verifiedReqs = allReqs.filter((r) => r.satisfied).length;
+    const totalReqs = allReqs.length;
+    const reqPct = totalReqs > 0 ? Math.round((verifiedReqs / totalReqs) * 100) : 0;
+    return {
+      commitsCount: projectActivity?.commits.length ?? commits.length,
+      pullsCount: pulls.length,
+      issuesCount: 0,
+      verifiedReqs,
+      totalReqs,
+      reqPct,
+    };
+  }, [isGuest, milestones, projectActivity, commits.length, pulls.length]);
+
+  const uniqueContributors = useMemo(
+    () => Array.from(new Set(allEvidence.map((item) => item.contributor).filter(Boolean))),
+    [allEvidence]
+  );
+
+  const uniqueMilestoneFilters = useMemo(
+    () => Array.from(new Set([
+      ...milestones.map((m) => m.title),
+      ...allEvidence.map((item) => item.relatedMilestone),
+    ].filter(Boolean))),
+    [milestones, allEvidence]
+  );
 
   // Dummy changed file diff payload for detail / view diff modal
   const sampleDiffFile: ChangedFile = useMemo(() => ({
@@ -599,12 +820,25 @@ export const EvidencePage: React.FC = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
-                    <span className="font-semibold text-blue-400">PR #102</span> matched to Requirement 1.1 with 98% confidence.
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
-                    <span className="font-semibold text-emerald-400">Commit 8c92a10</span> verified against OAuth rotation spec.
-                  </div>
+                  {isGuest ? (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-blue-400">PR #102</span> matched to Requirement 1.1 with 98% confidence.
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-emerald-400">Commit 8c92a10</span> verified against OAuth rotation spec.
+                      </div>
+                    </>
+                  ) : allEvidence.length === 0 ? (
+                    <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-400">
+                      No repository sync alerts yet. Connect a GitHub repo to track commit and PR events.
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                      Synced <span className="font-semibold text-blue-400">{evidenceMetrics.commitsCount} commits</span> and{' '}
+                      <span className="font-semibold text-indigo-400">{evidenceMetrics.pullsCount} pull requests</span>.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -640,39 +874,103 @@ export const EvidencePage: React.FC = () => {
                 <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                   REPOSITORY OVERVIEW
                 </span>
-                <GitHubIcon className="w-5 h-5 text-slate-400" />
+                <div className="flex items-center gap-2">
+                  {!isGuest && activeProject?.githubRepo && (
+                    <button
+                      onClick={handleSyncActiveRepo}
+                      disabled={syncingRepo}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-[11px] text-blue-300 cursor-pointer disabled:opacity-60"
+                    >
+                      <RotateCw className={`w-3 h-3 ${syncingRepo ? 'animate-spin' : ''}`} />
+                      <span>{syncingRepo ? 'Syncing' : 'Sync'}</span>
+                    </button>
+                  )}
+                  <GitHubIcon className="w-5 h-5 text-slate-400" />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-3.5 text-xs sm:text-sm">
-                <div>
-                  <span className="text-xs text-slate-400 block">Connected Repository</span>
-                  <a
-                    href="https://github.com/northstar-studio/payment-gateway"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-semibold text-white hover:text-blue-400 transition-colors truncate block mt-0.5"
+              {isGuest ? (
+                <div className="grid grid-cols-2 gap-4 pt-3.5 text-xs sm:text-sm">
+                  <div>
+                    <span className="text-xs text-slate-400 block">Connected Repository (DEMO)</span>
+                    <a
+                      href="https://github.com/northstar-studio/payment-gateway"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-white hover:text-blue-400 transition-colors truncate block mt-0.5"
+                    >
+                      northstar-studio/payment-gateway
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Last Synchronization</span>
+                    <span className="font-semibold text-white mt-0.5 block">2 mins ago</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Branch</span>
+                    <span className="font-mono text-xs sm:text-sm font-semibold text-blue-400 bg-blue-950/40 px-2.5 py-1 rounded-md border border-blue-500/30 inline-block mt-1">
+                      main
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Connection Status</span>
+                    <span className="flex items-center gap-2 font-semibold text-emerald-400 mt-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Connected
+                    </span>
+                  </div>
+                </div>
+              ) : activeProject?.githubRepo ? (
+                <div className="grid grid-cols-2 gap-4 pt-3.5 text-xs sm:text-sm">
+                  <div>
+                    <span className="text-xs text-slate-400 block">Connected Repository</span>
+                    <a
+                      href={`https://github.com/${activeProject.githubRepo}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-white hover:text-blue-400 transition-colors truncate block mt-0.5"
+                    >
+                      {activeProject.githubRepo}
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Last Synchronization</span>
+                    <span className="font-semibold text-white mt-0.5 block">
+                      {projectActivity?.lastSyncedAt || activeProject.githubSyncedAt
+                        ? new Date(projectActivity?.lastSyncedAt || activeProject.githubSyncedAt!).toLocaleString()
+                        : 'Pending sync'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Branch</span>
+                    <span className="font-mono text-xs sm:text-sm font-semibold text-blue-400 bg-blue-950/40 px-2.5 py-1 rounded-md border border-blue-500/30 inline-block mt-1">
+                      {projectActivity?.repository?.defaultBranch || activeProject.githubDefaultBranch || 'main'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Connection Status</span>
+                    <span className="flex items-center gap-2 font-semibold text-emerald-400 mt-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                      {ghStatus?.connected ? 'Connected' : 'Repo Bound'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-4 space-y-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">No GitHub repository linked to workspace projects yet.</span>
+                    <span className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-500/30 text-amber-300 font-semibold">
+                      Not Connected
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => navigate('/integrations')}
+                    className="px-3 py-1.5 rounded-lg bg-[#152238] hover:bg-[#1E2E4E] border border-[#26344B] text-blue-400 font-semibold cursor-pointer"
                   >
-                    northstar-studio/payment-gateway
-                  </a>
+                    Connect Repository in Integrations
+                  </button>
                 </div>
-                <div>
-                  <span className="text-xs text-slate-400 block">Last Synchronization</span>
-                  <span className="font-semibold text-white mt-0.5 block">2 mins ago</span>
-                </div>
-                <div>
-                  <span className="text-xs text-slate-400 block">Branch</span>
-                  <span className="font-mono text-xs sm:text-sm font-semibold text-blue-400 bg-blue-950/40 px-2.5 py-1 rounded-md border border-blue-500/30 inline-block mt-1">
-                    main
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs text-slate-400 block">Connection Status</span>
-                  <span className="flex items-center gap-2 font-semibold text-emerald-400 mt-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Connected
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* PHASE 3: EVIDENCE SUMMARY CARD (7 COLS) */}
@@ -681,7 +979,9 @@ export const EvidencePage: React.FC = () => {
                 <span className="text-xs sm:text-[13px] font-bold text-slate-400 uppercase tracking-wider">
                   EVIDENCE SUMMARY
                 </span>
-                <span className="text-xs text-slate-400 font-mono">Sample Telemetry</span>
+                <span className="text-xs text-slate-400 font-mono">
+                  {isGuest ? 'Sample Telemetry (DEMO)' : activeProject?.githubRepo ? 'Live GitHub Sync' : 'Workspace Telemetry'}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-3.5">
@@ -691,7 +991,7 @@ export const EvidencePage: React.FC = () => {
                     <GitCommit className="w-4 h-4" />
                     <span className="text-xs text-slate-400 font-medium">Total Commits</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">142</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">{evidenceMetrics.commitsCount}</div>
                 </div>
 
                 {/* 2. Pull Requests */}
@@ -700,7 +1000,7 @@ export const EvidencePage: React.FC = () => {
                     <GitPullRequest className="w-4 h-4" />
                     <span className="text-xs text-slate-400 font-medium">Pull Requests</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">28</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">{evidenceMetrics.pullsCount}</div>
                 </div>
 
                 {/* 3. Issues */}
@@ -709,7 +1009,7 @@ export const EvidencePage: React.FC = () => {
                     <AlertCircle className="w-4 h-4" />
                     <span className="text-xs text-slate-400 font-medium">Issues</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">17</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">{evidenceMetrics.issuesCount}</div>
                 </div>
 
                 {/* 4. Linked Milestone Requirements */}
@@ -718,9 +1018,11 @@ export const EvidencePage: React.FC = () => {
                     <ListChecks className="w-4 h-4" />
                     <span className="text-xs text-slate-400 font-medium truncate">Linked Req.</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">7/11</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
+                    {evidenceMetrics.verifiedReqs}/{evidenceMetrics.totalReqs}
+                  </div>
                   <div className="w-full bg-[#152238] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#2563EB] h-full rounded-full" style={{ width: '64%' }} />
+                    <div className="bg-[#2563EB] h-full rounded-full" style={{ width: `${evidenceMetrics.reqPct}%` }} />
                   </div>
                 </div>
               </div>
@@ -781,10 +1083,10 @@ export const EvidencePage: React.FC = () => {
                   onChange={(e) => setMilestoneFilter(e.target.value)}
                   className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
-                  <option value="Alpha Launch v1.0">Alpha Launch v1.0</option>
-                  <option value="V1.1 Release">V1.1 Release</option>
-                  <option value="V1.2 Scaling">V1.2 Scaling</option>
                   <option value="All">All Milestones</option>
+                  {uniqueMilestoneFilters.map((label) => (
+                    <option key={label} value={label}>{label}</option>
+                  ))}
                 </select>
               </div>
 
@@ -796,7 +1098,9 @@ export const EvidencePage: React.FC = () => {
                   className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden"
                 >
                   <option value="All">Contributor: All</option>
-                  <option value="Contributor">Primary Contributor</option>
+                  {uniqueContributors.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
                 </select>
               </div>
 
@@ -873,7 +1177,9 @@ export const EvidencePage: React.FC = () => {
                     ) : filteredEvidence.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
-                          No evidence items match the filter criteria.
+                          {allEvidence.length === 0
+                            ? 'No repository commits or pull requests synced yet. Link a GitHub repository in Integrations or Projects.'
+                            : 'No evidence items match the filter criteria.'}
                         </td>
                       </tr>
                     ) : (
@@ -970,27 +1276,29 @@ export const EvidencePage: React.FC = () => {
               </div>
 
               {/* Table Footer */}
-              <div className="p-3 bg-[#0C1524] border-t border-[#26344B] flex items-center justify-between text-[11px] text-slate-400">
-                <span>Selected: {selectedItem.title}</span>
-                {selectedItem.sha && (
-                  <button
-                    onClick={() => handleCopySha(selectedItem.sha!)}
-                    className="flex items-center gap-1.5 text-blue-400 hover:text-white font-mono"
-                  >
-                    {copiedSha === selectedItem.sha ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-400" />
-                        <span className="text-emerald-400">SHA Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Copy SHA: {selectedItem.sha.substring(0, 7)}</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
+              {selectedItem && (
+                <div className="p-3 bg-[#0C1524] border-t border-[#26344B] flex items-center justify-between text-[11px] text-slate-400">
+                  <span className="truncate pr-3">Selected: {selectedItem.title}</span>
+                  {selectedItem.sha && (
+                    <button
+                      onClick={() => handleCopySha(selectedItem.sha!)}
+                      className="flex items-center gap-1.5 text-blue-400 hover:text-white font-mono shrink-0"
+                    >
+                      {copiedSha === selectedItem.sha ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span className="text-emerald-400">SHA Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy SHA: {selectedItem.sha.substring(0, 7)}</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* RIGHT 4 COLS: EVIDENCE DETAIL & MILESTONE MAPPING */}
@@ -1002,14 +1310,24 @@ export const EvidencePage: React.FC = () => {
                     EVIDENCE DETAIL
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono">
-                    {selectedItem.type}
+                    {selectedItem ? selectedItem.type : '—'}
                   </span>
                 </div>
 
+                {!selectedItem ? (
+                  <div className="py-6 text-center text-xs text-slate-400 space-y-2">
+                    <p>No evidence item selected.</p>
+                    {!isGuest && (
+                      <p className="text-[11px] text-slate-500">
+                        Sync a linked GitHub repository or submit a commit/PR reference to inspect proofs.
+                      </p>
+                    )}
+                  </div>
+                ) : (
                 <div className="space-y-3 text-xs">
                   {/* PR / Evidence Title */}
                   <div>
-                    <span className="text-[10px] text-slate-400 block font-semibold">PR Title</span>
+                    <span className="text-[10px] text-slate-400 block font-semibold">Title</span>
                     <span className="font-bold text-white text-sm leading-snug block mt-0.5">
                       {selectedItem.title}
                     </span>
@@ -1019,7 +1337,7 @@ export const EvidencePage: React.FC = () => {
                   <div>
                     <span className="text-[10px] text-slate-400 block font-semibold">Description</span>
                     <p className="text-slate-300 text-xs leading-relaxed mt-0.5">
-                      {selectedItem.description || 'Implement secure OAuth2 login flow with refresh tokens.'}
+                      {selectedItem.description || 'Synced from repository activity.'}
                     </p>
                   </div>
 
@@ -1028,7 +1346,7 @@ export const EvidencePage: React.FC = () => {
                     <span className="text-slate-400 text-xs">
                       Changed Files:{' '}
                       <strong className="text-white font-mono">
-                        {selectedItem.changedFilesCount || 12}
+                        {typeof selectedItem.changedFilesCount === 'number' ? selectedItem.changedFilesCount : '—'}
                       </strong>
                     </span>
                     <button
@@ -1044,7 +1362,7 @@ export const EvidencePage: React.FC = () => {
                     <span className="text-slate-400 text-xs">
                       Related Requirements:{' '}
                       <strong className="text-white font-mono">
-                        {selectedItem.relatedRequirements?.length || 3}
+                        {selectedItem.relatedRequirements ? selectedItem.relatedRequirements.length : 0}
                       </strong>
                     </span>
                     <button
@@ -1060,10 +1378,12 @@ export const EvidencePage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400 text-xs">AI Relevance Assessment:</span>
                       <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-                        <span>{selectedItem.aiRelevanceScore || 98}%</span>
-                        <span className="text-[10px] bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.2 rounded">
-                          {selectedItem.aiConfidence || 'High'}
-                        </span>
+                        <span>{typeof selectedItem.aiRelevanceScore === 'number' ? `${selectedItem.aiRelevanceScore}%` : 'Pending'}</span>
+                        {selectedItem.aiConfidence && (
+                          <span className="text-[10px] bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.2 rounded">
+                            {selectedItem.aiConfidence}
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -1073,7 +1393,7 @@ export const EvidencePage: React.FC = () => {
                     <span className="font-semibold text-slate-400 block mb-0.5">Explanation:</span>
                     <span>
                       {selectedItem.aiExplanation ||
-                        'Code changes directly address secure login requirement.'}
+                        'Run AI Verification on the target milestone to score this evidence item.'}
                     </span>
                   </div>
 
@@ -1144,6 +1464,7 @@ export const EvidencePage: React.FC = () => {
                     </div>
                   )}
                 </div>
+                )}
               </div>
 
               {/* PHASE 7: MILESTONE MAPPING CARD */}
@@ -1156,43 +1477,66 @@ export const EvidencePage: React.FC = () => {
                 </div>
 
                 <div className="space-y-3 text-xs">
-                  {/* Item 1 */}
-                  <div className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-white text-xs">Requirement 1.1</span>
-                      <span className="text-[10px] font-bold bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 px-2 py-0.2 rounded">
-                        Verified
-                      </span>
+                  {isGuest ? (
+                    <>
+                      <div className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white text-xs">Requirement 1.1 (DEMO)</span>
+                          <span className="text-[10px] font-bold bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 px-2 py-0.2 rounded">
+                            Verified
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-300 text-xs">Secure Login - Implemented</span>
+                          <button
+                            onClick={() => setSelectedId('pr-102')}
+                            className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
+                          >
+                            {isClient ? 'Inspect PR #102' : 'Link PR #102'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white text-xs">Requirement 2.3 (DEMO)</span>
+                          <span className="text-[10px] font-bold bg-amber-950/70 text-amber-400 border border-amber-500/30 px-2 py-0.2 rounded">
+                            Partially Met
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-300 text-xs">User Profile - Partially Met</span>
+                          <button
+                            onClick={() => setSelectedId('commit-1')}
+                            className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
+                          >
+                            {isClient ? 'Inspect Commit Diff' : 'Link Issue #45, Commits'}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : milestones.flatMap((m) => (m.requirements || []).slice(0, 2)).length === 0 ? (
+                    <div className="p-3 rounded-lg bg-[#0C1524] border border-[#26344B] text-slate-400 text-xs">
+                      No milestone requirements defined yet. Create a milestone to map evidence proofs.
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-300 text-xs">Secure Login - Implemented</span>
-                      <button
-                        onClick={() => setSelectedId('pr-102')}
-                        className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
-                      >
-                        {isClient ? 'Inspect PR #102' : 'Link PR #102'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Item 2 */}
-                  <div className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-white text-xs">Requirement 2.3</span>
-                      <span className="text-[10px] font-bold bg-amber-950/70 text-amber-400 border border-amber-500/30 px-2 py-0.2 rounded">
-                        Partially Met
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-300 text-xs">User Profile - Partially Met</span>
-                      <button
-                        onClick={() => setSelectedId('commit-1')}
-                        className="text-[11px] text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
-                      >
-                        {isClient ? 'Inspect Commit Diff' : 'Link Issue #45, Commits'}
-                      </button>
-                    </div>
-                  </div>
+                  ) : (
+                    milestones
+                      .flatMap((m) => m.requirements || [])
+                      .slice(0, 3)
+                      .map((req) => (
+                        <div key={req.id} className="p-2.5 rounded-lg bg-[#0C1524] border border-[#26344B] space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-white text-xs truncate pr-2">{req.title}</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.2 rounded border ${
+                              req.satisfied
+                                ? 'bg-emerald-950/70 text-emerald-400 border-emerald-500/30'
+                                : 'bg-amber-950/70 text-amber-400 border-amber-500/30'
+                            }`}>
+                              {req.satisfied ? 'verified' : 'pending'}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                  )}
                 </div>
 
                 {/* Decorative Sparkle Graphic from visual reference */}
@@ -1207,7 +1551,7 @@ export const EvidencePage: React.FC = () => {
         </main>
 
       {/* MODAL 1: VIEW DIFF MODAL */}
-      {diffModalOpen && (
+      {diffModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
           <div className="w-full max-w-3xl rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
@@ -1218,7 +1562,7 @@ export const EvidencePage: React.FC = () => {
                     Code Diff: {selectedItem.title}
                   </h3>
                   <span className="text-[11px] text-slate-400 font-mono">
-                    SHA: {selectedItem.sha || '8c92a10d4812f'} &bull; Branch: main
+                    {selectedItem.sha ? `SHA: ${selectedItem.sha} • ` : ''}Branch: {activeProject?.githubDefaultBranch || 'main'}
                   </span>
                 </div>
               </div>
@@ -1230,32 +1574,39 @@ export const EvidencePage: React.FC = () => {
               </button>
             </div>
 
-            {/* Changed Files Tabs */}
-            <div className="flex items-center gap-2 border-b border-[#26344B] pb-2 text-xs overflow-x-auto">
-              <button
-                onClick={() => setActiveFileTab(0)}
-                className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-colors ${
-                  activeFileTab === 0
-                    ? 'bg-blue-600 text-white font-bold'
-                    : 'bg-[#152238] text-slate-300 hover:bg-[#1E2E4E]'
-                }`}
-              >
-                oauth2.provider.ts (+44, -12)
-              </button>
-              <button
-                onClick={() => setActiveFileTab(1)}
-                className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-colors ${
-                  activeFileTab === 1
-                    ? 'bg-blue-600 text-white font-bold'
-                    : 'bg-[#152238] text-slate-300 hover:bg-[#1E2E4E]'
-                }`}
-              >
-                session.service.ts (+28, -4)
-              </button>
-            </div>
-
-            {/* Diff Lines Table */}
-            <DarkDiffViewer file={sampleDiffFile} />
+            {isGuest ? (
+              <>
+                <div className="flex items-center gap-2 border-b border-[#26344B] pb-2 text-xs overflow-x-auto">
+                  <button
+                    onClick={() => setActiveFileTab(0)}
+                    className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-colors ${
+                      activeFileTab === 0
+                        ? 'bg-blue-600 text-white font-bold'
+                        : 'bg-[#152238] text-slate-300 hover:bg-[#1E2E4E]'
+                    }`}
+                  >
+                    oauth2.provider.ts (+44, -12)
+                  </button>
+                  <button
+                    onClick={() => setActiveFileTab(1)}
+                    className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-colors ${
+                      activeFileTab === 1
+                        ? 'bg-blue-600 text-white font-bold'
+                        : 'bg-[#152238] text-slate-300 hover:bg-[#1E2E4E]'
+                    }`}
+                  >
+                    session.service.ts (+28, -4)
+                  </button>
+                </div>
+                <DarkDiffViewer file={sampleDiffFile} />
+              </>
+            ) : selectedItem.rawCommit?.changedFiles && selectedItem.rawCommit.changedFiles.length > 0 ? (
+              <DarkDiffViewer file={selectedItem.rawCommit.changedFiles[0]} />
+            ) : (
+              <div className="p-6 rounded-xl bg-[#0C1524] border border-[#26344B] text-xs text-slate-400 text-center">
+                Inline diff hunks are viewed directly on GitHub for synced repository commits and pull requests.
+              </div>
+            )}
 
             <div className="pt-2 flex justify-between items-center border-t border-[#26344B]">
               <a
@@ -1278,7 +1629,7 @@ export const EvidencePage: React.FC = () => {
       )}
 
       {/* MODAL 2: RELATED REQUIREMENTS LIST */}
-      {requirementsListModalOpen && (
+      {requirementsListModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
           <div className="w-full max-w-md rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
@@ -1291,19 +1642,28 @@ export const EvidencePage: React.FC = () => {
               </button>
             </div>
             <div className="space-y-2 text-xs">
-              {(selectedItem.relatedRequirements || [
-                'Req 1.1: Secure Login',
-                'Req 1.2: OAuth Providers',
-                'Req 1.3: Token Rotation',
-              ]).map((req, i) => (
-                <div
-                  key={i}
-                  className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] flex items-center justify-between"
-                >
-                  <span className="font-medium text-slate-200">{req}</span>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              {(isGuest
+                ? (selectedItem.relatedRequirements || [
+                    'Req 1.1: Secure Login',
+                    'Req 1.2: OAuth Providers',
+                    'Req 1.3: Token Rotation',
+                  ])
+                : (selectedItem.relatedRequirements || [])
+              ).length === 0 ? (
+                <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] text-slate-400">
+                  No milestone requirements explicitly linked to this evidence item yet.
                 </div>
-              ))}
+              ) : (
+                (selectedItem.relatedRequirements || []).map((req, i) => (
+                  <div
+                    key={i}
+                    className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] flex items-center justify-between"
+                  >
+                    <span className="font-medium text-slate-200">{req}</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  </div>
+                ))
+              )}
             </div>
             <div className="flex justify-end pt-2">
               <button
@@ -1340,15 +1700,21 @@ export const EvidencePage: React.FC = () => {
               <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2">
                 <div className="flex justify-between text-slate-400 text-[11px]">
                   <span>Scope:</span>
-                  <strong className="text-white">Alpha Launch v1.0 (7 of 11 Requirements Met)</strong>
+                  <strong className="text-white">
+                    {isGuest
+                      ? 'Alpha Launch v1.0 (7 of 11 Requirements Met)'
+                      : `${activeProject?.name || 'Workspace'} (${evidenceMetrics.verifiedReqs} of ${evidenceMetrics.totalReqs} Requirements Met)`}
+                  </strong>
                 </div>
                 <div className="flex justify-between text-slate-400 text-[11px]">
                   <span>Repository:</span>
-                  <strong className="text-white font-mono">northstar-studio/payment-gateway</strong>
+                  <strong className="text-white font-mono">
+                    {isGuest ? 'northstar-studio/payment-gateway' : activeProject?.githubRepo || 'Not connected'}
+                  </strong>
                 </div>
                 <div className="flex justify-between text-slate-400 text-[11px]">
                   <span>Auditor Engine:</span>
-                  <strong className="text-blue-400">Gemini 2.5 Flash + AST Parser</strong>
+                  <strong className="text-blue-400">DevFlow AI + AST Verifier</strong>
                 </div>
               </div>
             </div>
@@ -1437,10 +1803,18 @@ export const EvidencePage: React.FC = () => {
                   onChange={(e) => setNewEvidenceMilestone(e.target.value)}
                   className="w-full bg-[#0C1524] border border-[#26344B] rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-hidden cursor-pointer"
                 >
-                  <option value="Alpha Launch v1.0">Alpha Launch v1.0</option>
-                  <option value="Payment Gateway Integration">Payment Gateway Integration</option>
-                  <option value="Analytics Dashboard">Analytics Dashboard</option>
-                  <option value="API Modernization">API Modernization</option>
+                  {isGuest ? (
+                    <>
+                      <option value="Alpha Launch v1.0">Alpha Launch v1.0</option>
+                      <option value="Payment Gateway Integration">Payment Gateway Integration</option>
+                    </>
+                  ) : milestones.length === 0 ? (
+                    <option value="">No milestones created yet</option>
+                  ) : (
+                    milestones.map((m) => (
+                      <option key={m.id} value={m.title}>{m.title}</option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -1481,7 +1855,7 @@ export const EvidencePage: React.FC = () => {
                   required
                   placeholder={
                     newEvidenceType === 'PR'
-                      ? 'e.g. northstar-studio/payment-gateway/pull/103'
+                      ? 'e.g. https://github.com/owner/repo/pull/42 or #42'
                       : 'e.g. 7b91d4e231fa'
                   }
                   value={newEvidenceRef}

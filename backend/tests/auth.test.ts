@@ -209,4 +209,47 @@ describe('Phase 2: HTTP Route Scaffolding & Input Validation', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
+
+  it('CSRF Guard: allows loopback twin Origin header in non-production', async () => {
+    const clientUrl = new URL(env.CLIENT_URL);
+    const twinOrigin = `${clientUrl.protocol}//${clientUrl.hostname === 'localhost' ? '127.0.0.1' : 'localhost'}${clientUrl.port ? `:${clientUrl.port}` : ''}`;
+
+    const res = await request(app)
+      .post('/api/auth/logout')
+      .set('Origin', twinOrigin)
+      .set('X-Requested-With', 'XMLHttpRequest');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it('RegisterSchema normalizes DEVELOPER alias to FREELANCER', () => {
+    const parsed = RegisterSchema.safeParse({
+      email: 'dev-alias@example.com',
+      password: 'Password1!',
+      name: 'Alias Dev',
+      role: 'DEVELOPER',
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.role).toBe('FREELANCER');
+    }
+  });
+
+  it('POST /api/auth/register returns 503 DATABASE_UNAVAILABLE when database is unreachable', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .set('Origin', env.CLIENT_URL)
+      .set('X-Requested-With', 'XMLHttpRequest')
+      .send({
+        email: 'db-down-test@example.com',
+        password: 'Password1!',
+        name: 'DB Down User',
+        role: 'CLIENT',
+      });
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('DATABASE_UNAVAILABLE');
+  });
 });

@@ -1,11 +1,18 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { devFlowApi } from '@/services/api';
+import {
+  GitHubConnectionStatus,
+  GitHubRepositorySummary,
+  DeveloperTelemetry,
+  Project,
+} from '@/types';
 import { GuestGuardModal } from '@/components/common';
 import {
-            Settings,
-        Bell,
+  Settings,
+  Bell,
   X,
   Menu,
   Check,
@@ -17,6 +24,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   Terminal,
+  Link2,
 } from 'lucide-react';
 
 // GitHub SVG Logo Icon
@@ -51,10 +59,11 @@ const PayPalLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
 
 export const IntegrationsPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Navigation & Layout States
   const { openMobileSidebar } = useSidebar();
-  const { user, isGuest, isClient, logout } = useAuth();
+  const { user, isGuest, isClient, logout, updateGitHubConnectionState } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
@@ -65,29 +74,175 @@ export const IntegrationsPage: React.FC = () => {
   const [viewLogsModalOpen, setViewLogsModalOpen] = useState(false);
   const [disconnectItem, setDisconnectItem] = useState<string | null>(null);
 
-  // Live Connections State
-  const [githubConnected, setGithubConnected] = useState(true);
-  const [paypalConnected, setPaypalConnected] = useState(true);
-  const [aiConnected, setAiConnected] = useState(true);
+  // Real Integration Telemetry & Connections State
+  const [loading, setLoading] = useState(true);
+  const [githubStatus, setGithubStatus] = useState<GitHubConnectionStatus>({
+    connected: false,
+    oauthConfigured: false,
+    webhookConfigured: false,
+    reauthRequired: false,
+    username: null,
+    githubId: null,
+    avatarUrl: null,
+    connectedAt: null,
+    scopes: [],
+    hasRepoScope: false,
+    githubApiReachable: false,
+  });
+  const [telemetry, setTelemetry] = useState<DeveloperTelemetry | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [repositories, setRepositories] = useState<GitHubRepositorySummary[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [selectedRepoName, setSelectedRepoName] = useState('');
+  const [busyAction, setBusyAction] = useState(false);
 
   // Toast Notification
-  const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ title, desc, type });
-    setTimeout(() => setToastMessage(null), 3500);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Webhook Event Stream (Transparent Sandbox Telemetry)
-  const webhookEvents = useMemo(() => [
-    { id: 'wh-1', event: 'GitHub push (northstar-studio/payment-gateway) - Verified [DEMO]', timestamp: '5 mins ago', status: 'Delivered', httpStatus: '200 OK' },
+  const userInitials = useMemo(() => {
+    if (isGuest) return 'DG';
+    const parts = (user?.name || 'Dev User').trim().split(/\s+/);
+    return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() || '').join('') || 'DU';
+  }, [isGuest, user?.name]);
+
+  const loadIntegrationsData = async () => {
+    setLoading(true);
+    try {
+      if (isGuest) {
+        setGithubStatus({
+          connected: true,
+          oauthConfigured: false,
+          webhookConfigured: false,
+          reauthRequired: false,
+          username: 'demo-developer',
+          githubId: null,
+          avatarUrl: null,
+          connectedAt: null,
+          scopes: ['read:user', 'repo'],
+          hasRepoScope: true,
+          githubApiReachable: false,
+        });
+        setLoading(false);
+        return;
+      }
+
+      const [ghRes, telRes, projRes] = await Promise.all([
+        devFlowApi.getGitHubStatus(),
+        devFlowApi.getTelemetry('30d'),
+        devFlowApi.getProjects(),
+      ]);
+
+      setGithubStatus(ghRes.data);
+      updateGitHubConnectionState(ghRes.data.connected);
+      setTelemetry(telRes.data);
+      setProjects(projRes.data);
+      if (projRes.data.length > 0 && !selectedProjectId) {
+        setSelectedProjectId(projRes.data[0].id);
+        setSelectedRepoName(projRes.data[0].githubRepo || '');
+      }
+
+      if (ghRes.data.connected && !ghRes.data.reauthRequired) {
+        const repoRes = await devFlowApi.getGitHubRepositories({ perPage: 30 }).catch(() => ({
+          data: [] as GitHubRepositorySummary[],
+          hasMore: false,
+        }));
+        setRepositories(repoRes.data || []);
+      } else {
+        setRepositories([]);
+      }
+    } catch (err) {
+      console.error('Failed to load integrations:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadIntegrationsData();
+  }, [isGuest]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || window.location.search);
+    const ghState = params.get('github');
+    const ghError = params.get('github_error');
+    if (ghState === 'connected') {
+      showToast('GitHub Connected', 'Your GitHub account is linked. Select a repository below to bind a project.', 'success');
+      updateGitHubConnectionState(true);
+      loadIntegrationsData();
+      navigate('/integrations', { replace: true });
+    } else if (ghError) {
+      showToast('GitHub Connection Failed', ghError, 'error');
+      navigate('/integrations', { replace: true });
+    }
+  }, [location.search]);
+
+  const handleConnectGitHub = async () => {
+    if (isGuest) {
+      setManageModal(null);
+      setGuardActionTitle('Connect GitHub Account');
+      setIsGuestGuardOpen(true);
+      return;
+    }
+    setBusyAction(true);
+    try {
+      const { authorizeUrl } = await devFlowApi.initiateGitHubConnect('/integrations');
+      window.location.href = authorizeUrl;
+    } catch (err) {
+      showToast('GitHub OAuth Unavailable', err instanceof Error ? err.message : 'Unable to start GitHub OAuth.', 'error');
+      setBusyAction(false);
+    }
+  };
+
+  const handleBindProjectRepo = async () => {
+    if (isGuest || !selectedProjectId || !selectedRepoName.trim()) return;
+    setBusyAction(true);
+    try {
+      const result = await devFlowApi.connectProjectRepo(selectedProjectId, selectedRepoName.trim());
+      showToast('Repository Linked', `Linked ${result.repository?.fullName || selectedRepoName.trim()} (${result.commits.length} commits synced).`, 'success');
+      await loadIntegrationsData();
+    } catch (err) {
+      showToast('Link Failed', err instanceof Error ? err.message : 'Failed to connect repository', 'error');
+    } finally {
+      setBusyAction(false);
+    }
+  };
+
+  const handleSyncProject = async (projectId: string) => {
+    if (isGuest) return;
+    setBusyAction(true);
+    try {
+      const res = await devFlowApi.syncProjectRepo(projectId, true);
+      showToast('Repository Synced', `Synced ${res.repository?.fullName || res.projectTitle} (${res.commits.length} commits).`, 'success');
+      await loadIntegrationsData();
+    } catch (err) {
+      showToast('Sync Failed', err instanceof Error ? err.message : 'Unable to sync repository', 'error');
+    } finally {
+      setBusyAction(false);
+    }
+  };
+
+  const demoWebhookEvents = useMemo(() => [
+    { id: 'wh-1', event: 'GitHub push (northstar-studio/payment-gateway) - Sample [DEMO]', timestamp: '5 mins ago', status: 'Delivered', httpStatus: '200 OK' },
     { id: 'wh-2', event: 'PayPal sandbox invoice webhook (INV-2026-0842) - Sample [DEMO]', timestamp: '12 mins ago', status: 'Delivered', httpStatus: '200 OK' },
-    { id: 'wh-3', event: 'GitHub pull_request closed (Milestone #2) - Verified [DEMO]', timestamp: '24 mins ago', status: 'Delivered', httpStatus: '200 OK' },
-    { id: 'wh-4', event: 'PayPal payout notification - Sandbox [DEMO]', timestamp: '1 hour ago', status: 'Sent', httpStatus: '200 OK' },
-    { id: 'wh-5', event: 'AI code verification payload - Complete [DEMO]', timestamp: '3 hours ago', status: 'Delivered', httpStatus: '200 OK' },
+    { id: 'wh-3', event: 'GitHub pull_request closed (Milestone #2) - Sample [DEMO]', timestamp: '24 mins ago', status: 'Delivered', httpStatus: '200 OK' },
   ], []);
 
-  const handleDisconnect = () => {
+  const linkedProjects = useMemo(
+    () => projects.filter((p) => Boolean(p.githubRepo && p.githubRepo.trim().length > 0)),
+    [projects]
+  );
+
+  const paypalConfigured = isGuest ? true : Boolean(telemetry?.integrations?.paypal?.configured);
+  const paypalMode = isGuest ? 'sandbox' : (telemetry?.integrations?.paypal?.mode || 'sandbox');
+  const aiLiveMode = isGuest ? false : Boolean(telemetry?.integrations?.ai?.liveMode);
+  const aiProviderName = isGuest ? 'Demo Preview Engine' : (telemetry?.integrations?.ai?.provider || 'simulation');
+
+  const handleDisconnect = async () => {
     if (isGuest) {
       setDisconnectItem(null);
       setGuardActionTitle(`Disconnect ${disconnectItem || 'Integration'}`);
@@ -95,15 +250,19 @@ export const IntegrationsPage: React.FC = () => {
       return;
     }
     if (!disconnectItem) return;
-    if (disconnectItem === 'PayPal') {
-      setPaypalConnected(false);
-      showToast('PayPal Disconnected', 'Sandbox invoice settlement listener deactivated.', 'info');
-    } else if (disconnectItem === 'AI Provider') {
-      setAiConnected(false);
-      showToast('AI Provider Disconnected', 'Autonomous AST evaluation worker stopped.', 'info');
-    } else if (disconnectItem === 'GitHub') {
-      setGithubConnected(false);
-      showToast('GitHub Disconnected', 'Repository commit listener paused.', 'info');
+    if (disconnectItem === 'GitHub') {
+      setBusyAction(true);
+      try {
+        await devFlowApi.disconnectGitHub();
+        showToast('GitHub Disconnected', 'Encrypted GitHub OAuth credentials were removed from your profile.', 'info');
+        await loadIntegrationsData();
+      } catch (err) {
+        showToast('Disconnect Failed', err instanceof Error ? err.message : 'Failed to disconnect GitHub.', 'error');
+      } finally {
+        setBusyAction(false);
+      }
+    } else {
+      showToast('Server Managed', `${disconnectItem} environment configuration is managed on the backend.`, 'info');
     }
     setDisconnectItem(null);
   };
@@ -111,7 +270,7 @@ export const IntegrationsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* PAGE HEADER */}
-        <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
+        <header className="relative z-30 h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
@@ -125,7 +284,7 @@ export const IntegrationsPage: React.FC = () => {
                   {isClient ? 'Integrations & Merchant Services' : 'Integrations & Webhooks'}
                 </h1>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider font-sans whitespace-nowrap">
-                  SANDBOX
+                  {isGuest ? 'DEMO MODE' : 'LIVE WORKSPACE'}
                 </span>
               </div>
               <p className="font-sans text-xs text-slate-400 mt-1 hidden sm:block">
@@ -169,12 +328,31 @@ export const IntegrationsPage: React.FC = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-xs text-emerald-300 border border-emerald-500/20">
-                    <span className="font-semibold">GitHub Synced:</span> 15 commits verified on northstar-studio/payment-gateway.
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-blue-500/10 text-xs text-blue-300 border border-blue-500/20">
-                    <span className="font-semibold">PayPal Webhook:</span> Sandbox listener active and authenticated.
-                  </div>
+                  {isGuest ? (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-emerald-500/10 text-xs text-emerald-300 border border-emerald-500/20">
+                        <span className="font-semibold">Demo GitHub Sync:</span> Sample repository preview active.
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-blue-500/10 text-xs text-blue-300 border border-blue-500/20">
+                        <span className="font-semibold">Demo PayPal:</span> Sandbox preview active.
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-[#0D1526] text-xs text-slate-300 border border-[#26344B]">
+                        <span className="font-semibold text-white">GitHub:</span>{' '}
+                        {githubStatus.connected
+                          ? `Connected as @${githubStatus.username || 'github-user'}`
+                          : githubStatus.oauthConfigured
+                            ? 'Not connected yet'
+                            : 'OAuth credentials missing in backend .env'}
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#0D1526] text-xs text-slate-300 border border-[#26344B]">
+                        <span className="font-semibold text-white">PayPal:</span>{' '}
+                        {paypalConfigured ? `Configured (${paypalMode})` : 'Not configured in backend .env'}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -185,7 +363,7 @@ export const IntegrationsPage: React.FC = () => {
               className="flex items-center gap-1.5 cursor-pointer p-1 rounded-xl hover:bg-[#1E2E4E] transition-colors"
             >
               <div className="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/40 text-xs font-bold text-blue-400 flex items-center justify-center">
-                AM
+                {userInitials}
               </div>
               <ChevronDown className="w-4 h-4 text-slate-400" />
             </div>
@@ -194,6 +372,26 @@ export const IntegrationsPage: React.FC = () => {
 
         {/* Scrollable Dashboard Body */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
+          {toastMessage && (
+            <div
+              className={`rounded-xl px-4 py-3 border text-xs flex items-center justify-between ${
+                toastMessage.type === 'error'
+                  ? 'bg-rose-950/60 border-rose-700/60 text-rose-200'
+                  : toastMessage.type === 'info'
+                    ? 'bg-blue-950/60 border-blue-700/60 text-blue-200'
+                    : 'bg-emerald-950/60 border-emerald-700/60 text-emerald-200'
+              }`}
+            >
+              <div>
+                <span className="font-bold mr-2">{toastMessage.title}:</span>
+                <span>{toastMessage.desc}</span>
+              </div>
+              <button onClick={() => setToastMessage(null)} className="text-slate-300 hover:text-white ml-4">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* CONNECTED INTEGRATIONS (3 CARDS IN A ROW) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -201,8 +399,18 @@ export const IntegrationsPage: React.FC = () => {
                 CONNECTED INTEGRATIONS
               </span>
               <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                All 3 demo services operational
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    isGuest || githubStatus.connected || paypalConfigured || aiLiveMode
+                      ? 'bg-emerald-400'
+                      : 'bg-amber-400'
+                  }`}
+                />
+                {isGuest
+                  ? 'Demo Sandbox Preview Active'
+                  : loading
+                    ? 'Checking backend integration status...'
+                    : `${[githubStatus.connected, paypalConfigured, aiLiveMode].filter(Boolean).length} of 3 live services configured`}
               </span>
             </div>
 
@@ -217,14 +425,22 @@ export const IntegrationsPage: React.FC = () => {
                       </div>
                       <div>
                         <h3 className="font-heading font-bold text-base text-white">GITHUB</h3>
-                        {githubConnected ? (
+                        {githubStatus.connected && !githubStatus.reauthRequired ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                            Connected
+                            {isGuest ? 'Connected (Demo)' : `Connected${githubStatus.username ? ` (@${githubStatus.username})` : ''}`}
+                          </span>
+                        ) : githubStatus.reauthRequired ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            Re-auth Required
+                          </span>
+                        ) : !githubStatus.oauthConfigured && !isGuest ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                            OAuth Not Configured
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            Disconnected
+                            Not Connected
                           </span>
                         )}
                       </div>
@@ -233,23 +449,45 @@ export const IntegrationsPage: React.FC = () => {
 
                   <div className="text-xs sm:text-sm text-slate-400 space-y-2 pt-1">
                     <div>
-                      <span className="font-medium text-slate-300">Repository Access:</span>{' '}
-                      <span className="font-mono text-xs text-blue-300">northstar-studio/payment-gateway</span>
+                      <span className="font-medium text-slate-300">Linked Repositories:</span>{' '}
+                      <span className="font-mono text-xs text-blue-300">
+                        {isGuest
+                          ? 'northstar-studio/payment-gateway'
+                          : linkedProjects.length > 0
+                            ? `${linkedProjects.length} project repo${linkedProjects.length > 1 ? 's' : ''} linked`
+                            : 'None linked'}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-medium text-slate-300">Last Synchronisation:</span> 5 mins ago
+                      <span className="font-medium text-slate-300">Last Synchronisation:</span>{' '}
+                      {isGuest
+                        ? 'Demo fixture'
+                        : linkedProjects.find((p) => p.githubSyncedAt)?.githubSyncedAt
+                          ? new Date(linkedProjects.find((p) => p.githubSyncedAt)!.githubSyncedAt!).toLocaleString()
+                          : 'Never synced'}
                     </div>
                     <div>
-                      <span className="font-medium text-slate-300">Monitored Branches:</span>{' '}
-                      <span className="font-mono text-xs text-slate-300">main, develop</span>
+                      <span className="font-medium text-slate-300">OAuth Scopes:</span>{' '}
+                      <span className="font-mono text-xs text-slate-300">
+                        {githubStatus.scopes.length > 0 ? githubStatus.scopes.join(', ') : 'read:user, user:email, repo'}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-[#26344B] mt-5">
+                <div className="pt-4 border-t border-[#26344B] mt-5 flex items-center gap-2">
+                  {!isGuest && (!githubStatus.connected || githubStatus.reauthRequired) && (
+                    <button
+                      onClick={handleConnectGitHub}
+                      disabled={busyAction || !githubStatus.oauthConfigured}
+                      className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-xs sm:text-sm font-semibold text-white transition-colors cursor-pointer"
+                    >
+                      {githubStatus.oauthConfigured ? 'Connect GitHub' : 'Setup Needed'}
+                    </button>
+                  )}
                   <button
                     onClick={() => setManageModal('github')}
-                    className="w-full py-2.5 rounded-xl border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs sm:text-sm font-semibold text-slate-200 transition-colors"
+                    className="flex-1 py-2.5 rounded-xl border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs sm:text-sm font-semibold text-slate-200 transition-colors cursor-pointer"
                   >
                     Manage connection
                   </button>
@@ -265,14 +503,14 @@ export const IntegrationsPage: React.FC = () => {
                         <PayPalLogo className="w-7 h-7" />
                       </div>
                       <div>
-                        <h3 className="font-heading font-bold text-base text-white">PAYPAL SANDBOX</h3>
-                        {paypalConnected ? (
+                        <h3 className="font-heading font-bold text-base text-white">PAYPAL</h3>
+                        {paypalConfigured ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                            Active Sandbox
+                            {isGuest ? 'Demo Sandbox' : `Configured (${paypalMode})`}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            Disconnected
+                            Not Configured
                           </span>
                         )}
                       </div>
@@ -281,13 +519,16 @@ export const IntegrationsPage: React.FC = () => {
 
                   <div className="text-xs sm:text-sm text-slate-400 space-y-2 pt-1">
                     <div>
-                      <span className="font-medium text-slate-300">Invoice Integration:</span> Enabled (v2 REST API)
+                      <span className="font-medium text-slate-300">Invoice Integration:</span>{' '}
+                      {paypalConfigured ? 'Enabled (v2 REST API)' : 'Credentials missing in backend .env'}
                     </div>
                     <div>
-                      <span className="font-medium text-slate-300">Environment:</span> Developer Sandbox Mode
+                      <span className="font-medium text-slate-300">Environment:</span>{' '}
+                      {isGuest ? 'Demo Mode Preview' : `${paypalMode.toUpperCase()} (${paypalConfigured ? 'Ready' : 'Inactive'})`}
                     </div>
                     <div>
-                      <span className="font-medium text-slate-300">Settlement Listener:</span> Verified Webhook
+                      <span className="font-medium text-slate-300">Settlement Listener:</span>{' '}
+                      {paypalConfigured ? 'Webhook endpoint ready' : 'Awaiting PAYPAL_CLIENT_ID / SECRET'}
                     </div>
                   </div>
                 </div>
@@ -295,7 +536,7 @@ export const IntegrationsPage: React.FC = () => {
                 <div className="pt-4 border-t border-[#26344B] mt-5">
                   <button
                     onClick={() => setManageModal('paypal')}
-                    className="w-full py-2.5 rounded-xl border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs sm:text-sm font-semibold text-slate-200 transition-colors"
+                    className="w-full py-2.5 rounded-xl border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs sm:text-sm font-semibold text-slate-200 transition-colors cursor-pointer"
                   >
                     Manage connection
                   </button>
@@ -312,13 +553,13 @@ export const IntegrationsPage: React.FC = () => {
                       </div>
                       <div>
                         <h3 className="font-heading font-bold text-base text-white">AI PROVIDER</h3>
-                        {aiConnected ? (
+                        {aiLiveMode ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                            Active Engine
+                            Live Engine Ready
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            Disconnected
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                            {isGuest ? 'Demo Preview' : 'Simulation / Heuristic Fallback'}
                           </span>
                         )}
                       </div>
@@ -327,13 +568,14 @@ export const IntegrationsPage: React.FC = () => {
 
                   <div className="text-xs sm:text-sm text-slate-400 space-y-2 pt-1">
                     <div>
-                      <span className="font-medium text-slate-300">LLM Service:</span> DevFlow AI Engine v1.2
+                      <span className="font-medium text-slate-300">Provider:</span> {aiProviderName}
                     </div>
                     <div>
-                      <span className="font-medium text-slate-300">Model Policy:</span> Gemini 2.5 Flash + GPT-4o
+                      <span className="font-medium text-slate-300">Pipeline Mode:</span>{' '}
+                      {aiLiveMode ? 'Live LLM Verification' : 'Fallback when API key unavailable'}
                     </div>
                     <div>
-                      <span className="font-medium text-slate-300">AST Verification:</span> Strict Syntactic Mode
+                      <span className="font-medium text-slate-300">AST Verification:</span> Requirement-Aware Pipeline
                     </div>
                   </div>
                 </div>
@@ -341,7 +583,7 @@ export const IntegrationsPage: React.FC = () => {
                 <div className="pt-4 border-t border-[#26344B] mt-5">
                   <button
                     onClick={() => setManageModal('ai')}
-                    className="w-full py-2.5 rounded-xl border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs sm:text-sm font-semibold text-slate-200 transition-colors"
+                    className="w-full py-2.5 rounded-xl border border-[#26344B] hover:border-blue-500/60 bg-[#17233B] hover:bg-[#1E2E4E] text-xs sm:text-sm font-semibold text-slate-200 transition-colors cursor-pointer"
                   >
                     Manage settings
                   </button>
@@ -364,69 +606,140 @@ export const IntegrationsPage: React.FC = () => {
                   <table className="w-full text-left text-xs sm:text-sm">
                     <thead>
                       <tr className="border-b border-[#26344B] text-xs text-slate-400 font-semibold bg-[#0D1526]">
-                        <th className="py-3 px-4">Service</th>
-                        <th className="py-3 px-4">Workspace / Project</th>
+                        <th className="py-3 px-4">Service / Project</th>
+                        <th className="py-3 px-4">Target / Status</th>
                         <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]">
-                      {/* Row 1: GITHUB */}
-                      <tr className="hover:bg-[#152238]/60 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2.5 font-bold text-white">
-                            <GitHubLogo className="w-5 h-5 text-slate-300" />
-                            <span>GITHUB</span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-300 font-mono text-xs">northstar-studio/payment-gateway</td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => setViewLogsModalOpen(true)}
-                            className="px-3 py-1.5 rounded-lg bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 border border-[#26344B] text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
-                          >
-                            <Terminal className="w-3.5 h-3.5 text-blue-400" />
-                            <span>View Logs</span>
-                          </button>
-                        </td>
-                      </tr>
+                      {!isGuest ? (
+                        <>
+                          {linkedProjects.length > 0 ? (
+                            linkedProjects.map((proj) => (
+                              <tr key={proj.id} className="hover:bg-[#152238]/60 transition-colors">
+                                <td className="py-3.5 px-4">
+                                  <div className="flex items-center gap-2.5 font-bold text-white">
+                                    <GitHubLogo className="w-5 h-5 text-slate-300" />
+                                    <span className="truncate max-w-[160px]">{proj.name}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3.5 px-4 text-slate-300 font-mono text-xs">
+                                  {proj.githubRepo}
+                                </td>
+                                <td className="py-3.5 px-4 text-right">
+                                  <button
+                                    onClick={() => handleSyncProject(proj.id)}
+                                    disabled={busyAction}
+                                    className="px-3 py-1.5 rounded-lg bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 border border-[#26344B] text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                                  >
+                                    <RotateCw className={`w-3.5 h-3.5 text-blue-400 ${busyAction ? 'animate-spin' : ''}`} />
+                                    <span>Sync</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr className="hover:bg-[#152238]/60 transition-colors">
+                              <td className="py-3.5 px-4">
+                                <div className="flex items-center gap-2.5 font-bold text-white">
+                                  <GitHubLogo className="w-5 h-5 text-slate-300" />
+                                  <span>GITHUB</span>
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-400 text-xs">
+                                No project repositories linked yet
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <button
+                                  onClick={() => setManageModal('github')}
+                                  className="px-3 py-1.5 rounded-lg bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 border border-[#26344B] text-xs font-semibold cursor-pointer"
+                                >
+                                  Link Repo
+                                </button>
+                              </td>
+                            </tr>
+                          )}
 
-                      {/* Row 2: PAYPAL */}
-                      <tr className="hover:bg-[#152238]/60 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2.5 font-bold text-white">
-                            <PayPalLogo className="w-5 h-5 text-[#0079C1]" />
-                            <span>PAYPAL</span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-300 font-medium">Meridian Labs (Demo Sandbox)</td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => setDisconnectItem('PayPal')}
-                            className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs sm:text-sm font-semibold inline-flex items-center gap-1 transition-colors"
-                          >
-                            <span>Disconnect</span>
-                          </button>
-                        </td>
-                      </tr>
+                          <tr className="hover:bg-[#152238]/60 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2.5 font-bold text-white">
+                                <PayPalLogo className="w-5 h-5 text-[#0079C1]" />
+                                <span>PAYPAL</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300 font-medium text-xs">
+                              {paypalConfigured ? `Mode: ${paypalMode}` : 'Not configured in backend env'}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => setManageModal('paypal')}
+                                className="px-3 py-1.5 rounded-lg bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 border border-[#26344B] text-xs font-semibold cursor-pointer"
+                              >
+                                Details
+                              </button>
+                            </td>
+                          </tr>
 
-                      {/* Row 3: AI PROVIDER */}
-                      <tr className="hover:bg-[#152238]/60 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2.5 font-bold text-white">
-                            <Brain className="w-5 h-5 text-cyan-400" />
-                            <span>AI PROVIDER</span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-300 font-medium">DevFlow Autonomous Engine</td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => setDisconnectItem('AI Provider')}
-                            className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs sm:text-sm font-semibold inline-flex items-center gap-1 transition-colors"
-                          >
-                            <span>Disconnect</span>
-                          </button>
-                        </td>
-                      </tr>
+                          <tr className="hover:bg-[#152238]/60 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2.5 font-bold text-white">
+                                <Brain className="w-5 h-5 text-cyan-400" />
+                                <span>AI PROVIDER</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300 font-medium text-xs">
+                              {aiProviderName} ({aiLiveMode ? 'Live' : 'Fallback'})
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => setViewLogsModalOpen(true)}
+                                className="px-3 py-1.5 rounded-lg bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 border border-[#26344B] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                                <span>View Events</span>
+                              </button>
+                            </td>
+                          </tr>
+                        </>
+                      ) : (
+                        <>
+                          <tr className="hover:bg-[#152238]/60 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2.5 font-bold text-white">
+                                <GitHubLogo className="w-5 h-5 text-slate-300" />
+                                <span>GITHUB</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300 font-mono text-xs">northstar-studio/payment-gateway</td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => setViewLogsModalOpen(true)}
+                                className="px-3 py-1.5 rounded-lg bg-[#17233B] hover:bg-[#1E2E4E] text-slate-200 border border-[#26344B] text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
+                              >
+                                <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                                <span>View Logs</span>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-[#152238]/60 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2.5 font-bold text-white">
+                                <PayPalLogo className="w-5 h-5 text-[#0079C1]" />
+                                <span>PAYPAL</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300 font-medium">Meridian Labs (Demo Sandbox)</td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => setDisconnectItem('PayPal')}
+                                className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs sm:text-sm font-semibold inline-flex items-center gap-1 transition-colors"
+                              >
+                                <span>Disconnect</span>
+                              </button>
+                            </td>
+                          </tr>
+                        </>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -481,39 +794,59 @@ export const IntegrationsPage: React.FC = () => {
               <div className="rounded-2xl bg-[#111C30] border border-[#26344B] shadow-xs p-5 sm:p-6 space-y-5">
                 {/* System Operational Badge */}
                 <div className="flex items-center justify-between pb-3.5 border-b border-[#26344B]">
-                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span
+                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold border ${
+                      isGuest || githubStatus.connected
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                    }`}
+                  >
                     <Check className="w-4 h-4 stroke-[3]" />
-                    <span>All Webhook Listeners Operational</span>
+                    <span>
+                      {isGuest
+                        ? 'Demo Webhook Preview Active'
+                        : githubStatus.connected
+                          ? 'Webhook Listeners Ready'
+                          : 'GitHub Not Connected Yet'}
+                    </span>
                   </span>
                   <button
-                    onClick={() => showToast('Refreshed', 'Webhook listeners verified against HMAC digest.', 'success')}
-                    className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1.5 transition-colors"
+                    onClick={loadIntegrationsData}
+                    className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <RotateCw className="w-3.5 h-3.5" /> Refresh
+                    <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
                   </button>
                 </div>
 
-                {/* Webhook Events Table */}
+                {/* Webhook Endpoint Reference */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs sm:text-sm">
                     <thead>
                       <tr className="border-b border-[#26344B] text-xs text-slate-400 font-semibold bg-[#0D1526]">
-                        <th className="py-2.5 px-3.5">Webhook Event</th>
+                        <th className="py-2.5 px-3.5">Listener Endpoint</th>
                         <th className="py-2.5 px-3.5 text-right">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]">
                       <tr className="hover:bg-[#152238]/60">
-                        <td className="py-3 px-3.5 font-medium text-slate-200">
-                          GitHub push: northstar-studio/payment-gateway
+                        <td className="py-3 px-3.5 font-mono text-xs text-slate-200">
+                          POST /api/github/webhooks
                         </td>
-                        <td className="py-3 px-3.5 text-right font-mono text-emerald-400 text-xs">HTTP 200 OK</td>
+                        <td className="py-3 px-3.5 text-right font-mono text-xs text-emerald-400">
+                          HMAC SHA-256 Guarded
+                        </td>
                       </tr>
                       <tr className="hover:bg-[#152238]/60">
-                        <td className="py-3 px-3.5 font-medium text-slate-200">
-                          PayPal invoicing: PAYMENT.CAPTURE.COMPLETED (Sandbox)
+                        <td className="py-3 px-3.5 font-mono text-xs text-slate-200">
+                          POST /api/webhooks/paypal
                         </td>
-                        <td className="py-3 px-3.5 text-right font-mono text-emerald-400 text-xs">HTTP 200 OK</td>
+                        <td
+                          className={`py-3 px-3.5 text-right font-mono text-xs ${
+                            paypalConfigured ? 'text-emerald-400' : 'text-slate-400'
+                          }`}
+                        >
+                          {paypalConfigured ? `Ready (${paypalMode})` : 'Not Configured'}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -522,33 +855,41 @@ export const IntegrationsPage: React.FC = () => {
                 {/* Subheader: Recent event delivery log */}
                 <div className="pt-2">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2.5">
-                    Recent Event Telemetry Log (Sample Data)
+                    {isGuest ? 'Recent Event Telemetry Log (Demo Sample)' : 'Recent Activity & Sync Events'}
                   </span>
                   <div className="space-y-2 font-mono text-xs sm:text-sm">
-                    <div className="p-3 rounded-xl bg-[#0D1526] border border-[#26344B] flex items-center justify-between">
-                      <span className="text-slate-300 font-sans font-medium text-xs sm:text-sm">
-                        GitHub push &bull; commit <span className="font-mono text-blue-300">a1e9482f</span>
-                      </span>
-                      <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-                        HTTP 200 OK
-                      </span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#0D1526] border border-[#26344B] flex items-center justify-between">
-                      <span className="text-slate-300 font-sans font-medium text-xs sm:text-sm">
-                        PayPal invoice &bull; <span className="font-mono text-blue-300">INV-2026-0842</span>
-                      </span>
-                      <span className="text-xs text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20">
-                        Dispatched
-                      </span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#0D1526] border border-[#26344B] flex items-center justify-between">
-                      <span className="text-slate-300 font-sans font-medium text-xs sm:text-sm">
-                        PayPal payment &bull; <span className="font-mono text-blue-300">PP-DEMO-12345678</span>
-                      </span>
-                      <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-                        Verified Webhook
-                      </span>
-                    </div>
+                    {isGuest ? (
+                      demoWebhookEvents.slice(0, 3).map((evt) => (
+                        <div key={evt.id} className="p-3 rounded-xl bg-[#0D1526] border border-[#26344B] flex items-center justify-between gap-2">
+                          <span className="text-slate-300 font-sans font-medium text-xs truncate">
+                            {evt.event}
+                          </span>
+                          <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 shrink-0">
+                            {evt.httpStatus}
+                          </span>
+                        </div>
+                      ))
+                    ) : telemetry?.recentActivity && telemetry.recentActivity.length > 0 ? (
+                      telemetry.recentActivity.slice(0, 4).map((evt) => (
+                        <div key={evt.id} className="p-3 rounded-xl bg-[#0D1526] border border-[#26344B] flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="text-slate-200 font-sans font-medium text-xs block truncate">
+                              {evt.projectTitle ? `${evt.projectTitle}: ` : ''}{evt.action.replace(/_/g, ' ')}
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              {new Date(evt.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 shrink-0">
+                            {evt.action.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3.5 rounded-xl bg-[#0D1526] border border-[#26344B] text-xs font-sans text-slate-400">
+                        No repository syncs or webhook deliveries recorded yet.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -574,17 +915,69 @@ export const IntegrationsPage: React.FC = () => {
 
             {manageModal === 'github' && (
               <div className="space-y-3 text-slate-300">
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                    Connected GitHub Repository
-                  </label>
-                  <input
-                    type="text"
-                    disabled
-                    value="northstar-studio/payment-gateway"
-                    className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
-                  />
+                {!githubStatus.oauthConfigured && !isGuest && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200">
+                    GitHub OAuth is not configured on the backend (`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` missing in `.env`).
+                  </div>
+                )}
+
+                <div className="p-3 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">GitHub Account:</span>
+                    <span className="font-mono text-white">
+                      {githubStatus.connected ? `@${githubStatus.username || 'connected'}` : 'Not Connected'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Scopes:</span>
+                    <span className="font-mono text-slate-300">
+                      {githubStatus.scopes.join(', ') || 'read:user user:email repo'}
+                    </span>
+                  </div>
                 </div>
+
+                {!isGuest && projects.length > 0 && githubStatus.connected && (
+                  <div className="space-y-2 pt-1">
+                    <label className="text-[11px] font-semibold text-slate-300 block">
+                      Link Repository to Project
+                    </label>
+                    <select
+                      value={selectedProjectId}
+                      onChange={(e) => setSelectedProjectId(e.target.value)}
+                      className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B]"
+                    >
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    {repositories.length > 0 ? (
+                      <select
+                        value={selectedRepoName}
+                        onChange={(e) => setSelectedRepoName(e.target.value)}
+                        className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
+                      >
+                        <option value="">Select repository...</option>
+                        {repositories.map((repo) => (
+                          <option key={repo.id} value={repo.fullName}>
+                            {repo.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="owner/repository"
+                        value={selectedRepoName}
+                        onChange={(e) => setSelectedRepoName(e.target.value)}
+                        className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
+                      />
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                     Webhook Destination
@@ -592,106 +985,92 @@ export const IntegrationsPage: React.FC = () => {
                   <input
                     type="text"
                     disabled
-                    value="https://devflow.team/api/github/webhooks"
+                    value={`${window.location.origin}/api/github/webhooks`}
                     className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B] font-mono"
                   />
-                </div>
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
-                  <span className="font-semibold block">Full Access (Demo Account):</span>
-                  Synchronizing commit SHAs, PR diffs, and test suite telemetry with HMAC validation.
                 </div>
               </div>
             )}
 
             {manageModal === 'paypal' && (
               <div className="space-y-3 text-slate-300">
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                    PayPal Sandbox Client ID
-                  </label>
-                  <input
-                    type="password"
-                    disabled
-                    value={isGuest ? 'hidden-in-demo-mode' : 'AUJ892X-SANDBOX-PAYPAL-CLIENT-ID-DEVFLOW'}
-                    className="w-full bg-[#0D1526] text-xs text-white px-3 py-2 rounded-lg border border-[#26344B] font-mono"
-                  />
-                  {isGuest && (
-                    <p className="text-[10px] text-teal-300 mt-1">
-                      Credentials and private keys are masked in Demo Mode.
-                    </p>
-                  )}
+                <div className="p-3 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Configuration Status:</span>
+                    <span className={paypalConfigured ? 'text-emerald-400 font-semibold' : 'text-amber-300 font-semibold'}>
+                      {paypalConfigured ? 'Configured' : 'Missing Env Credentials'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Environment Mode:</span>
+                    <span className="font-mono text-white uppercase">{paypalMode}</span>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                    Invoicing REST API Environment
-                  </label>
-                  <input
-                    type="text"
-                    disabled
-                    value="PayPal Sandbox v2 (Demonstration Mode)"
-                    className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B]"
-                  />
-                </div>
-                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300">
-                  <span className="font-semibold block">Invoice Integration Active:</span>
-                  Webhooks listener captures payment settlement events and HMAC signatures.
+                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-200">
+                  {paypalConfigured
+                    ? 'PayPal REST v2 invoicing and settlement webhooks are configured in the backend environment.'
+                    : 'Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in backend .env to enable live PayPal Sandbox or Production invoicing.'}
                 </div>
               </div>
             )}
 
             {manageModal === 'ai' && (
               <div className="space-y-3 text-slate-300">
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                    Selected LLM Service Engine
-                  </label>
-                  <input
-                    type="text"
-                    disabled
-                    value="DevFlow AI Engine v1.2 (Gemini 2.5 Flash + GPT-4o fallback)"
-                    className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B]"
-                  />
+                <div className="p-3 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Configured Provider:</span>
+                    <span className="font-mono text-white">{aiProviderName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Execution Mode:</span>
+                    <span className="font-mono text-cyan-300">{aiLiveMode ? 'Live API Key Present' : 'Fallback'}</span>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                    AST Pattern Matching Policy
-                  </label>
-                  <input
-                    type="text"
-                    disabled
-                    value="Strict Syntactic Parsing (Zero Hallucination Proof)"
-                    className="w-full bg-[#0D1526] text-xs text-slate-300 px-3 py-2 rounded-lg border border-[#26344B]"
-                  />
-                </div>
-                <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
-                  <span className="font-semibold block">AI Autonomous Mode:</span>
-                  Parses git commit diffs to evaluate deliverable requirements before milestone approval.
+                <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-200">
+                  AI verification pipelines analyze submitted project evidence against milestone requirements before manual client approval.
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#26344B]">
+            <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-[#26344B]">
               <button
                 onClick={() => setManageModal(null)}
-                className="px-4 py-2 rounded-lg bg-[#1E2E4E] hover:bg-[#26344B] text-slate-300 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#1E2E4E] hover:bg-[#26344B] text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
               >
                 Close
               </button>
-              <button
-                onClick={() => {
-                  if (isGuest) {
-                    setManageModal(null);
-                    setGuardActionTitle('Update Integration Settings');
-                    setIsGuestGuardOpen(true);
-                    return;
-                  }
-                  setManageModal(null);
-                  showToast('Configuration Updated', 'Connection settings validated.', 'success');
-                }}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
-              >
-                Save Changes
-              </button>
+              {manageModal === 'github' && !isGuest && githubStatus.connected && (
+                <>
+                  <button
+                    onClick={() => {
+                      setManageModal(null);
+                      setDisconnectItem('GitHub');
+                    }}
+                    className="px-4 py-2 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Disconnect GitHub
+                  </button>
+                  {selectedProjectId && selectedRepoName.trim() && (
+                    <button
+                      onClick={handleBindProjectRepo}
+                      disabled={busyAction}
+                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <Link2 className="w-3.5 h-3.5" />
+                      <span>Link &amp; Sync Project</span>
+                    </button>
+                  )}
+                </>
+              )}
+              {manageModal === 'github' && !isGuest && (!githubStatus.connected || githubStatus.reauthRequired) && (
+                <button
+                  onClick={handleConnectGitHub}
+                  disabled={busyAction || !githubStatus.oauthConfigured}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Connect with GitHub
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -704,7 +1083,9 @@ export const IntegrationsPage: React.FC = () => {
             <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-blue-400" />
-                <h3 className="text-sm font-bold text-white">northstar-studio/payment-gateway &bull; Event Logs</h3>
+                <h3 className="text-sm font-bold text-white">
+                  {isGuest ? 'Demo Event Logs' : 'Workspace Activity & Event Logs'}
+                </h3>
               </div>
               <button
                 onClick={() => setViewLogsModalOpen(false)}
@@ -715,17 +1096,35 @@ export const IntegrationsPage: React.FC = () => {
             </div>
 
             <div className="space-y-2 max-h-72 overflow-y-auto font-mono text-[11px]">
-              {webhookEvents.map((evt) => (
-                <div key={evt.id} className="p-2.5 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">{evt.event}</span>
-                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-semibold">
-                      {evt.status}
-                    </span>
+              {isGuest ? (
+                demoWebhookEvents.map((evt) => (
+                  <div key={evt.id} className="p-2.5 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-200">{evt.event}</span>
+                      <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-semibold">
+                        {evt.status}
+                      </span>
+                    </div>
+                    <div className="text-slate-400 text-[10px]">Delivered: {evt.timestamp} &bull; {evt.httpStatus}</div>
                   </div>
-                  <div className="text-slate-400 text-[10px]">Delivered: {evt.timestamp} &bull; Headers: HMAC SHA-256 validated &bull; {evt.httpStatus}</div>
+                ))
+              ) : telemetry?.recentActivity && telemetry.recentActivity.length > 0 ? (
+                telemetry.recentActivity.map((evt) => (
+                  <div key={evt.id} className="p-2.5 rounded-lg bg-[#0D1526] border border-[#26344B] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-200">{evt.action}</span>
+                      <span className="text-[10px] text-slate-500">{new Date(evt.createdAt).toLocaleString()}</span>
+                    </div>
+                    <div className="text-slate-300 font-sans text-xs">
+                      {evt.projectTitle ? `${evt.projectTitle} — ` : ''}{evt.actorName} ({typeof evt.details === 'string' ? evt.details : JSON.stringify(evt.details)})
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-slate-400 font-sans">
+                  No recorded integration events yet.
                 </div>
-              ))}
+              )}
             </div>
 
             <div className="flex justify-end pt-2 border-t border-[#26344B]">
@@ -771,7 +1170,11 @@ export const IntegrationsPage: React.FC = () => {
 
       {/* USER PROFILE MODAL */}
       {userMenuOpen && (
-        <div className="fixed top-16 right-6 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150 text-slate-200">
+        <div
+          role="menu"
+          data-popover="true"
+          className="fixed top-16 right-6 z-50 w-56 rounded-xl bg-[#111C30] border border-[#26344B] shadow-2xl p-3 text-xs space-y-2 animate-in fade-in duration-150 text-slate-200"
+        >
           <div className="font-bold text-white border-b border-[#26344B] pb-2">
             {isGuest ? 'Developer Guest' : user?.name || 'Developer Account'}
             <div className="text-[10px] text-slate-400 font-normal">

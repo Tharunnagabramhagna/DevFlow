@@ -3,6 +3,8 @@ import { Role } from '@prisma/client';
 
 const passwordComplexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]).{8,}$/;
 
+const normalizeRoleInput = (val: unknown) => (val === 'DEVELOPER' ? Role.FREELANCER : val);
+
 export const RegisterSchema = z.object({
   email: z.string().email('Invalid email address format').toLowerCase().trim(),
   password: z.string()
@@ -12,9 +14,12 @@ export const RegisterSchema = z.object({
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
     ),
   name: z.string().min(2, 'Name must be at least 2 characters long').trim(),
-  role: z.nativeEnum(Role).optional().default(Role.FREELANCER).refine(
-    (role) => role !== Role.ADMIN,
-    { message: 'Cannot self-register as ADMIN' }
+  role: z.preprocess(
+    normalizeRoleInput,
+    z.nativeEnum(Role).optional().default(Role.FREELANCER).refine(
+      (role) => role !== Role.ADMIN,
+      { message: 'Cannot self-register as ADMIN' }
+    )
   ),
 });
 
@@ -42,8 +47,12 @@ export const OAuthExchangeSchema = z.object({
 });
 
 export const GitHubCallbackQuerySchema = z.object({
-  code: z.string().min(1, 'Authorization code is required'),
-  state: z.string().min(1, 'State parameter is required'),
+  code: z.string().min(1, 'Authorization code is required').optional(),
+  state: z.string().min(1, 'State parameter is required').optional(),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
+}).refine((val) => Boolean(val.error) || (Boolean(val.code) && Boolean(val.state)), {
+  message: 'Authorization code and state parameter are required',
 });
 
 export const AccountLinkingPasswordSchema = z.object({
@@ -66,7 +75,10 @@ export type AccountLinkingPasswordDto = z.infer<typeof AccountLinkingPasswordSch
 export type AccountLinkingOtpDto = z.infer<typeof AccountLinkingOtpSchema>;
 
 export const SocialOAuthInitiateSchema = z.object({
-  role: z.enum(['FREELANCER', 'CLIENT']).default('FREELANCER'),
+  role: z
+    .enum(['FREELANCER', 'DEVELOPER', 'CLIENT'])
+    .default('FREELANCER')
+    .transform((role) => (role === 'DEVELOPER' ? 'FREELANCER' : role)),
   intent: z.enum(['login', 'signup']).default('login'),
   callbackUrl: z.string().url().optional(),
 });
@@ -77,7 +89,7 @@ export const MockSocialAuthSchema = z.object({
   provider: z.enum(['google', 'facebook']),
   email: z.string().email('Invalid email address format').toLowerCase().trim(),
   name: z.string().min(1, 'Name is required'),
-  role: z.enum(['FREELANCER', 'CLIENT']),
+  role: z.preprocess(normalizeRoleInput, z.enum(['FREELANCER', 'CLIENT'])),
   avatarUrl: z.string().url().optional(),
 });
 

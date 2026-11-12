@@ -16,13 +16,30 @@ export const generalRateLimiter = rateLimit({
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // General limit for authentication endpoints
+  max: 20, // Strict limit for auth mutations, registrations, and OAuth callbacks
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) =>
+    req.method === 'GET' &&
+    (req.path === '/me' || req.path === '/oauth/providers'),
+  message: {
+    error: {
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many authentication attempts, please try again after 15 minutes',
+      timestamp: new Date().toISOString(),
+    },
+  },
+});
+
+export const sessionReadRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 60, // Dedicated higher limit for read-only session (/me) & OAuth provider discovery
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',
-      message: 'Too many authentication attempts, please try again after 15 minutes',
+      message: 'Too many session checks, please try again shortly',
       timestamp: new Date().toISOString(),
     },
   },

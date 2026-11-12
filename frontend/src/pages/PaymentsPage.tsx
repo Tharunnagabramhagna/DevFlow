@@ -95,8 +95,21 @@ export const PaymentsPage: React.FC = () => {
         .toUpperCase() || 'CL';
 
   // Data Loading & Live State
-  const [, setMilestones] = useState<Milestone[]>([]);
-  const [, setProjects] = useState<Project[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [financials, setFinancials] = useState<{
+    invoicedAmount: number;
+    receivedPaymentAmount: number;
+    pendingPaymentAmount: number;
+    paypalConfigured: boolean;
+    paypalMode: string;
+  }>({
+    invoicedAmount: 0,
+    receivedPaymentAmount: 0,
+    pendingPaymentAmount: 0,
+    paypalConfigured: false,
+    paypalMode: 'sandbox',
+  });
   const [loading, setLoading] = useState(true);
 
   // Search & Filter States
@@ -106,8 +119,8 @@ export const PaymentsPage: React.FC = () => {
   const [clientFilter, setClientFilter] = useState<string>('Select Client');
   const [dateFilter, setDateFilter] = useState<string>('Select Range');
 
-  // Selected Invoice ID (Defaulting to INV-2026-002 as depicted in the reference screenshot)
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('INV-2026-002');
+  // Selected Invoice ID
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>(isGuest ? 'INV-2026-002' : '');
 
   // Pagination States
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
@@ -123,12 +136,13 @@ export const PaymentsPage: React.FC = () => {
   const [newClient, setNewClient] = useState('');
   const [newProject, setNewProject] = useState('');
   const [newMilestone, setNewMilestone] = useState('');
-  const [newAmount, setNewAmount] = useState('8500');
-  const [newDueDate, setNewDueDate] = useState('2026-11-28');
+  const [newAmount, setNewAmount] = useState('');
+  const [newDueDate, setNewDueDate] = useState('');
 
-  // Sandbox Checkout Simulation States
+  // Checkout Modal States
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<'review' | 'processing' | 'success' | 'error'>('review');
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Copy Feedback State
   const [copiedLink, setCopiedLink] = useState(false);
@@ -139,27 +153,7 @@ export const PaymentsPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  useEffect(() => {
-    loadInvoices();
-  }, []);
-
-  const loadInvoices = async () => {
-    setLoading(true);
-    try {
-      const [milestonesRes, projectsRes] = await Promise.all([
-        devFlowApi.getMilestones(),
-        devFlowApi.getProjects(),
-      ]);
-      setMilestones(milestonesRes.data);
-      setProjects(projectsRes.data);
-    } catch (err) {
-      console.error('Failed to load invoice telemetry:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Static/Demo Table Entries matching the visual reference screenshot
+  // Static/Demo Table Entries (Used STRICTLY when isGuest === true)
   const initialInvoiceList: UnifiedInvoiceItem[] = useMemo(() => [
     {
       id: 'inv-1',
@@ -177,7 +171,7 @@ export const PaymentsPage: React.FC = () => {
       referenceNumber: 'REF-8849201940',
       timelineCreated: 'Oct 26, 2026',
       timelineSent: 'Oct 26, 2026',
-      timelineStatus: 'Settled via PayPal (Webhook verified)',
+      timelineStatus: 'Settled via PayPal (Demo)',
       hostedInvoiceUrl: 'devflow.com/invoice/INV-2026-001',
       notes: 'API integration endpoints verified against AST requirement specifications.',
       paypalWebhookEventId: 'WH-EVT-772910-PAID',
@@ -264,12 +258,116 @@ export const PaymentsPage: React.FC = () => {
     },
   ], []);
 
-  const [invoices, setInvoices] = useState<UnifiedInvoiceItem[]>(initialInvoiceList);
+  const [invoices, setInvoices] = useState<UnifiedInvoiceItem[]>(isGuest ? initialInvoiceList : []);
+
+  const loadInvoices = async () => {
+    setLoading(true);
+    if (isGuest) {
+      setInvoices(initialInvoiceList);
+      setFinancials({
+        invoicedAmount: initialInvoiceList.reduce((s, i) => s + i.amount, 0),
+        receivedPaymentAmount: initialInvoiceList.filter((i) => i.status === 'Paid').reduce((s, i) => s + i.amount, 0),
+        pendingPaymentAmount: initialInvoiceList.filter((i) => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0),
+        paypalConfigured: false,
+        paypalMode: 'sandbox',
+      });
+      setSelectedInvoiceId('INV-2026-002');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [invRes, milestonesRes, projectsRes, finRes] = await Promise.all([
+        devFlowApi.getInvoices(),
+        devFlowApi.getMilestones(),
+        devFlowApi.getProjects(),
+        devFlowApi.getFinancialSummary('all'),
+      ]);
+
+      setMilestones(milestonesRes.data);
+      setProjects(projectsRes.data);
+      setFinancials({
+        invoicedAmount: Number(finRes.data?.invoicedAmount || 0),
+        receivedPaymentAmount: Number(finRes.data?.receivedPaymentAmount || 0),
+        pendingPaymentAmount: Number(finRes.data?.pendingPaymentAmount || 0),
+        paypalConfigured: Boolean(finRes.paypalConfigured),
+        paypalMode: finRes.paypalMode || 'sandbox',
+      });
+
+      const mappedInvoices: UnifiedInvoiceItem[] = (invRes.data || []).map(({ milestone, invoice }) => {
+        const parentProj = projectsRes.data.find((p) => p.id === milestone.projectId);
+        const invStatus = String(invoice.status || '').toUpperCase();
+        const mappedStatus: UnifiedInvoiceItem['status'] =
+          invStatus === 'PAID'
+            ? 'Paid'
+            : invStatus === 'SENT'
+              ? 'Sent'
+              : invStatus === 'OVERDUE'
+                ? 'Overdue'
+                : invStatus === 'DRAFT'
+                  ? 'Draft'
+                  : 'Pending';
+
+        return {
+          id: invoice.id,
+          invoiceNumber: invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8)}`,
+          project: parentProj?.name || 'Workspace Project',
+          client: parentProj?.clientName || 'Client',
+          clientEmail: invoice.recipientEmail || parentProj?.clientEmail || '',
+          clientAddress: '',
+          clientDescription: parentProj?.description || '',
+          relatedMilestone: milestone.title,
+          amount: Number(invoice.amount || milestone.amount || 0),
+          issueDate: invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : '—',
+          dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '—',
+          status: mappedStatus,
+          referenceNumber: invoice.paypalInvoiceId || invoice.id,
+          timelineCreated: invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : '—',
+          timelineSent: invoice.sentAt || invoice.createdAt ? new Date(invoice.sentAt || invoice.createdAt).toLocaleDateString() : 'Pending',
+          timelineStatus:
+            mappedStatus === 'Paid'
+              ? `Paid${invoice.paidAt ? ` on ${new Date(invoice.paidAt).toLocaleDateString()}` : ''}`
+              : 'Awaiting Payment',
+          hostedInvoiceUrl: invoice.paypalInvoiceId ? `https://www.sandbox.paypal.com/invoice/p/#${invoice.paypalInvoiceId}` : '',
+          notes: invoice.notes || milestone.description || '',
+          paypalWebhookEventId: invoice.paypalInvoiceId || undefined,
+        };
+      });
+
+      setInvoices(mappedInvoices);
+      if (mappedInvoices.length > 0 && !mappedInvoices.some((i) => i.invoiceNumber === selectedInvoiceId)) {
+        setSelectedInvoiceId(mappedInvoices[0].invoiceNumber);
+      } else if (mappedInvoices.length === 0) {
+        setSelectedInvoiceId('');
+      }
+    } catch (err) {
+      console.error('Failed to load invoice telemetry:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInvoices();
+  }, [isGuest]);
+
+  const projectOptions = useMemo(() => {
+    const names = new Set<string>(invoices.map((i) => i.project).filter(Boolean));
+    projects.forEach((p) => names.add(p.name));
+    return Array.from(names);
+  }, [invoices, projects]);
+
+  const clientOptions = useMemo(() => {
+    const names = new Set<string>(invoices.map((i) => i.client).filter(Boolean));
+    projects.forEach((p) => {
+      if (p.clientName) names.add(p.clientName);
+    });
+    return Array.from(names);
+  }, [invoices, projects]);
 
   // Filtered Invoices
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
-      // Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matches =
@@ -280,13 +378,8 @@ export const PaymentsPage: React.FC = () => {
         if (!matches) return false;
       }
 
-      // Status Filter
       if (statusFilter !== 'All' && inv.status !== statusFilter) return false;
-
-      // Project Filter
       if (projectFilter !== 'Select Project' && inv.project !== projectFilter) return false;
-
-      // Client Filter
       if (clientFilter !== 'Select Client' && inv.client !== clientFilter) return false;
 
       return true;
@@ -297,129 +390,155 @@ export const PaymentsPage: React.FC = () => {
   const selectedInvoice = useMemo(() => {
     return (
       invoices.find((inv) => inv.invoiceNumber === selectedInvoiceId) ||
-      invoices[1] ||
-      invoices[0]
+      invoices[0] ||
+      null
     );
   }, [invoices, selectedInvoiceId]);
 
-  // Financial Summary KPIs (Matching reference: $128,450.00, $89,120.00, $22,350.00, $16,980.00)
+  // Financial Summary KPIs aligned with backend financialSummary service
   const summaryMetrics = useMemo(() => {
+    const overdueInvoices = invoices
+      .filter((i) => i.status === 'Overdue')
+      .reduce((sum, i) => sum + i.amount, 0);
+
+    if (isGuest) {
+      return {
+        totalInvoiced: invoices.reduce((s, i) => s + i.amount, 0),
+        paidInvoices: invoices.filter((i) => i.status === 'Paid').reduce((s, i) => s + i.amount, 0),
+        pendingInvoices: invoices.filter((i) => i.status === 'Sent' || i.status === 'Pending' || i.status === 'Draft').reduce((s, i) => s + i.amount, 0),
+        overdueInvoices,
+      };
+    }
+
     return {
-      totalInvoiced: 128450.0,
-      paidInvoices: 89120.0,
-      pendingInvoices: 22350.0,
-      overdueInvoices: 16980.0,
+      totalInvoiced: financials.invoicedAmount,
+      paidInvoices: financials.receivedPaymentAmount,
+      pendingInvoices: financials.pendingPaymentAmount,
+      overdueInvoices,
     };
-  }, []);
+  }, [invoices, financials, isGuest]);
 
   // Copy hosted link
   const handleCopyHostedLink = async () => {
+    if (!selectedInvoice?.hostedInvoiceUrl) {
+      showToast('No Hosted URL', 'No PayPal hosted URL is attached to this invoice yet.', 'info');
+      return;
+    }
     try {
-      const link = `https://${selectedInvoice.hostedInvoiceUrl}`;
+      const link = selectedInvoice.hostedInvoiceUrl.startsWith('http')
+        ? selectedInvoice.hostedInvoiceUrl
+        : `https://${selectedInvoice.hostedInvoiceUrl}`;
       if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(link);
       }
       setCopiedLink(true);
-      showToast('Link Copied', `Hosted PayPal invoice URL copied to clipboard: ${link}`, 'info');
+      showToast('Link Copied', `Invoice URL copied to clipboard: ${link}`, 'info');
       setTimeout(() => setCopiedLink(false), 2000);
     } catch {
       showToast('Copy Failed', 'Could not access clipboard.', 'error');
     }
   };
 
-  // Sandbox Checkout Execution
+  // Real PayPal settlement trigger or hosted checkout redirect
   const handleExecuteSandboxCheckout = async () => {
+    if (!selectedInvoice) return;
+    if (selectedInvoice.hostedInvoiceUrl && selectedInvoice.hostedInvoiceUrl.startsWith('http')) {
+      window.open(selectedInvoice.hostedInvoiceUrl, '_blank', 'noopener,noreferrer');
+      setIsCheckoutModalOpen(false);
+      return;
+    }
+
     setIsProcessingCheckout(true);
     setCheckoutStep('processing');
+    setCheckoutError(null);
     try {
-      await new Promise((res) => setTimeout(res, 1200));
-      // Mark current invoice as Paid
-      setInvoices((prev) =>
-        prev.map((item) =>
-          item.invoiceNumber === selectedInvoice.invoiceNumber
-            ? {
-                ...item,
-                status: 'Paid',
-                timelineStatus: 'Settled via PayPal (Webhook verified)',
-                paypalWebhookEventId: `WH-SIM-${Date.now().toString().slice(-6)}`,
-              }
-            : item
-        )
-      );
+      await devFlowApi.recordPayPalPaymentEvent(selectedInvoice.id);
+      await loadInvoices();
       setCheckoutStep('success');
-      showToast('Sandbox Settlement Complete', `Simulated payment recorded for ${selectedInvoice.invoiceNumber}.`, 'success');
-    } catch {
+      showToast('Payment Recorded', `Verified backend payment recorded for ${selectedInvoice.invoiceNumber}.`, 'success');
+    } catch (err) {
       setCheckoutStep('error');
-      showToast('Simulation Failed', 'Could not process sandbox settlement.', 'error');
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'PayPal settlement unavailable. Configure PayPal credentials or wait for webhook settlement.';
+      setCheckoutError(msg);
+      showToast('Settlement Not Processed', msg, 'error');
     } finally {
       setIsProcessingCheckout(false);
     }
   };
 
+  const unbilledApprovedMilestones = useMemo(
+    () =>
+      milestones.filter(
+        (m) => (m.status === 'client_approved' || m.status === 'ai_verified') && !invoices.some((i) => i.relatedMilestone === m.title)
+      ),
+    [milestones, invoices]
+  );
+
+  const pendingApprovalMilestones = useMemo(
+    () => milestones.filter((m) => m.status === 'evidence_submitted' || m.status === 'client_review' || m.status === 'ai_analyzing'),
+    [milestones]
+  );
+
   // Handle Generate Invoice for Unbilled Milestone
-  const handleGenerateInvoiceForUnbilled = () => {
+  const handleGenerateInvoiceForUnbilled = async (milestoneId?: string) => {
     if (isGuest) {
       setGuardActionTitle('Generate PayPal Invoice');
       setIsGuestGuardOpen(true);
       return;
     }
-    const newInv: UnifiedInvoiceItem = {
-      id: `inv-${Date.now()}`,
-      invoiceNumber: `INV-2026-00${invoices.length + 1}`,
-      project: 'Apollo Mobile',
-      client: 'Acme Corp',
-      clientEmail: 'billing@acme-corp.com',
-      clientAddress: '100 Market St, San Francisco, CA',
-      clientDescription: 'Enterprise mobile platform for client logistics.',
-      relatedMilestone: 'Milestone 4: QA Testing',
-      amount: 8200.0,
-      issueDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      dueDate: new Date(Date.now() + 14 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      status: 'Sent',
-      referenceNumber: `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
-      timelineCreated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      timelineSent: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      timelineStatus: 'Awaiting Payment',
-      hostedInvoiceUrl: `devflow.com/invoice/INV-2026-00${invoices.length + 1}`,
-      notes: 'Generated from approved QA Testing milestone acceptance proofs.',
-    };
-    setInvoices([newInv, ...invoices]);
-    setSelectedInvoiceId(newInv.invoiceNumber);
-    showToast('Invoice Generated', `Created ${newInv.invoiceNumber} for $8,200.00 via PayPal Invoicing API.`, 'success');
+    const targetId = milestoneId || unbilledApprovedMilestones[0]?.id;
+    if (!targetId) {
+      showToast('No Approved Milestones', 'Approve a milestone before generating an invoice.', 'info');
+      return;
+    }
+    try {
+      const res = await devFlowApi.generatePayPalInvoice(targetId);
+      await loadInvoices();
+      setSelectedInvoiceId(res.data.invoiceNumber);
+      showToast('Invoice Generated', `Created ${res.data.invoiceNumber} via backend invoicing API.`, 'success');
+    } catch (err) {
+      showToast('Invoice Generation Failed', err instanceof Error ? err.message : 'Unable to create invoice.', 'error');
+    }
   };
 
-  // Handle Manual Invoice Creation
-  const handleCreateNewInvoice = (e: React.FormEvent) => {
+  // Handle Manual Invoice Creation (links to selected milestone when available)
+  const handleCreateNewInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newClient.trim() || !newProject.trim()) return;
+    if (isGuest) {
+      setIsCreateInvoiceModalOpen(false);
+      setGuardActionTitle('Create Invoice');
+      setIsGuestGuardOpen(true);
+      return;
+    }
 
-    const newInv: UnifiedInvoiceItem = {
-      id: `inv-${Date.now()}`,
-      invoiceNumber: `INV-2026-00${invoices.length + 1}`,
-      project: newProject,
-      client: newClient,
-      clientEmail: `${newClient.toLowerCase().replace(/\s+/g, '')}@partner.io`,
-      clientDescription: `Client milestone deliverable for ${newProject}.`,
-      relatedMilestone: newMilestone || 'Milestone Deliverable',
-      amount: parseFloat(newAmount) || 5000.0,
-      issueDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      dueDate: new Date(newDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      status: 'Sent',
-      referenceNumber: `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
-      timelineCreated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      timelineSent: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      timelineStatus: 'Awaiting Payment',
-      hostedInvoiceUrl: `devflow.com/invoice/INV-2026-00${invoices.length + 1}`,
-      notes: 'Standard milestone payment request.',
-    };
+    const matchedMilestone =
+      milestones.find((m) => m.title.toLowerCase() === newMilestone.trim().toLowerCase()) ||
+      unbilledApprovedMilestones[0];
 
-    setInvoices([newInv, ...invoices]);
-    setSelectedInvoiceId(newInv.invoiceNumber);
-    setIsCreateInvoiceModalOpen(false);
-    setNewClient('');
-    setNewProject('');
-    setNewMilestone('');
-    showToast('Invoice Issued', `Invoice ${newInv.invoiceNumber} dispatched to ${newInv.client}.`, 'success');
+    if (!matchedMilestone) {
+      showToast(
+        'Approved Milestone Required',
+        'Invoices must be linked to an approved milestone on the backend.',
+        'error'
+      );
+      return;
+    }
+
+    try {
+      const res = await devFlowApi.generatePayPalInvoice(matchedMilestone.id);
+      await loadInvoices();
+      setSelectedInvoiceId(res.data.invoiceNumber);
+      setIsCreateInvoiceModalOpen(false);
+      setNewClient('');
+      setNewProject('');
+      setNewMilestone('');
+      showToast('Invoice Created', `Generated ${res.data.invoiceNumber} for ${matchedMilestone.title}.`, 'success');
+    } catch (err) {
+      showToast('Invoice Error', err instanceof Error ? err.message : 'Failed to generate invoice.', 'error');
+    }
   };
 
   if (loading) {
@@ -489,12 +608,26 @@ export const PaymentsPage: React.FC = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
-                    <span className="font-semibold text-emerald-400">INV-2026-001</span> settled via PayPal Webhook ($7,500.00).
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
-                    <span className="font-semibold text-amber-400">INV-2026-004</span> client review completed.
-                  </div>
+                  {isGuest ? (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-emerald-400">INV-2026-001</span> settled via PayPal (Demo).
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-amber-400">INV-2026-004</span> review preview.
+                      </div>
+                    </>
+                  ) : invoices.length > 0 ? (
+                    invoices.slice(0, 3).map((inv) => (
+                      <div key={inv.id} className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-blue-400">{inv.invoiceNumber}</span> &bull; {inv.status} (${inv.amount.toLocaleString()})
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-400">
+                      No invoice events recorded yet.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -579,12 +712,12 @@ export const PaymentsPage: React.FC = () => {
                   onChange={(e) => setProjectFilter(e.target.value)}
                   className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-8 cursor-pointer"
                 >
-                  <option value="Select Project">Project: Select Project</option>
-                  <option value="Apollo Mobile">Apollo Mobile</option>
-                  <option value="Alpha Portal">Alpha Portal</option>
-                  <option value="Gamma Analytics">Gamma Analytics</option>
-                  <option value="Delta Platform">Delta Platform</option>
-                  <option value="Beta Engine">Beta Engine</option>
+                  <option value="Select Project">Project: All Projects</option>
+                  {projectOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -596,12 +729,12 @@ export const PaymentsPage: React.FC = () => {
                   onChange={(e) => setClientFilter(e.target.value)}
                   className="w-full bg-[#0C1524] text-xs sm:text-sm text-slate-200 px-3.5 py-2.5 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none pr-8 cursor-pointer"
                 >
-                  <option value="Select Client">Client: Select Client</option>
-                  <option value="Acme Corp">Acme Corp</option>
-                  <option value="Stellar Innovations">Stellar Innovations</option>
-                  <option value="Global Dynamics">Global Dynamics</option>
-                  <option value="Future Tech">Future Tech</option>
-                  <option value="TechSolutions">TechSolutions</option>
+                  <option value="Select Client">Client: All Clients</option>
+                  {clientOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -748,7 +881,15 @@ export const PaymentsPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
-                      {filteredInvoices.map((row) => {
+                      {filteredInvoices.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="py-12 px-4 text-center text-xs sm:text-sm text-slate-400">
+                            {invoices.length === 0
+                              ? 'No invoices generated yet. Approved milestones appear below when ready for invoicing.'
+                              : 'No invoices match the current filter criteria.'}
+                          </td>
+                        </tr>
+                      ) : filteredInvoices.map((row) => {
                         const isSelected = row.invoiceNumber === selectedInvoiceId;
                         return (
                           <tr
@@ -905,6 +1046,16 @@ export const PaymentsPage: React.FC = () => {
 
             {/* PHASE 7: INVOICE DETAILS SIDE PANEL (4 COLS) */}
             <div className="lg:col-span-4 rounded-2xl bg-[#111C30] border border-[#26344B] p-5 sm:p-6 space-y-5 relative overflow-hidden">
+              {!selectedInvoice ? (
+                <div className="py-16 text-center space-y-2 text-xs sm:text-sm text-slate-400">
+                  <FileText className="w-8 h-8 text-slate-600 mx-auto" />
+                  <div className="font-semibold text-white">No Invoice Selected</div>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                    Select an invoice row or generate a new invoice from an approved milestone to inspect PayPal status and timeline.
+                  </p>
+                </div>
+              ) : (
+                <>
               {/* Header: Title & Reference */}
               <div className="pb-3.5 border-b border-[#26344B]/60 space-y-1.5">
                 <h3 className="text-base font-bold text-white tracking-wide">
@@ -922,17 +1073,16 @@ export const PaymentsPage: React.FC = () => {
                   Client Info
                 </span>
                 <div className="text-slate-200 font-semibold">{selectedInvoice.client}</div>
-                <div className="text-xs text-slate-400 font-mono">{selectedInvoice.clientEmail}</div>
-                <div className="text-xs text-slate-400">{selectedInvoice.clientAddress || '123 Stellar St, Future City'}</div>
+                <div className="text-xs text-slate-400 font-mono">{selectedInvoice.clientEmail || '—'}</div>
               </div>
 
               {/* Client Project */}
               <div className="space-y-1.5 text-xs sm:text-sm pt-3 border-t border-[#26344B]/40">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                  Client
+                  Project
                 </span>
                 <div className="text-slate-200 font-semibold">{selectedInvoice.project}</div>
-                <div className="text-xs text-slate-400">{selectedInvoice.clientDescription || 'Connected Innovation.'}</div>
+                <div className="text-xs text-slate-400">{selectedInvoice.clientDescription || selectedInvoice.relatedMilestone}</div>
               </div>
 
               {/* Amount */}
@@ -984,29 +1134,31 @@ export const PaymentsPage: React.FC = () => {
                 </span>
                 {selectedInvoice.status === 'Paid' ? (
                   <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-300 font-mono">
-                    Paid via PayPal Webhook: {selectedInvoice.paypalWebhookEventId || 'WH-EVT-772910-PAID'}
+                    Paid{selectedInvoice.paypalWebhookEventId ? `: ${selectedInvoice.paypalWebhookEventId}` : ''}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-400 italic">No payments yet</div>
+                  <div className="text-xs text-slate-400 italic">No payments settled yet</div>
                 )}
               </div>
 
               {/* Hosted Invoice Link with Copy */}
               <div className="space-y-1.5 pt-3 border-t border-[#26344B]/40">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                  Hosted Invoice:
+                  Hosted Invoice URL:
                 </span>
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0C1524] border border-[#26344B] text-xs sm:text-sm">
                   <span className="font-mono text-blue-400 text-xs truncate">
-                    {selectedInvoice.hostedInvoiceUrl}
+                    {selectedInvoice.hostedInvoiceUrl || 'Not generated (Local / PayPal unconfigured)'}
                   </span>
-                  <button
-                    onClick={handleCopyHostedLink}
-                    className="p-1.5 text-slate-400 hover:text-white transition-colors"
-                    title="Copy Hosted Invoice URL"
-                  >
-                    {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  </button>
+                  {selectedInvoice.hostedInvoiceUrl && (
+                    <button
+                      onClick={handleCopyHostedLink}
+                      className="p-1.5 text-slate-400 hover:text-white transition-colors"
+                      title="Copy Hosted Invoice URL"
+                    >
+                      {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1034,7 +1186,7 @@ export const PaymentsPage: React.FC = () => {
                       className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <PayPalIcon className="w-4 h-4" />
-                      <span>Pay Sandbox</span>
+                      <span>{selectedInvoice.hostedInvoiceUrl ? 'Pay with PayPal' : 'Checkout Status'}</span>
                     </button>
                   ) : (
                     <div className="flex-1 py-2.5 px-3 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-400 text-xs font-semibold flex items-center justify-center gap-2">
@@ -1049,13 +1201,8 @@ export const PaymentsPage: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              {/* Decorative Sparkle Graphic from visual reference */}
-              <div className="absolute bottom-16 right-2 opacity-25 pointer-events-none">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" className="text-blue-300">
-                  <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-                </svg>
-              </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1067,24 +1214,47 @@ export const PaymentsPage: React.FC = () => {
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   {isClient ? 'Unbilled Approved Milestones' : 'Claimable Milestone Earnings'}
                 </span>
-                <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
-                  <div className="flex items-center gap-2 text-xs sm:text-sm">
-                    <span className="font-semibold text-white">Acme Corp</span>
-                    <span className="text-slate-500">→</span>
-                    <span className="text-slate-300">Apollo Mobile</span>
-                    <span className="text-slate-500">→</span>
-                    <span className="text-blue-400 font-medium">Milestone 4: QA Testing</span>
+                {isGuest ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <span className="font-semibold text-white">Acme Corp</span>
+                      <span className="text-slate-500">&rarr;</span>
+                      <span className="text-slate-300">Apollo Mobile (Demo)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono font-bold text-white text-xs sm:text-sm">$8,200.00</span>
+                      <button
+                        onClick={() => handleGenerateInvoiceForUnbilled()}
+                        className="text-xs sm:text-sm text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
+                      >
+                        {isClient ? 'Generate Invoice' : 'Submit for Invoicing'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-white text-xs sm:text-sm">$8,200.00</span>
-                    <button
-                      onClick={handleGenerateInvoiceForUnbilled}
-                      className="text-xs sm:text-sm text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
-                    >
-                      {isClient ? 'Generate Invoice' : 'Submit for Invoicing'}
-                    </button>
+                ) : unbilledApprovedMilestones.length > 0 ? (
+                  unbilledApprovedMilestones.slice(0, 2).map((ms) => (
+                    <div key={ms.id} className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
+                      <div className="text-xs sm:text-sm text-slate-200 font-semibold truncate max-w-[240px]">
+                        {ms.title}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono font-bold text-white text-xs sm:text-sm">
+                          ${Number(ms.amount || 0).toLocaleString()}
+                        </span>
+                        <button
+                          onClick={() => handleGenerateInvoiceForUnbilled(ms.id)}
+                          className="text-xs sm:text-sm text-blue-400 hover:text-white font-semibold transition-colors cursor-pointer"
+                        >
+                          {isClient ? 'Generate Invoice' : 'Submit for Invoicing'}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] text-xs text-slate-400">
+                    No unbilled approved milestones ready for invoicing.
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Right Column: Pending Milestone Approvals */}
@@ -1092,31 +1262,44 @@ export const PaymentsPage: React.FC = () => {
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Pending Milestone Approvals
                 </span>
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
-                  <div className="text-xs sm:text-sm text-slate-300">
-                    <span className="font-semibold text-white">Stellar Innovations</span> &bull; Alpha Portal (Milestone 2)
+                {isGuest ? (
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
+                    <div className="text-xs sm:text-sm text-slate-300">
+                      <span className="font-semibold text-white">Stellar Innovations</span> &bull; Alpha Portal (Demo)
+                    </div>
+                    <button
+                      onClick={() => navigate('/milestones')}
+                      className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-bold"
+                    >
+                      Review
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      if (isGuest) {
-                        setGuardActionTitle('Create Invoice');
-                        setIsGuestGuardOpen(true);
-                        return;
-                      }
-                      setIsCreateInvoiceModalOpen(true);
-                    }}
-                    className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 transition-colors"
-                  >
-                    Create Invoice
-                  </button>
-                </div>
+                ) : pendingApprovalMilestones.length > 0 ? (
+                  pendingApprovalMilestones.slice(0, 2).map((ms) => (
+                    <div key={ms.id} className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B]">
+                      <div className="text-xs sm:text-sm text-slate-300 truncate max-w-[260px]">
+                        <span className="font-semibold text-white">{ms.title}</span> &bull; ${Number(ms.amount || 0).toLocaleString()}
+                      </div>
+                      <button
+                        onClick={() => navigate('/milestones')}
+                        className="px-3 py-1.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold cursor-pointer"
+                      >
+                        Open Milestones
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3.5 rounded-xl bg-[#0C1524] border border-[#26344B] text-xs text-slate-400">
+                    No milestones currently awaiting review.
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </main>
 
       {/* MODAL 1: PRINTABLE INVOICE DOCUMENT (Preserves #printable-invoice-container for selective printing!) */}
-      {isPrintModalOpen && (
+      {isPrintModalOpen && selectedInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs no-print-backdrop">
           <div className="w-full max-w-2xl rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#26344B] pb-3 no-print">
@@ -1252,8 +1435,8 @@ export const PaymentsPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 2: PAYPAL SANDBOX CHECKOUT SIMULATION */}
-      {isCheckoutModalOpen && (
+      {/* MODAL 2: PAYPAL CHECKOUT & STATUS */}
+      {isCheckoutModalOpen && selectedInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
           <div className="w-full max-w-md rounded-2xl bg-[#111C30] border border-[#26344B] shadow-2xl p-6 space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-[#26344B] pb-3">
@@ -1346,8 +1529,10 @@ export const PaymentsPage: React.FC = () => {
                 <div className="w-12 h-12 rounded-full bg-rose-950/60 border border-rose-500/40 flex items-center justify-center text-rose-400 mx-auto">
                   <AlertTriangle className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-white">Simulation Failed</h3>
-                <p className="text-xs text-slate-400">Could not record simulated webhook event.</p>
+                <h3 className="text-base font-bold text-white">Payment Settlement Unavailable</h3>
+                <p className="text-xs text-slate-400">
+                  {checkoutError || 'Could not execute settlement. Ensure PayPal credentials or backend settlement hooks are enabled.'}
+                </p>
                 <button
                   onClick={() => setIsCheckoutModalOpen(false)}
                   className="px-4 py-2 rounded-lg bg-[#152238] text-white text-xs font-semibold"

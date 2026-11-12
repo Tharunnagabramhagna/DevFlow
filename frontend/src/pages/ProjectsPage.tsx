@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { devFlowApi } from '@/services/api';
-import { Project, Milestone } from '@/types';
+import { Project, Milestone, DashboardActivityItem, GitHubRepositorySummary, ProjectGitHubActivity } from '@/types';
 import { GuestGuardModal } from '@/components/common';
 import {
   FolderGit2,
@@ -16,6 +16,9 @@ import {
   List,
   ArrowRight,
   Menu,
+  RefreshCw,
+  Link2,
+  AlertCircle,
 } from 'lucide-react';
 
 // Custom PayPal Logo Mark
@@ -139,64 +142,186 @@ export const ProjectsPage: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<DisplayProject | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  // Real Telemetry / GitHub State
+  const [recentActivity, setRecentActivity] = useState<DashboardActivityItem[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [availableRepos, setAvailableRepos] = useState<GitHubRepositorySummary[]>([]);
+  const [projectActivity, setProjectActivity] = useState<ProjectGitHubActivity | null>(null);
+  const [drawerRepoInput, setDrawerRepoInput] = useState('');
+  const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null);
+  const [drawerMessage, setDrawerMessage] = useState<string | null>(null);
+
   // New Project Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [githubRepo, setGithubRepo] = useState('northstar-studio/payment-gateway');
-  const [totalBudget, setTotalBudget] = useState('18500');
+  const [githubRepo, setGithubRepo] = useState('');
+  const [totalBudget, setTotalBudget] = useState('');
   const [projectDesc, setProjectDesc] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
     loadProjectsData();
-  }, []);
+  }, [isGuest]);
 
   const loadProjectsData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const [pRes, mRes] = await Promise.all([
+      const [pRes, mRes, telRes, reposRes] = await Promise.all([
         devFlowApi.getProjects(),
         devFlowApi.getMilestones(),
+        devFlowApi.getTelemetry('30d').catch(() => ({ data: { recentActivity: [] as DashboardActivityItem[] }, isMock: false })),
+        !isGuest
+          ? devFlowApi.getGitHubRepositories({ perPage: 30 }).catch(() => ({ data: [] as GitHubRepositorySummary[], hasMore: false }))
+          : Promise.resolve({ data: [] as GitHubRepositorySummary[], hasMore: false }),
       ]);
 
       setMilestones(mRes.data);
+      setAvailableRepos(reposRes.data || []);
 
-      // Map API projects into display projects with enhanced progress & deadline fields
+      // Map API projects into display projects using verified backend records
       const apiProjectsMapped: DisplayProject[] = pRes.data.map((p) => {
         const projMilestones = mRes.data.filter((m) => m.projectId === p.id);
-        const completedCount = projMilestones.filter((m) => m.status === 'paid').length;
-        const totalCount = projMilestones.length || p.milestonesCount || 1;
-        const calcPercent = Math.round((completedCount / totalCount) * 100);
+        const paidMilestones = projMilestones.filter((m) => m.status === 'paid');
+        const completedCount = paidMilestones.length;
+        const totalCount = projMilestones.length > 0 ? projMilestones.length : (p.milestonesCount || 0);
+        const calcPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+        const nextMilestone = projMilestones.find((m) => m.status !== 'paid') || projMilestones[0];
+        const dueDateFormatted = nextMilestone?.dueDate
+          ? new Date(nextMilestone.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : '—';
+        const paidTotal = paidMilestones.reduce((sum, m) => sum + Number(m.amount || 0), 0);
+        const inReview = projMilestones.some(
+          (m) => m.status === 'evidence_submitted' || m.status === 'ai_analyzing' || m.status === 'client_review'
+        );
 
         return {
           ...p,
-          progressPercent: calcPercent || 50,
-          currentMilestoneTitle: projMilestones[0]?.title || 'Phase 1 - Implementation',
-          deadline: projMilestones[0]?.dueDate ? `Nov ${projMilestones[0].dueDate.slice(-2)}, 2026` : 'Dec 20, 2026',
-          paidAmount: completedCount * (p.totalBudget / (totalCount || 1)),
-          paymentStatus: calcPercent === 100 ? 'Paid' : 'Active',
-          connectedRepoName: p.githubRepo.split('/').pop() || p.githubRepo,
+          progressPercent: calcPercent,
+          currentMilestoneTitle: nextMilestone?.title || 'No milestones yet',
+          deadline: dueDateFormatted,
+          paidAmount: paidTotal,
+          paymentStatus: inReview ? 'Review' : calcPercent === 100 && totalCount > 0 ? 'Paid' : 'Active',
+          connectedRepoName: p.githubRepo ? (p.githubRepo.split('/').pop() || p.githubRepo) : '',
         };
       });
 
-      // Combine user projects with reference example projects to achieve full fidelity
-      const combined = [...apiProjectsMapped];
-      REFERENCE_PROJECTS.forEach((ref) => {
-        if (!combined.some((item) => item.name.toLowerCase() === ref.name.toLowerCase())) {
-          combined.push(ref);
-        }
-      });
+      if (isGuest) {
+        const combined = [...apiProjectsMapped];
+        REFERENCE_PROJECTS.forEach((ref) => {
+          if (!combined.some((item) => item.name.toLowerCase() === ref.name.toLowerCase())) {
+            combined.push(ref);
+          }
+        });
+        setProjects(combined);
+      } else {
+        setProjects(apiProjectsMapped);
+      }
 
-      setProjects(combined);
+      setRecentActivity(telRes.data?.recentActivity || []);
     } catch (err) {
       console.error('Failed to load projects data:', err);
-      setProjects(REFERENCE_PROJECTS);
+      if (isGuest) {
+        setProjects(REFERENCE_PROJECTS);
+      } else {
+        setProjects([]);
+        setLoadError('Failed to load projects from the server.');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openProjectDrawer = async (proj: DisplayProject) => {
+    setSelectedProject(proj);
+    setDrawerRepoInput(proj.githubRepo || '');
+    setDrawerMessage(null);
+    setProjectActivity(null);
+    setIsDrawerOpen(true);
+
+    if (!isGuest && proj.githubRepo) {
+      const actRes = await devFlowApi.getProjectGitHubActivity(proj.id);
+      if (actRes.data) {
+        setProjectActivity(actRes.data);
+      }
+    }
+  };
+
+  const handleLinkRepoInDrawer = async () => {
+    if (!selectedProject || !drawerRepoInput.trim() || isGuest) return;
+    setSyncingProjectId(selectedProject.id);
+    setDrawerMessage(null);
+    try {
+      const linked = await devFlowApi.connectProjectRepo(selectedProject.id, drawerRepoInput.trim());
+      const resolvedFullName = linked.repository?.fullName || drawerRepoInput.trim();
+      setProjectActivity(linked);
+      setDrawerRepoInput(resolvedFullName);
+      setSelectedProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              githubRepo: resolvedFullName,
+              connectedRepoName: resolvedFullName.split('/').pop() || resolvedFullName,
+              githubSyncStatus: linked.syncStatus,
+              githubSyncedAt: linked.lastSyncedAt,
+            }
+          : prev
+      );
+      setProjects((prev) =>
+        prev.map((item) =>
+          item.id === selectedProject.id
+            ? {
+                ...item,
+                githubRepo: resolvedFullName,
+                connectedRepoName: resolvedFullName.split('/').pop() || resolvedFullName,
+                githubSyncStatus: linked.syncStatus,
+                githubSyncedAt: linked.lastSyncedAt,
+              }
+            : item
+        )
+      );
+      setDrawerMessage(`Repository ${resolvedFullName} linked and synced.`);
+    } catch (err) {
+      setDrawerMessage(err instanceof Error ? err.message : 'Failed to connect repository');
+    } finally {
+      setSyncingProjectId(null);
+    }
+  };
+
+  const handleSyncProjectRepo = async (projectId: string) => {
+    if (isGuest) return;
+    setSyncingProjectId(projectId);
+    setDrawerMessage(null);
+    try {
+      const synced = await devFlowApi.syncProjectRepo(projectId, true);
+      const syncedName = synced.repository?.fullName || synced.projectTitle;
+      setProjectActivity(synced);
+      setProjects((prev) =>
+        prev.map((item) =>
+          item.id === projectId
+            ? {
+                ...item,
+                githubSyncStatus: synced.syncStatus,
+                githubSyncedAt: synced.lastSyncedAt,
+              }
+            : item
+        )
+      );
+      if (selectedProject?.id === projectId) {
+        setSelectedProject((prev) =>
+          prev ? { ...prev, githubSyncStatus: synced.syncStatus, githubSyncedAt: synced.lastSyncedAt } : prev
+        );
+      }
+      setDrawerMessage(`Synced ${syncedName} (${synced.commits.length} commits fetched).`);
+    } catch (err) {
+      setDrawerMessage(err instanceof Error ? err.message : 'Repository sync failed');
+    } finally {
+      setSyncingProjectId(null);
     }
   };
 
@@ -204,14 +329,20 @@ export const ProjectsPage: React.FC = () => {
     e.preventDefault();
     if (!projectName.trim() || !clientName.trim()) return;
 
+    const budgetNum = parseFloat(totalBudget);
+    if (!Number.isFinite(budgetNum) || budgetNum <= 0) {
+      setCreateError('Please enter a valid positive project budget.');
+      return;
+    }
+
+    setCreateError(null);
     setIsSubmitting(true);
     try {
-      const budgetNum = parseFloat(totalBudget) || 12500;
       const res = await devFlowApi.createProject({
         name: projectName.trim(),
-        description: projectDesc.trim() || `Client deliverable scope for ${clientName}`,
+        description: projectDesc.trim() || `Client deliverable scope for ${clientName.trim()}`,
         clientName: clientName.trim(),
-        clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, '.')}@partner.io`,
+        clientEmail: clientEmail.trim(),
         githubRepo: githubRepo.trim(),
         totalBudget: budgetNum,
         currency: 'USD',
@@ -219,12 +350,12 @@ export const ProjectsPage: React.FC = () => {
 
       const newDisplay: DisplayProject = {
         ...res.data,
-        progressPercent: 15,
-        currentMilestoneTitle: 'Milestone 1 - Initial Architecture',
-        deadline: 'Jan 20, 2027',
+        progressPercent: 0,
+        currentMilestoneTitle: 'No milestones yet',
+        deadline: '—',
         paidAmount: 0,
         paymentStatus: 'Active',
-        connectedRepoName: res.data.githubRepo.split('/').pop() || res.data.githubRepo,
+        connectedRepoName: res.data.githubRepo ? (res.data.githubRepo.split('/').pop() || res.data.githubRepo) : '',
       };
 
       setProjects([newDisplay, ...projects]);
@@ -232,9 +363,12 @@ export const ProjectsPage: React.FC = () => {
       setProjectName('');
       setClientName('');
       setClientEmail('');
+      setGithubRepo('');
+      setTotalBudget('');
       setProjectDesc('');
     } catch (err) {
       console.error('Failed to create project:', err);
+      setCreateError(err instanceof Error ? err.message : 'Failed to create project');
     } finally {
       setIsSubmitting(false);
     }
@@ -287,7 +421,7 @@ export const ProjectsPage: React.FC = () => {
 
   const activeCount = projects.filter((p) => (p.progressPercent || 0) < 100).length;
   const completedCount = projects.filter((p) => (p.progressPercent || 0) >= 100).length;
-  const onHoldCount = projects.filter((p) => p.paymentStatus === 'Review').length || 1;
+  const onHoldCount = projects.filter((p) => p.paymentStatus === 'Review').length;
 
   if (loading) {
     return (
@@ -385,6 +519,21 @@ export const ProjectsPage: React.FC = () => {
             </div>
           </div>
 
+          {loadError && !isGuest && (
+            <div className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-800/60 flex items-center justify-between text-xs text-rose-200">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{loadError}</span>
+              </div>
+              <button
+                onClick={loadProjectsData}
+                className="px-3 py-1 rounded-lg bg-rose-900/60 hover:bg-rose-900 text-white font-semibold"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* 2. KPI SUMMARY CARDS */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Card 1: Total Projects */}
@@ -393,9 +542,11 @@ export const ProjectsPage: React.FC = () => {
               <div className="mt-2.5 flex items-baseline justify-between">
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
-                    {String(projects.length || 12).padStart(2, '0')}
+                    {String(projects.length).padStart(2, '0')}
                   </span>
-                  <span className="text-xs text-slate-500 font-sans tabular-nums">+2 this month</span>
+                  {isGuest && (
+                    <span className="text-xs text-slate-500 font-sans tabular-nums">Demo Set</span>
+                  )}
                 </div>
                 {/* Green Trend Sparkline */}
                 <svg className="w-14 h-6 text-emerald-400 shrink-0" viewBox="0 0 50 20" fill="none">
@@ -412,7 +563,7 @@ export const ProjectsPage: React.FC = () => {
               </div>
               <div className="mt-2.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
-                  {String(activeCount || 8).padStart(2, '0')}
+                  {String(activeCount).padStart(2, '0')}
                 </span>
                 {/* Blue Trend Sparkline */}
                 <svg className="w-14 h-6 text-blue-500 shrink-0" viewBox="0 0 50 20" fill="none">
@@ -429,7 +580,7 @@ export const ProjectsPage: React.FC = () => {
               </div>
               <div className="mt-2.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-white">
-                  {String(completedCount || 3).padStart(2, '0')}
+                  {String(completedCount).padStart(2, '0')}
                 </span>
                 {/* Cyan Trend Sparkline */}
                 <svg className="w-14 h-6 text-slate-300 shrink-0" viewBox="0 0 50 20" fill="none">
@@ -440,10 +591,10 @@ export const ProjectsPage: React.FC = () => {
 
             {/* Card 4: On Hold */}
             <div className="p-4 rounded-xl bg-[#111C30] border border-[#26344B] flex flex-col justify-between">
-              <span className="font-sans text-xs text-slate-400 font-semibold">On Hold</span>
+              <span className="font-sans text-xs text-slate-400 font-semibold">In Review / Hold</span>
               <div className="mt-2.5 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-slate-500">
-                  {String(onHoldCount || 1).padStart(2, '0')}
+                <span className="text-2xl sm:text-3xl font-black font-sans tabular-nums text-slate-400">
+                  {String(onHoldCount).padStart(2, '0')}
                 </span>
                 {/* Muted Sparkline */}
                 <svg className="w-14 h-6 text-slate-600 shrink-0" viewBox="0 0 50 20" fill="none">
@@ -544,24 +695,36 @@ export const ProjectsPage: React.FC = () => {
               {filteredAndSortedProjects.length === 0 ? (
                 <div className="text-center py-16 px-4 rounded-xl bg-[#111C30] border border-[#26344B] text-slate-400">
                   <FolderGit2 className="w-10 h-10 mx-auto mb-2 opacity-40 text-blue-400" />
-                  <h3 className="text-sm font-semibold text-white">No projects found</h3>
+                  <h3 className="text-sm font-semibold text-white">
+                    {projects.length === 0 ? 'No projects created yet' : 'No projects found'}
+                  </h3>
                   <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    Try adjusting your search query or status filter.
+                    {projects.length === 0
+                      ? 'Create your first client project and optionally link a GitHub repository to track milestones and payouts.'
+                      : 'Try adjusting your search query or status filter.'}
                   </p>
+                  {projects.length === 0 && !isGuest && (
+                    <button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Create First Project</span>
+                    </button>
+                  )}
                 </div>
               ) : viewMode === 'grid' ? (
                 /* GRID VIEW: 3-column responsive layout */
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                   {filteredAndSortedProjects.map((proj) => {
-                    const percent = proj.progressPercent || 50;
+                    const percent = proj.progressPercent ?? 0;
+                    const hasRepo = Boolean(proj.githubRepo && proj.githubRepo.trim().length > 0);
+                    const repoSynced = hasRepo && proj.githubSyncStatus === 'SYNCED';
 
                     return (
                       <div
                         key={proj.id}
-                        onClick={() => {
-                          setSelectedProject(proj);
-                          setIsDrawerOpen(true);
-                        }}
+                        onClick={() => openProjectDrawer(proj)}
                         className="p-5 sm:p-6 rounded-2xl bg-[#111C30] border border-[#26344B] hover:border-blue-500/50 hover:bg-[#132038] transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
                       >
                         {/* HEADER */}
@@ -596,14 +759,14 @@ export const ProjectsPage: React.FC = () => {
                           <div className="flex justify-between items-center">
                             <span className="text-slate-400">Milestones:</span>
                             <span className="font-sans tabular-nums text-white font-semibold">
-                              {proj.completedMilestonesCount}/{proj.milestonesCount}
+                              {proj.completedMilestonesCount || 0}/{proj.milestonesCount || 0}
                             </span>
                           </div>
                           <div className="text-slate-300 truncate">
-                            Current: {proj.currentMilestoneTitle || 'API Verification'}
+                            Current: {proj.currentMilestoneTitle || 'No milestones yet'}
                           </div>
                           <div className="text-slate-400 tabular-nums">
-                            Deadline: {proj.deadline || 'Dec 12, 2026'}
+                            Deadline: {proj.deadline || '—'}
                           </div>
                         </div>
 
@@ -611,12 +774,39 @@ export const ProjectsPage: React.FC = () => {
                         <div className="pt-2.5 border-t border-[#26344B]/70 flex items-center justify-between text-xs sm:text-[13px] font-sans">
                           <div className="flex items-center gap-2 text-slate-300">
                             <GitHubIcon className="w-4 h-4" />
-                            <span className="truncate max-w-[130px] font-medium font-mono text-xs">{proj.connectedRepoName}</span>
+                            <span className="truncate max-w-[130px] font-medium font-mono text-xs">
+                              {hasRepo ? proj.connectedRepoName || proj.githubRepo : 'Not linked'}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                            <span>Connected</span>
-                          </div>
+                          {hasRepo ? (
+                            <div
+                              className={`flex items-center gap-1.5 font-semibold ${
+                                repoSynced
+                                  ? 'text-emerald-400'
+                                  : proj.githubSyncStatus === 'ERROR'
+                                    ? 'text-rose-400'
+                                    : 'text-amber-400'
+                              }`}
+                            >
+                              <span
+                                className={`w-2 h-2 rounded-full ${
+                                  repoSynced
+                                    ? 'bg-emerald-400'
+                                    : proj.githubSyncStatus === 'ERROR'
+                                      ? 'bg-rose-400'
+                                      : 'bg-amber-400'
+                                }`}
+                              />
+                              <span>
+                                {repoSynced ? 'Synced' : proj.githubSyncStatus === 'ERROR' ? 'Sync Error' : 'Linked'}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                              <span className="w-2 h-2 rounded-full bg-slate-600" />
+                              <span>Unlinked</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* PAYMENT SECTION */}
@@ -625,7 +815,7 @@ export const ProjectsPage: React.FC = () => {
                             <div className="text-slate-400 flex items-center gap-1.5 font-sans tabular-nums">
                               <span>Payment:</span>
                               <span className="text-white font-bold">
-                                ${proj.paidAmount?.toLocaleString() || '12,400'} / ${proj.totalBudget.toLocaleString()}
+                                ${(proj.paidAmount ?? 0).toLocaleString()} / ${proj.totalBudget.toLocaleString()}
                               </span>
                             </div>
                             {/* Payment Status Badge */}
@@ -678,10 +868,7 @@ export const ProjectsPage: React.FC = () => {
                       {filteredAndSortedProjects.map((proj) => (
                         <tr
                           key={proj.id}
-                          onClick={() => {
-                            setSelectedProject(proj);
-                            setIsDrawerOpen(true);
-                          }}
+                          onClick={() => openProjectDrawer(proj)}
                           className="hover:bg-[#15233D] transition-colors cursor-pointer"
                         >
                           <td className="py-4 font-bold text-white">{proj.name}</td>
@@ -691,22 +878,22 @@ export const ProjectsPage: React.FC = () => {
                               <div className="w-24 bg-[#1A263D] h-2 rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-[#2563EB] rounded-full"
-                                  style={{ width: `${proj.progressPercent || 50}%` }}
+                                  style={{ width: `${proj.progressPercent ?? 0}%` }}
                                 />
                               </div>
                               <span className="font-mono text-xs text-slate-300">
-                                {proj.progressPercent || 50}%
+                                {proj.progressPercent ?? 0}%
                               </span>
                             </div>
                           </td>
                           <td className="py-4 font-mono text-slate-300">
-                            {proj.completedMilestonesCount}/{proj.milestonesCount}
+                            {proj.completedMilestonesCount || 0}/{proj.milestonesCount || 0}
                           </td>
                           <td className="py-4 font-mono text-slate-400 flex items-center gap-2">
                             <GitHubIcon className="w-4 h-4" />
-                            <span>{proj.connectedRepoName}</span>
+                            <span>{proj.connectedRepoName || 'Not linked'}</span>
                           </td>
-                          <td className="py-4 font-mono text-slate-400">{proj.deadline}</td>
+                          <td className="py-4 font-mono text-slate-400">{proj.deadline || '—'}</td>
                           <td className="py-4 text-right">
                             <span className="font-mono font-bold text-emerald-400">
                               ${proj.totalBudget.toLocaleString()}
@@ -729,47 +916,74 @@ export const ProjectsPage: React.FC = () => {
                 </h3>
 
                 <div className="space-y-4 text-xs sm:text-sm">
-                  {/* Item 1: GitHub Push */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#080D18] border border-[#26344B] flex items-center justify-center shrink-0 text-white mt-0.5">
-                      <GitHubIcon className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <div className="font-bold text-white">GitHub push by jdoe</div>
-                      <p className="text-xs text-slate-400 font-mono">
-                        4 commits to nebula-gateway
-                      </p>
-                      <span className="text-[11px] text-slate-500 font-mono">10m ago</span>
-                    </div>
-                  </div>
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 5).map((item) => (
+                      <div key={item.id} className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#080D18] border border-[#26344B] flex items-center justify-center shrink-0 text-white mt-0.5">
+                          <GitHubIcon className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="font-bold text-white truncate">
+                            {item.projectTitle || item.action.replace(/_/g, ' ')}
+                          </div>
+                          <p className="text-xs text-slate-400 break-words">
+                            {item.actorName} &bull; {typeof item.details === 'string' ? item.details : JSON.stringify(item.details)}
+                          </p>
+                          <span className="text-[11px] text-slate-500 font-mono">
+                            {new Date(item.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : isGuest ? (
+                    <>
+                      {/* Item 1: GitHub Push (Demo) */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#080D18] border border-[#26344B] flex items-center justify-center shrink-0 text-white mt-0.5">
+                          <GitHubIcon className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-white">GitHub push by jdoe</div>
+                          <p className="text-xs text-slate-400 font-mono">
+                            4 commits to nebula-gateway
+                          </p>
+                          <span className="text-[11px] text-slate-500 font-mono">10m ago</span>
+                        </div>
+                      </div>
 
-                  {/* Item 2: Milestone Approved */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-950/70 border border-emerald-800/50 flex items-center justify-center shrink-0 text-emerald-400 mt-0.5">
-                      <Check className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <div className="font-bold text-white">Milestone 3</div>
-                      <p className="text-xs text-slate-400">
-                        Approved by AI Agent &amp; client
-                      </p>
-                      <span className="text-[11px] text-slate-500 font-mono">1h ago</span>
-                    </div>
-                  </div>
+                      {/* Item 2: Milestone Approved (Demo) */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-950/70 border border-emerald-800/50 flex items-center justify-center shrink-0 text-emerald-400 mt-0.5">
+                          <Check className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-white">Milestone 3</div>
+                          <p className="text-xs text-slate-400">
+                            Approved by AI Agent &amp; client
+                          </p>
+                          <span className="text-[11px] text-slate-500 font-mono">1h ago</span>
+                        </div>
+                      </div>
 
-                  {/* Item 3: Invoice Paid */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-950/70 border border-blue-800/50 flex items-center justify-center shrink-0 text-blue-400 mt-0.5">
-                      <PayPalIcon className="w-4 h-4" />
+                      {/* Item 3: Invoice Paid (Demo) */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-950/70 border border-blue-800/50 flex items-center justify-center shrink-0 text-blue-400 mt-0.5">
+                          <PayPalIcon className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-white">Invoice #1042</div>
+                          <p className="text-xs text-slate-400 font-mono">
+                            Paid ($4,500) via PayPal
+                          </p>
+                          <span className="text-[11px] text-slate-500 font-mono">3h ago</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-400 py-3">
+                      No recorded project activity yet. Activity will appear here as repositories sync, evidence is submitted, or payments settle.
                     </div>
-                    <div className="space-y-0.5">
-                      <div className="font-bold text-white">Invoice #1042</div>
-                      <p className="text-xs text-slate-400 font-mono">
-                        Paid ($4,500) via PayPal
-                      </p>
-                      <span className="text-[11px] text-slate-500 font-mono">3h ago</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -847,13 +1061,98 @@ export const ProjectsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Contact Email:</span>
-                  <span className="font-mono text-slate-300">{selectedProject.clientEmail}</span>
+                  <span className="font-mono text-slate-300">{selectedProject.clientEmail || '—'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Repository:</span>
-                  <span className="font-mono text-blue-400">{selectedProject.githubRepo}</span>
+                  <span className="font-mono text-blue-400">{selectedProject.githubRepo || 'Not linked'}</span>
                 </div>
               </div>
+
+              {!isGuest && (
+                <div className="p-4 rounded-xl bg-[#080D18] border border-[#26344B] space-y-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-slate-300 uppercase tracking-wider text-[11px]">
+                      GitHub Repository Binding &amp; Sync
+                    </h4>
+                    {selectedProject.githubRepo && (
+                      <button
+                        type="button"
+                        onClick={() => handleSyncProjectRepo(selectedProject.id)}
+                        disabled={syncingProjectId === selectedProject.id}
+                        className="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 font-semibold cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${syncingProjectId === selectedProject.id ? 'animate-spin' : ''}`} />
+                        <span>Sync Now</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {availableRepos.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={drawerRepoInput}
+                        onChange={(e) => setDrawerRepoInput(e.target.value)}
+                        className="flex-1 bg-[#111C30] border border-[#26344B] rounded-lg px-2.5 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="">Select repository...</option>
+                        {availableRepos.map((repo) => (
+                          <option key={repo.id} value={repo.fullName}>
+                            {repo.fullName} {repo.private ? '(private)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleLinkRepoInDrawer}
+                        disabled={!drawerRepoInput.trim() || syncingProjectId === selectedProject.id}
+                        className="px-3 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <Link2 className="w-3.5 h-3.5" />
+                        <span>Link</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="owner/repository"
+                        value={drawerRepoInput}
+                        onChange={(e) => setDrawerRepoInput(e.target.value)}
+                        className="flex-1 bg-[#111C30] border border-[#26344B] rounded-lg px-2.5 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleLinkRepoInDrawer}
+                        disabled={!drawerRepoInput.trim() || syncingProjectId === selectedProject.id}
+                        className="px-3 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white font-semibold cursor-pointer disabled:opacity-50"
+                      >
+                        Bind
+                      </button>
+                    </div>
+                  )}
+
+                  {drawerMessage && (
+                    <div className="text-[11px] text-slate-300 bg-[#111C30] border border-[#26344B] rounded-lg px-2.5 py-1.5">
+                      {drawerMessage}
+                    </div>
+                  )}
+
+                  {projectActivity && projectActivity.commits.length > 0 && (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+                        Latest Commits ({projectActivity.commits.length})
+                      </div>
+                      {projectActivity.commits.slice(0, 3).map((commit) => (
+                        <div key={commit.sha} className="flex items-center justify-between text-[11px] text-slate-300 font-mono">
+                          <span className="truncate max-w-[260px]">{commit.message}</span>
+                          <span className="text-slate-500 shrink-0 ml-2">{commit.shortSha}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Project Milestones */}
               <div className="space-y-2.5">
@@ -922,6 +1221,11 @@ export const ProjectsPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreateProject} className="space-y-4 text-sm">
+              {createError && (
+                <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-800/60 text-xs text-rose-200">
+                  {createError}
+                </div>
+              )}
               <div>
                 <label className="block font-semibold text-slate-300 mb-1.5">Project Name *</label>
                 <input
@@ -958,19 +1262,39 @@ export const ProjectsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">GitHub Repository (owner/repo)</label>
-                <input
-                  type="text"
-                  value={githubRepo}
-                  onChange={(e) => setGithubRepo(e.target.value)}
-                  className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
-                />
+                <label className="block font-semibold text-slate-300 mb-1.5">GitHub Repository (owner/repo, optional)</label>
+                {availableRepos.length > 0 ? (
+                  <select
+                    value={githubRepo}
+                    onChange={(e) => setGithubRepo(e.target.value)}
+                    className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
+                  >
+                    <option value="">Link later</option>
+                    {availableRepos.map((repo) => (
+                      <option key={repo.id} value={repo.fullName}>
+                        {repo.fullName}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="owner/repository (optional)"
+                    value={githubRepo}
+                    onChange={(e) => setGithubRepo(e.target.value)}
+                    className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"
+                  />
+                )}
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">Total Deliverable Budget (USD)</label>
+                <label className="block font-semibold text-slate-300 mb-1.5">Total Deliverable Budget (USD) *</label>
                 <input
                   type="number"
+                  required
+                  min="1"
+                  step="any"
+                  placeholder="e.g. 5000"
                   value={totalBudget}
                   onChange={(e) => setTotalBudget(e.target.value)}
                   className="w-full bg-[#080D18] border border-[#26344B] rounded-xl px-4 py-2.5 text-white text-sm font-mono focus:outline-none focus:border-[#2563EB]"

@@ -22,6 +22,11 @@ import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { IntegrationsPage } from '@/pages/IntegrationsPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { CareerProfilePage } from '@/pages/CareerProfilePage';
+import { FindDevelopersPage } from '@/pages/FindDevelopersPage';
+import { TalentPipelinePage } from '@/pages/TalentPipelinePage';
+import { FindOpportunitiesPage } from '@/pages/FindOpportunitiesPage';
+import { MyApplicationsPage } from '@/pages/MyApplicationsPage';
 
 /**
  * Legacy /guest/* route adapter: enters Demo Mode for the requested persona
@@ -157,6 +162,50 @@ export const App: React.FC = () => {
                 <Route path="/integrations" element={<IntegrationsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+
+                {/* Client-Only Marketplace Routes */}
+                <Route
+                  path="/find-developers"
+                  element={
+                    <RoleGuard allowedRole="CLIENT">
+                      <FindDevelopersPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/talent-pipeline"
+                  element={
+                    <RoleGuard allowedRole="CLIENT">
+                      <TalentPipelinePage />
+                    </RoleGuard>
+                  }
+                />
+
+                {/* Developer-Only Resume Studio & Marketplace Routes */}
+                <Route
+                  path="/career-profile"
+                  element={
+                    <RoleGuard allowedRole="DEVELOPER">
+                      <CareerProfilePage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/opportunities"
+                  element={
+                    <RoleGuard allowedRole="DEVELOPER">
+                      <FindOpportunitiesPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/my-applications"
+                  element={
+                    <RoleGuard allowedRole="DEVELOPER">
+                      <MyApplicationsPage />
+                    </RoleGuard>
+                  }
+                />
               </Route>
             </Route>
 

@@ -9,6 +9,10 @@
   "scripts": {
     "dev": "npm run dev --prefix frontend",
     "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "start:backend": "npm run start --prefix backend",
+    "dev:all": "node scripts/dev.mjs",
+    "db:up": "docker compose up -d postgres",
     "build": "npm run build --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
     "preview": "npm run preview --prefix frontend",
@@ -18,7 +22,7 @@
     "db:seed": "prisma db seed --schema database/prisma/schema.prisma",
     "db:reset": "prisma migrate reset --schema database/prisma/schema.prisma",
     "db:studio": "prisma studio --schema database/prisma/schema.prisma",
-    "db:test": "tsx database/prisma/validate.ts"
+    "db:test": "npm --prefix backend exec -- tsx database/prisma/validate.ts"
   },
   "prisma": {
     "seed": "tsx database/prisma/seed.ts"

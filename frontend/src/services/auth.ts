@@ -8,6 +8,107 @@ import {
 } from './devOfflineAuth';
 
 const BASE_URL = '/api/auth';
+const AUTH_MUTATION_TIMEOUT_MS = 15000;
+const oauthExchangeInFlight = new Map<string, Promise<AuthSession>>();
+
+function extractApiErrorMessage(errJson: any): string | null {
+  const details = errJson?.error?.details;
+  if (Array.isArray(details) && details.length > 0) {
+    const firstIssueMsg = details.find(
+      (issue: any) => typeof issue?.message === 'string' && issue.message.trim()
+    )?.message;
+    if (firstIssueMsg) {
+      return firstIssueMsg;
+    }
+  } else if (details && typeof details === 'object') {
+    for (const val of Object.values(details)) {
+      if (Array.isArray(val) && typeof val[0] === 'string' && val[0].trim()) {
+        return val[0];
+      }
+    }
+  }
+
+  if (typeof errJson?.error?.message === 'string' && errJson.error.message.trim()) {
+    return errJson.error.message;
+  }
+  if (typeof errJson?.message === 'string' && errJson.message.trim()) {
+    return errJson.message;
+  }
+  return null;
+}
+
+async function throwFromFailedAuthResponse(
+  res: Response,
+  options?: { unauthorizedMessage?: string; conflictMessage?: string }
+): Promise<never> {
+  const errJson = await res.json().catch(() => ({}));
+  if (options?.unauthorizedMessage && res.status === 401) {
+    throw new Error(options.unauthorizedMessage);
+  }
+
+  const apiMsg = extractApiErrorMessage(errJson);
+  if (
+    options?.conflictMessage &&
+    (res.status === 409 ||
+      errJson?.error?.code === 'CONFLICT' ||
+      apiMsg?.toLowerCase().includes('already exists'))
+  ) {
+    throw new Error(options.conflictMessage);
+  }
+
+  if (res.status === 503 || errJson?.error?.code === 'DATABASE_UNAVAILABLE') {
+    throw new Error(
+      apiMsg || 'Authentication database is unavailable. Ensure PostgreSQL is running and try again.'
+    );
+  }
+
+  if (apiMsg) {
+    throw new Error(apiMsg);
+  }
+
+  if (res.status >= 500) {
+    // Empty/non-JSON 5xx typically indicates Vite proxy ECONNREFUSED to a down backend
+    throw new Error('Failed to fetch backend');
+  }
+
+  throw new Error(`Authentication request failed with status ${res.status}.`);
+}
+
+function isNetworkOrTimeoutError(err: unknown): boolean {
+  const e = err as { name?: string; message?: string } | null;
+  if (e?.name === 'AbortError' || e?.name === 'TimeoutError') {
+    return true;
+  }
+  if (typeof e?.message === 'string') {
+    const msg = e.message.toLowerCase();
+    return (
+      msg.includes('fetch') ||
+      msg.includes('network') ||
+      msg.includes('timeout') ||
+      msg.includes('timed out')
+    );
+  }
+  return false;
+}
+
+function mapBackendAuthResponse(json: any, organization?: string): AuthSession {
+  const mappedRole: UserRole =
+    json.user.role === 'FREELANCER' ? 'DEVELOPER' : (json.user.role as UserRole);
+  const user: AuthUser = {
+    id: json.user.id,
+    email: json.user.email,
+    name: json.user.name,
+    role: mappedRole,
+    avatarUrl: json.user.avatarUrl,
+    bio: json.user.bio,
+    githubConnected: Boolean(json.user.githubConnected),
+    githubUsername: json.user.githubUsername ?? null,
+    githubConnectedAt: json.user.githubConnectedAt ?? null,
+    ...(organization !== undefined ? { organization } : {}),
+    createdAt: json.user.createdAt,
+  };
+  return { user, accessToken: json.accessToken };
+}
 
 if (!isOfflineAuthSimulationEnabled()) {
   clearDevOfflineVault();
@@ -33,7 +134,7 @@ export const authService = {
   },
   /**
    * Registers a new user. Calls the backend `/api/auth/register` endpoint.
-   * If the backend is unavailable, gracefully falls back to secure cryptographic storage.
+   * Falls back to offline simulation only when explicitly opted in for development.
    */
   async register(data: {
     name: string;
@@ -47,54 +148,38 @@ export const authService = {
     try {
       const res = await fetch(`${BASE_URL}/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         body: JSON.stringify({
           name: data.name.trim(),
           email: data.email.toLowerCase().trim(),
           password: data.password,
           role: backendRole,
         }),
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(AUTH_MUTATION_TIMEOUT_MS),
       });
 
       if (res.ok) {
         const json = await res.json();
-        const mappedRole: UserRole = json.user.role === 'FREELANCER' ? 'DEVELOPER' : (json.user.role as UserRole);
-        const user: AuthUser = {
-          id: json.user.id,
-          email: json.user.email,
-          name: json.user.name,
-          role: mappedRole,
-          avatarUrl: json.user.avatarUrl,
-          bio: json.user.bio,
-          organization: data.organization,
-          createdAt: json.user.createdAt,
-        };
-        return { user, accessToken: json.accessToken };
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        if (res.status === 409 || errJson.error?.includes?.('already exists') || errJson.message?.includes?.('already exists')) {
-          throw new Error('A user with this email address already exists. Please log in.');
-        }
-        if (errJson.message) {
-          throw new Error(errJson.message);
-        }
-        if (errJson.error?.message) {
-          throw new Error(errJson.error.message);
-        }
-        if (res.status >= 500) {
-          throw new Error('Failed to fetch backend');
-        }
+        return mapBackendAuthResponse(json, data.organization);
       }
+
+      await throwFromFailedAuthResponse(res, {
+        conflictMessage: 'A user with this email address already exists. Please log in.',
+      });
     } catch (err: any) {
-      if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout')) {
+      if (!isNetworkOrTimeoutError(err) && err?.message !== 'Failed to fetch backend') {
         throw err;
       }
       if (isOfflineAuthSimulationEnabled()) {
         return devOfflineRegister(data);
       }
       throw new Error(
-        'Authentication server is unreachable. Real account registration requires the backend server.'
+        'Authentication server timed out or is unreachable. Ensure the backend server (port 3001) and database are running, and open DevFlow on http://localhost:3000.'
       );
     }
 
@@ -114,53 +199,39 @@ export const authService = {
     try {
       const res = await fetch(`${BASE_URL}/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         body: JSON.stringify({
           email: emailLower,
           password: credentials.password,
         }),
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(AUTH_MUTATION_TIMEOUT_MS),
       });
 
       if (res.ok) {
         const json = await res.json();
-        const registeredRole: UserRole = json.user.role === 'FREELANCER' ? 'DEVELOPER' : (json.user.role as UserRole);
+        const session = mapBackendAuthResponse(json);
 
         // Strict Role Validation Check
-        if (registeredRole !== credentials.selectedRole) {
-          const expectedLabel = registeredRole === 'CLIENT' ? 'Client' : 'Developer';
+        if (session.user.role !== credentials.selectedRole) {
+          const expectedLabel = session.user.role === 'CLIENT' ? 'Client' : 'Developer';
           throw new Error(
             `Role mismatch: This account is registered as a ${expectedLabel}. Please select the ${expectedLabel} role option to log in.`
           );
         }
 
-        const user: AuthUser = {
-          id: json.user.id,
-          email: json.user.email,
-          name: json.user.name,
-          role: registeredRole,
-          avatarUrl: json.user.avatarUrl,
-          bio: json.user.bio,
-          createdAt: json.user.createdAt,
-        };
-        return { user, accessToken: json.accessToken };
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        if (res.status === 401) {
-          throw new Error('Invalid email or password.');
-        }
-        if (errJson.message) {
-          throw new Error(errJson.message);
-        }
-        if (errJson.error?.message) {
-          throw new Error(errJson.error.message);
-        }
-        if (res.status >= 500) {
-          throw new Error('Failed to fetch backend');
-        }
+        return session;
       }
+
+      await throwFromFailedAuthResponse(res, {
+        unauthorizedMessage: 'Invalid email or password.',
+      });
     } catch (err: any) {
-      if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout')) {
+      if (!isNetworkOrTimeoutError(err) && err?.message !== 'Failed to fetch backend') {
         throw err;
       }
 
@@ -168,7 +239,7 @@ export const authService = {
         return devOfflineLogin(credentials);
       }
       throw new Error(
-        'Authentication server is unreachable. Real account sign-in requires the backend server.'
+        'Authentication server timed out or is unreachable. Ensure the backend server (port 3001) and database are running, and open DevFlow on http://localhost:3000.'
       );
     }
 
@@ -184,9 +255,13 @@ export const authService = {
     try {
       await fetch(`${BASE_URL}/logout`, {
         method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         signal: AbortSignal.timeout(2000),
       });
-    } catch {}
+    } catch { }
   },
 
   /**
@@ -201,7 +276,7 @@ export const authService = {
       if (res.ok) {
         return await res.json();
       }
-    } catch {}
+    } catch { }
     return {
       google: { configured: false },
       facebook: { configured: false },
@@ -217,87 +292,113 @@ export const authService = {
     intent: 'login' | 'signup'
   ): Promise<void> {
     const backendRole = role === 'DEVELOPER' ? 'FREELANCER' : 'CLIENT';
+    const providerLabel = provider === 'google' ? 'Google' : 'Facebook';
 
     try {
       const res = await fetch(`${BASE_URL}/oauth/${provider}/initiate`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
         },
         body: JSON.stringify({
           role: backendRole,
           intent,
         }),
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(10000),
       });
 
       if (res.ok) {
-        const json = await res.json();
+        const json = await res.json().catch(() => ({}));
         if (json.authUrl) {
           window.location.href = json.authUrl;
           return;
         }
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        if (errJson.error?.code === 'GOOGLE_OAUTH_NOT_CONFIGURED' || errJson.message?.includes('Google OAuth is not configured')) {
-          throw new Error('GOOGLE_OAUTH_NOT_CONFIGURED');
-        }
-        if (errJson.error?.code === 'FACEBOOK_OAUTH_NOT_CONFIGURED' || errJson.message?.includes('Facebook OAuth is not configured')) {
-          throw new Error('FACEBOOK_OAUTH_NOT_CONFIGURED');
-        }
-        if (errJson.message) {
-          throw new Error(errJson.message);
-        }
+        throw new Error(`Authorization URL was not returned by the server for ${providerLabel} login.`);
       }
+
+      const errJson = await res.json().catch(() => ({}));
+      const errCode = errJson?.error?.code;
+      const apiMsg = extractApiErrorMessage(errJson);
+
+      if (
+        errCode === 'GOOGLE_OAUTH_NOT_CONFIGURED' ||
+        apiMsg?.includes('Google OAuth is not configured')
+      ) {
+        throw new Error('GOOGLE_OAUTH_NOT_CONFIGURED');
+      }
+      if (
+        errCode === 'FACEBOOK_OAUTH_NOT_CONFIGURED' ||
+        apiMsg?.includes('Facebook OAuth is not configured')
+      ) {
+        throw new Error('FACEBOOK_OAUTH_NOT_CONFIGURED');
+      }
+
+      if (apiMsg) {
+        throw new Error(apiMsg);
+      }
+
+      throw new Error(
+        `Unable to start ${providerLabel} authentication (HTTP ${res.status}). Ensure the DevFlow backend server and database are running.`
+      );
     } catch (err: any) {
       if (
-        err.message === 'GOOGLE_OAUTH_NOT_CONFIGURED' ||
-        err.message === 'FACEBOOK_OAUTH_NOT_CONFIGURED'
+        err?.message === 'GOOGLE_OAUTH_NOT_CONFIGURED' ||
+        err?.message === 'FACEBOOK_OAUTH_NOT_CONFIGURED'
       ) {
         throw err;
       }
-      if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout')) {
-        throw err;
+
+      if (isNetworkOrTimeoutError(err)) {
+        throw new Error(
+          `Could not reach the DevFlow authentication server to start ${providerLabel} sign-in. Ensure the backend server (port 3001) and database are running.`
+        );
       }
-      // If network unreachable, throw configuration notice for offline fallback
-      throw new Error(
-        provider === 'google'
-          ? 'GOOGLE_OAUTH_NOT_CONFIGURED'
-          : 'FACEBOOK_OAUTH_NOT_CONFIGURED'
-      );
+
+      throw err instanceof Error ? err : new Error(`${providerLabel} authentication failed.`);
     }
   },
 
   /**
    * Exchanges short-lived one-time OAuth code for user session.
+   * Deduplicates concurrent calls for the same code (React StrictMode double-mount protection).
    */
   async exchangeOAuthCode(code: string): Promise<AuthSession> {
-    const res = await fetch(`${BASE_URL}/oauth/exchange`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (res.ok) {
-      const json = await res.json();
-      const mappedRole: UserRole =
-        json.user.role === 'FREELANCER' ? 'DEVELOPER' : (json.user.role as UserRole);
-      const user: AuthUser = {
-        id: json.user.id,
-        email: json.user.email,
-        name: json.user.name,
-        role: mappedRole,
-        avatarUrl: json.user.avatarUrl,
-        bio: json.user.bio,
-        createdAt: json.user.createdAt,
-      };
-      return { user, accessToken: json.accessToken };
+    const existingRequest = oauthExchangeInFlight.get(code);
+    if (existingRequest) {
+      return existingRequest;
     }
 
-    const errJson = await res.json().catch(() => ({}));
-    throw new Error(errJson.message || 'OAuth exchange failed. The code may be expired.');
+    const requestPromise = (async (): Promise<AuthSession> => {
+      const res = await fetch(`${BASE_URL}/oauth/exchange`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ code }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        return mapBackendAuthResponse(json);
+      }
+
+      const errJson = await res.json().catch(() => ({}));
+      const apiMsg = extractApiErrorMessage(errJson);
+      throw new Error(apiMsg || 'OAuth exchange failed. The code may be expired.');
+    })().catch((err) => {
+      oauthExchangeInFlight.delete(code);
+      throw err;
+    });
+
+    oauthExchangeInFlight.set(code, requestPromise);
+    return requestPromise;
   },
 
   /**
@@ -323,37 +424,16 @@ export const authService = {
           role: backendRole,
           avatarUrl: params.avatarUrl,
         }),
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(AUTH_MUTATION_TIMEOUT_MS),
       });
 
       if (res.ok) {
         const json = await res.json();
-        const mappedRole: UserRole =
-          json.user.role === 'FREELANCER' ? 'DEVELOPER' : (json.user.role as UserRole);
-        const user: AuthUser = {
-          id: json.user.id,
-          email: json.user.email,
-          name: json.user.name,
-          role: mappedRole,
-          avatarUrl: json.user.avatarUrl,
-          bio: json.user.bio,
-          createdAt: json.user.createdAt,
-        };
-        return { user, accessToken: json.accessToken };
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        if (errJson.message) {
-          throw new Error(errJson.message);
-        }
-        if (errJson.error?.message) {
-          throw new Error(errJson.error.message);
-        }
-        if (res.status >= 500) {
-          throw new Error('Failed to fetch backend');
-        }
+        return mapBackendAuthResponse(json);
       }
+      await throwFromFailedAuthResponse(res);
     } catch (err: any) {
-      if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout')) {
+      if (!isNetworkOrTimeoutError(err) && err?.message !== 'Failed to fetch backend') {
         throw err;
       }
     }

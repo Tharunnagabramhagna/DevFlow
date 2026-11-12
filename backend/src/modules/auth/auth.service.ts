@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, Role, User } from '@prisma/client';
+import { Prisma, PrismaClient, Role, User } from '@prisma/client';
 import { env } from '../../config/env';
 import { prisma as defaultPrisma } from '../../config/database';
 import { emailService, IEmailService } from '../../services/email.service';
@@ -13,6 +13,7 @@ import {
   generateOtp,
 } from '../../utils/crypto';
 import {
+  AppError,
   BadRequestError,
   UnauthorizedError,
   ConflictError,
@@ -30,6 +31,9 @@ export interface SanitizedUser {
   isGuest?: boolean;
   guestPersona?: 'CLIENT' | 'DEVELOPER' | null;
   organization?: string;
+  githubConnected?: boolean;
+  githubUsername?: string | null;
+  githubConnectedAt?: Date | null;
   createdAt: Date;
 }
 
@@ -40,8 +44,22 @@ export const sanitizeUser = (user: User): SanitizedUser => ({
   role: user.role,
   avatarUrl: user.avatarUrl,
   bio: user.bio,
+  githubConnected: Boolean(user.githubId && user.githubAccessToken),
+  githubUsername: user.githubUsername ?? null,
+  githubConnectedAt: user.githubConnectedAt ?? null,
   createdAt: user.createdAt,
 });
+
+function sanitizeReturnPath(returnPath?: string | null): string {
+  if (!returnPath || typeof returnPath !== 'string') {
+    return '/dashboard';
+  }
+  const trimmed = returnPath.trim();
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.includes('://')) {
+    return '/dashboard';
+  }
+  return trimmed;
+}
 
 export class AuthService {
   constructor(
@@ -63,14 +81,22 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        passwordHash,
-        name: dto.name,
-        role: dto.role as Role,
-      },
-    });
+    let user: User;
+    try {
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          name: dto.name,
+          role: dto.role as Role,
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictError('A user with this email address already exists');
+      }
+      throw err;
+    }
 
     const accessToken = this.generateAccessToken(user);
     const rawRefreshToken = await this.issueRefreshToken(user.id);
@@ -377,20 +403,103 @@ export class AuthService {
   }
 
   /**
-   * Handles GitHub OAuth callback, verifies state + PKCE, validates verified email, and processes login/linking.
+   * Generates GitHub OAuth 2.0 + PKCE authorize URL for an already-authenticated user connecting repositories.
+   */
+  async initiateGitHubConnectOAuth(
+    userId: string,
+    returnPath = '/dashboard'
+  ): Promise<{ authorizeUrl: string; rawState: string }> {
+    if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+      throw new AppError(
+        503,
+        'GITHUB_NOT_CONFIGURED',
+        'GitHub OAuth is not configured on this server. Add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in backend environment settings.'
+      );
+    }
+
+    const codeVerifier = generateSecureToken(32);
+    const codeChallenge = crypto
+      .createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64url');
+
+    const safeReturnPath = sanitizeReturnPath(returnPath);
+    const { rawState } = await this.createOAuthState(codeVerifier, {
+      initiatingUserId: userId,
+      purpose: 'CONNECT_GITHUB',
+      returnPath: safeReturnPath,
+    });
+    const redirectUri = env.GITHUB_CALLBACK_URL || `${env.CLIENT_URL}/api/auth/github/callback`;
+    const params = new URLSearchParams({
+      client_id: env.GITHUB_CLIENT_ID,
+      redirect_uri: redirectUri,
+      scope: 'read:user user:email repo',
+      state: rawState,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+    });
+
+    return {
+      authorizeUrl: `https://github.com/login/oauth/authorize?${params.toString()}`,
+      rawState,
+    };
+  }
+
+  /**
+   * Handles GitHub OAuth callback, verifies state + PKCE, and processes either CONNECT_GITHUB or LOGIN/linking.
    */
   async handleGitHubCallback(
-    code: string,
-    state: string,
-    rawCookieState?: string
+    code: string | undefined,
+    state: string | undefined,
+    rawCookieState?: string,
+    oauthError?: string
   ): Promise<
     | { action: 'EXCHANGE'; code: string }
     | { action: 'LINK_REQUIRED'; ticket: string }
+    | { action: 'REDIRECT'; redirectUrl: string }
   > {
+    if (oauthError) {
+      let safeReturnPath = '/dashboard';
+      let purpose = 'LOGIN';
+      if (state) {
+        try {
+          const stateContext = await this.validateGitHubOAuthState(state, rawCookieState);
+          purpose = stateContext.purpose;
+          safeReturnPath = sanitizeReturnPath(stateContext.returnPath);
+        } catch {
+          // Ignore expired/mismatched state on user-cancelled callback and fall back cleanly
+        }
+      }
+      if (purpose === 'CONNECT_GITHUB') {
+        return {
+          action: 'REDIRECT',
+          redirectUrl: `${env.CLIENT_URL}/#${safeReturnPath}?github_error=${encodeURIComponent(oauthError)}`,
+        };
+      }
+      return {
+        action: 'REDIRECT',
+        redirectUrl: `${env.CLIENT_URL}/#/login?oauth_error=${encodeURIComponent(oauthError)}`,
+      };
+    }
+
+    if (!code || !state) {
+      throw new BadRequestError('Authorization code and state parameter are required');
+    }
+
     // 1. Validate browser-bound state and decrypt PKCE verifier
-    const codeVerifier = await this.validateOAuthState(state, rawCookieState);
+    const { codeVerifier, purpose, initiatingUserId, returnPath } = await this.validateGitHubOAuthState(
+      state,
+      rawCookieState
+    );
+    const safeReturnPath = sanitizeReturnPath(returnPath);
 
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+      if (purpose === 'CONNECT_GITHUB') {
+        return {
+          action: 'REDIRECT',
+          redirectUrl: `${env.CLIENT_URL}/#${safeReturnPath}?github_error=github_not_configured`,
+        };
+      }
       throw new BadRequestError('GitHub OAuth credentials not configured');
     }
 
@@ -426,6 +535,7 @@ export class AuthService {
     const profileResponse = await fetch('https://api.github.com/user', {
       headers: {
         Authorization: `Bearer ${githubAccessToken}`,
+        Accept: 'application/vnd.github+json',
         'User-Agent': 'DevFlow-Backend',
       },
     });
@@ -442,11 +552,42 @@ export class AuthService {
     };
 
     const githubId = String(profile.id);
+    const encryptedGithubAccessToken = encryptSecret(githubAccessToken);
+
+    // Authenticated Developer GitHub Connection flow (does NOT create a new auth session)
+    if (purpose === 'CONNECT_GITHUB' && initiatingUserId) {
+      const existingOwner = await this.prisma.user.findUnique({
+        where: { githubId },
+      });
+
+      if (existingOwner && existingOwner.id !== initiatingUserId) {
+        return {
+          action: 'REDIRECT',
+          redirectUrl: `${env.CLIENT_URL}/#${safeReturnPath}?github_error=github_account_in_use`,
+        };
+      }
+
+      await this.prisma.user.update({
+        where: { id: initiatingUserId },
+        data: {
+          githubId,
+          githubAccessToken: encryptedGithubAccessToken,
+          githubUsername: profile.login,
+          githubConnectedAt: new Date(),
+        },
+      });
+
+      return {
+        action: 'REDIRECT',
+        redirectUrl: `${env.CLIENT_URL}/#${safeReturnPath}?github=connected`,
+      };
+    }
 
     // 4. Fetch GitHub verified email addresses
     const emailResponse = await fetch('https://api.github.com/user/emails', {
       headers: {
         Authorization: `Bearer ${githubAccessToken}`,
+        Accept: 'application/vnd.github+json',
         'User-Agent': 'DevFlow-Backend',
       },
     });
@@ -479,6 +620,14 @@ export class AuthService {
     });
 
     if (existingByGithub) {
+      await this.prisma.user.update({
+        where: { id: existingByGithub.id },
+        data: {
+          githubAccessToken: encryptedGithubAccessToken,
+          githubUsername: profile.login,
+          githubConnectedAt: existingByGithub.githubConnectedAt ?? new Date(),
+        },
+      });
       const exchangeCode = await this.createOAuthExchangeCode(existingByGithub.id);
       return { action: 'EXCHANGE', code: exchangeCode };
     }
@@ -502,6 +651,9 @@ export class AuthService {
         name: profile.name || profile.login,
         avatarUrl: profile.avatar_url,
         githubId,
+        githubAccessToken: encryptedGithubAccessToken,
+        githubUsername: profile.login,
+        githubConnectedAt: new Date(),
         role: Role.FREELANCER,
       },
     });
@@ -513,7 +665,14 @@ export class AuthService {
   /**
    * Creates an encrypted PKCE OAuth state.
    */
-  async createOAuthState(pkceVerifier?: string): Promise<{ rawState: string }> {
+  async createOAuthState(
+    pkceVerifier?: string,
+    options?: {
+      initiatingUserId?: string;
+      purpose?: 'LOGIN' | 'CONNECT_GITHUB';
+      returnPath?: string;
+    }
+  ): Promise<{ rawState: string }> {
     const rawState = generateSecureToken(32);
     const stateHash = hashToken(rawState);
     const encryptedPkce = pkceVerifier ? encryptSecret(pkceVerifier) : null;
@@ -523,6 +682,9 @@ export class AuthService {
       data: {
         stateHash,
         pkceVerifier: encryptedPkce,
+        ...(options?.initiatingUserId ? { initiatingUserId: options.initiatingUserId } : {}),
+        ...(options?.purpose ? { purpose: options.purpose } : {}),
+        ...(options?.returnPath ? { returnPath: options.returnPath } : {}),
         expiresAt,
       },
     });
@@ -530,12 +692,63 @@ export class AuthService {
     return { rawState };
   }
 
+  private async validateGitHubOAuthState(
+    state: string,
+    rawCookieState?: string
+  ): Promise<{
+    codeVerifier: string | null;
+    purpose: string;
+    initiatingUserId: string | null;
+    returnPath: string | null;
+  }> {
+    if (!state) {
+      throw new UnauthorizedError('OAuth state mismatch or missing cookie state');
+    }
+
+    if (rawCookieState !== undefined) {
+      const stateBuf = Buffer.from(state, 'utf8');
+      const cookieBuf = Buffer.from(rawCookieState, 'utf8');
+      if (stateBuf.length !== cookieBuf.length || !crypto.timingSafeEqual(stateBuf, cookieBuf)) {
+        throw new UnauthorizedError('OAuth state mismatch or missing cookie state');
+      }
+    }
+
+    const stateHash = hashToken(state);
+    const record = await this.prisma.oAuthState.findUnique({
+      where: { stateHash },
+    });
+
+    if (!record || record.usedAt !== null || record.expiresAt < new Date()) {
+      throw new UnauthorizedError('Invalid or expired OAuth state');
+    }
+
+    await this.prisma.oAuthState.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    });
+
+    return {
+      codeVerifier: record.pkceVerifier ? decryptSecret(record.pkceVerifier) : null,
+      purpose: record.purpose || 'LOGIN',
+      initiatingUserId: record.initiatingUserId || null,
+      returnPath: record.returnPath || null,
+    };
+  }
+
   /**
    * Validates and atomically consumes OAuth state.
    */
   async validateOAuthState(state: string, rawCookieState?: string): Promise<string | null> {
-    if (!state || (rawCookieState && state !== rawCookieState)) {
+    if (!state) {
       throw new UnauthorizedError('OAuth state mismatch or missing cookie state');
+    }
+
+    if (rawCookieState !== undefined) {
+      const stateBuf = Buffer.from(state, 'utf8');
+      const cookieBuf = Buffer.from(rawCookieState, 'utf8');
+      if (stateBuf.length !== cookieBuf.length || !crypto.timingSafeEqual(stateBuf, cookieBuf)) {
+        throw new UnauthorizedError('OAuth state mismatch or missing cookie state');
+      }
     }
 
     const stateHash = hashToken(state);
@@ -800,14 +1013,19 @@ export class AuthService {
     google: { configured: boolean; clientIdPrefix?: string };
     facebook: { configured: boolean; appIdPrefix?: string };
   } {
+    const googleClientId = env.GOOGLE_CLIENT_ID?.trim();
+    const googleClientSecret = env.GOOGLE_CLIENT_SECRET?.trim();
+    const facebookAppId = env.FACEBOOK_APP_ID?.trim();
+    const facebookAppSecret = env.FACEBOOK_APP_SECRET?.trim();
+
     return {
       google: {
-        configured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
-        clientIdPrefix: env.GOOGLE_CLIENT_ID ? `${env.GOOGLE_CLIENT_ID.substring(0, 10)}...` : undefined,
+        configured: Boolean(googleClientId && googleClientSecret),
+        clientIdPrefix: googleClientId ? `${googleClientId.substring(0, 10)}...` : undefined,
       },
       facebook: {
-        configured: Boolean(env.FACEBOOK_APP_ID && env.FACEBOOK_APP_SECRET),
-        appIdPrefix: env.FACEBOOK_APP_ID ? `${env.FACEBOOK_APP_ID.substring(0, 6)}...` : undefined,
+        configured: Boolean(facebookAppId && facebookAppSecret),
+        appIdPrefix: facebookAppId ? `${facebookAppId.substring(0, 6)}...` : undefined,
       },
     };
   }
@@ -816,7 +1034,118 @@ export class AuthService {
    * Centralized Meta / Facebook Graph API version (configurable via env.FACEBOOK_GRAPH_API_VERSION).
    */
   get facebookGraphApiVersion(): string {
-    return env.FACEBOOK_GRAPH_API_VERSION || 'v27.0';
+    return env.FACEBOOK_GRAPH_API_VERSION?.trim() || 'v27.0';
+  }
+
+  /**
+   * Normalizes and validates social OAuth initiation role, intent, and optional callback URL.
+   */
+  normalizeSocialOAuthParams(input: {
+    role?: unknown;
+    intent?: unknown;
+    callbackUrl?: unknown;
+  }): { role: Role; intent: 'login' | 'signup'; callbackUrl?: string } {
+    const rawRole = typeof input.role === 'string' ? input.role.trim().toUpperCase() : 'FREELANCER';
+    let role: Role;
+    if (rawRole === 'CLIENT') {
+      role = Role.CLIENT;
+    } else if (rawRole === 'FREELANCER' || rawRole === 'DEVELOPER') {
+      role = Role.FREELANCER;
+    } else {
+      throw new BadRequestError('Unsupported OAuth role. Select Client or Developer.');
+    }
+
+    const rawIntent = typeof input.intent === 'string' ? input.intent.trim().toLowerCase() : 'login';
+    if (rawIntent !== 'login' && rawIntent !== 'signup') {
+      throw new BadRequestError('Unsupported OAuth intent. Expected login or signup.');
+    }
+
+    const callbackUrl =
+      typeof input.callbackUrl === 'string' && input.callbackUrl.trim()
+        ? input.callbackUrl.trim()
+        : undefined;
+
+    return { role, intent: rawIntent, callbackUrl };
+  }
+
+  /**
+   * Resolves and validates the server OAuth callback URL to enforce redirect_uri consistency.
+   */
+  private resolveSocialCallbackUrl(provider: 'google' | 'facebook', requestedCallbackUrl?: string): string {
+    const configured =
+      provider === 'google'
+        ? env.GOOGLE_CALLBACK_URL?.trim() || `http://localhost:${env.PORT}/api/auth/oauth/google/callback`
+        : env.FACEBOOK_CALLBACK_URL?.trim() || `http://localhost:${env.PORT}/api/auth/oauth/facebook/callback`;
+
+    if (!requestedCallbackUrl) {
+      return configured;
+    }
+
+    let requestedUrl: URL;
+    let configuredUrl: URL;
+    try {
+      requestedUrl = new URL(requestedCallbackUrl);
+      configuredUrl = new URL(configured);
+    } catch {
+      throw new BadRequestError('Invalid OAuth callback URL.');
+    }
+
+    if (
+      requestedUrl.origin !== configuredUrl.origin ||
+      requestedUrl.pathname !== configuredUrl.pathname
+    ) {
+      throw new BadRequestError('Untrusted OAuth callback URL.');
+    }
+
+    return configured;
+  }
+
+  /**
+   * Safely peeks role/intent from an OAuth state token so cancellation or errors return to the same role step.
+   */
+  async peekSocialOAuthStateContext(
+    state?: string
+  ): Promise<{ role?: Role; intent?: 'login' | 'signup' } | null> {
+    if (!state) return null;
+    try {
+      const record = await this.prisma.oAuthState.findUnique({
+        where: { stateHash: hashToken(state) },
+      });
+      if (!record?.pkceVerifier) return null;
+      const metadata = JSON.parse(decryptSecret(record.pkceVerifier)) as {
+        role?: Role;
+        intent?: 'login' | 'signup';
+      };
+      return {
+        role: metadata.role === Role.CLIENT || metadata.role === Role.FREELANCER ? metadata.role : undefined,
+        intent: metadata.intent === 'login' || metadata.intent === 'signup' ? metadata.intent : undefined,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async extractOAuthErrorDetail(res: Response, fallback: string): Promise<string> {
+    try {
+      const text = await res.text();
+      if (!text) return fallback;
+      try {
+        const parsed = JSON.parse(text) as {
+          error?: string | { message?: string };
+          error_description?: string;
+          message?: string;
+        };
+        if (parsed.error_description) return parsed.error_description;
+        if (typeof parsed.error === 'object' && parsed.error?.message) return parsed.error.message;
+        if (typeof parsed.error === 'string') return parsed.error;
+        if (parsed.message) return parsed.message;
+      } catch {
+        // Ignore non-JSON bodies so raw HTML error pages are not dumped into URLs
+      }
+      return fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   /**
@@ -829,30 +1158,41 @@ export class AuthService {
     callbackUrl?: string;
   }): Promise<{ authUrl: string; rawState: string }> {
     const isGoogle = params.provider === 'google';
+    if (params.role !== Role.CLIENT && params.role !== Role.FREELANCER) {
+      throw new BadRequestError('Unsupported OAuth role. Select Client or Developer.');
+    }
+
+    const googleClientId = env.GOOGLE_CLIENT_ID?.trim();
+    const googleClientSecret = env.GOOGLE_CLIENT_SECRET?.trim();
+    const facebookAppId = env.FACEBOOK_APP_ID?.trim();
+    const facebookAppSecret = env.FACEBOOK_APP_SECRET?.trim();
 
     if (isGoogle) {
-      if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+      if (!googleClientId || !googleClientSecret) {
         throw new BadRequestError(
-          'Google OAuth is not configured on this server. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in backend/.env.',
+          'Google OAuth is not configured on this server. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.',
           undefined,
           'GOOGLE_OAUTH_NOT_CONFIGURED'
         );
       }
     } else {
-      if (!env.FACEBOOK_APP_ID || !env.FACEBOOK_APP_SECRET) {
+      if (!facebookAppId || !facebookAppSecret) {
         throw new BadRequestError(
-          'Facebook OAuth is not configured on this server. Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in backend/.env.',
+          'Facebook OAuth is not configured on this server. Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in .env.',
           undefined,
           'FACEBOOK_OAUTH_NOT_CONFIGURED'
         );
       }
     }
 
+    const redirectUri = this.resolveSocialCallbackUrl(params.provider, params.callbackUrl);
+
     // Embed metadata securely into the state's encrypted verifier payload
     const metadata = JSON.stringify({
       provider: params.provider,
       role: params.role,
       intent: params.intent,
+      redirectUri,
       createdAt: Date.now(),
     });
 
@@ -861,12 +1201,8 @@ export class AuthService {
     let authUrl = '';
 
     if (isGoogle) {
-      const redirectUri =
-        params.callbackUrl ||
-        env.GOOGLE_CALLBACK_URL ||
-        `http://localhost:3001/api/auth/oauth/google/callback`;
       const query = new URLSearchParams({
-        client_id: env.GOOGLE_CLIENT_ID!,
+        client_id: googleClientId!,
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: 'openid email profile',
@@ -876,12 +1212,8 @@ export class AuthService {
       });
       authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${query.toString()}`;
     } else {
-      const redirectUri =
-        params.callbackUrl ||
-        env.FACEBOOK_CALLBACK_URL ||
-        `http://localhost:3001/api/auth/oauth/facebook/callback`;
       const query = new URLSearchParams({
-        client_id: env.FACEBOOK_APP_ID!,
+        client_id: facebookAppId!,
         redirect_uri: redirectUri,
         state: rawState,
         scope: 'email,public_profile',
@@ -904,6 +1236,10 @@ export class AuthService {
     selectedRole: Role;
     intent: 'login' | 'signup';
   }): Promise<{ exchangeCode: string; user: SanitizedUser }> {
+    if (params.selectedRole !== Role.CLIENT && params.selectedRole !== Role.FREELANCER) {
+      throw new BadRequestError('Unsupported role for social authentication.');
+    }
+
     const normalizedEmail = params.email.toLowerCase().trim();
 
     const existingUser = await this.prisma.user.findUnique({
@@ -911,6 +1247,12 @@ export class AuthService {
     });
 
     if (existingUser) {
+      if (existingUser.role === Role.ADMIN) {
+        throw new ConflictError(
+          'Administrator accounts cannot sign in through Client or Developer social login.'
+        );
+      }
+
       // STRICT ROLE VALIDATION: Cross-role social login is strictly blocked!
       if (existingUser.role !== params.selectedRole) {
         const expectedRoleLabel = existingUser.role === 'CLIENT' ? 'Client' : 'Developer';
@@ -919,18 +1261,20 @@ export class AuthService {
         );
       }
 
+      let resolvedUser = existingUser;
       // If user exists and roles match, update avatar if missing
       if (!existingUser.avatarUrl && params.avatarUrl) {
-        await this.prisma.user.update({
+        const updated = await this.prisma.user.update({
           where: { id: existingUser.id },
           data: { avatarUrl: params.avatarUrl },
         });
+        resolvedUser = { ...existingUser, ...(updated?.id ? updated : { avatarUrl: params.avatarUrl }) };
       }
 
       const exchangeCode = await this.createOAuthExchangeCode(existingUser.id);
       return {
         exchangeCode,
-        user: sanitizeUser(existingUser),
+        user: sanitizeUser(resolvedUser),
       };
     }
 
@@ -965,17 +1309,37 @@ export class AuthService {
       throw new UnauthorizedError('Invalid or expired OAuth state metadata');
     }
 
-    let metadata: { provider: string; role: Role; intent: 'login' | 'signup' };
+    let metadata: {
+      provider?: string;
+      role?: Role;
+      intent?: 'login' | 'signup';
+      redirectUri?: string;
+    };
     try {
       metadata = JSON.parse(decryptedState);
     } catch {
       throw new UnauthorizedError('Corrupt OAuth state payload');
     }
 
+    if (
+      metadata.provider !== 'google' ||
+      (metadata.role !== Role.CLIENT && metadata.role !== Role.FREELANCER)
+    ) {
+      throw new UnauthorizedError('OAuth state provider or role mismatch');
+    }
+
+    if (!params.code || !params.code.trim()) {
+      throw new BadRequestError('Google did not return an authorization code.');
+    }
+
+    const googleClientId = env.GOOGLE_CLIENT_ID?.trim();
+    const googleClientSecret = env.GOOGLE_CLIENT_SECRET?.trim();
+    if (!googleClientId || !googleClientSecret) {
+      throw new BadRequestError('Google OAuth is not configured on this server.', undefined, 'GOOGLE_OAUTH_NOT_CONFIGURED');
+    }
+
     const redirectUri =
-      params.callbackUrl ||
-      env.GOOGLE_CALLBACK_URL ||
-      `http://localhost:3001/api/auth/oauth/google/callback`;
+      metadata.redirectUri || this.resolveSocialCallbackUrl('google', params.callbackUrl);
 
     // Exchange code with Google
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -983,20 +1347,26 @@ export class AuthService {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code: params.code,
-        client_id: env.GOOGLE_CLIENT_ID || '',
-        client_secret: env.GOOGLE_CLIENT_SECRET || '',
+        client_id: googleClientId,
+        client_secret: googleClientSecret,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
       }),
     });
 
     if (!tokenRes.ok) {
-      const errBody = await tokenRes.text().catch(() => '');
-      throw new UnauthorizedError(`Failed to exchange authorization code with Google: ${errBody}`);
+      const detail = await this.extractOAuthErrorDetail(
+        tokenRes,
+        'Failed to exchange authorization code with Google'
+      );
+      throw new UnauthorizedError(`Google authentication failed: ${detail}`);
     }
 
-    const tokenData = (await tokenRes.json()) as { access_token: string };
+    const tokenData = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenData.access_token;
+    if (!accessToken) {
+      throw new UnauthorizedError('Google did not return an OAuth access token');
+    }
 
     // Fetch verified profile from Google UserInfo endpoint
     const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -1009,11 +1379,17 @@ export class AuthService {
 
     const profile = (await profileRes.json()) as {
       email?: string;
+      email_verified?: boolean | string;
       name?: string;
       picture?: string;
     };
 
-    if (!profile.email) {
+    const isUnverifiedEmail =
+      profile.email_verified !== undefined &&
+      profile.email_verified !== true &&
+      profile.email_verified !== 'true';
+
+    if (!profile.email || isUnverifiedEmail) {
       throw new BadRequestError('Google did not return a verified email address');
     }
 
@@ -1023,7 +1399,7 @@ export class AuthService {
       name: profile.name || 'Google User',
       avatarUrl: profile.picture || null,
       selectedRole: metadata.role,
-      intent: metadata.intent,
+      intent: metadata.intent === 'signup' ? 'signup' : 'login',
     });
   }
 
@@ -1041,22 +1417,42 @@ export class AuthService {
       throw new UnauthorizedError('Invalid or expired OAuth state metadata');
     }
 
-    let metadata: { provider: string; role: Role; intent: 'login' | 'signup' };
+    let metadata: {
+      provider?: string;
+      role?: Role;
+      intent?: 'login' | 'signup';
+      redirectUri?: string;
+    };
     try {
       metadata = JSON.parse(decryptedState);
     } catch {
       throw new UnauthorizedError('Corrupt OAuth state payload');
     }
 
+    if (
+      metadata.provider !== 'facebook' ||
+      (metadata.role !== Role.CLIENT && metadata.role !== Role.FREELANCER)
+    ) {
+      throw new UnauthorizedError('OAuth state provider or role mismatch');
+    }
+
+    if (!params.code || !params.code.trim()) {
+      throw new BadRequestError('Facebook did not return an authorization code.');
+    }
+
+    const facebookAppId = env.FACEBOOK_APP_ID?.trim();
+    const facebookAppSecret = env.FACEBOOK_APP_SECRET?.trim();
+    if (!facebookAppId || !facebookAppSecret) {
+      throw new BadRequestError('Facebook OAuth is not configured on this server.', undefined, 'FACEBOOK_OAUTH_NOT_CONFIGURED');
+    }
+
     const redirectUri =
-      params.callbackUrl ||
-      env.FACEBOOK_CALLBACK_URL ||
-      `http://localhost:3001/api/auth/oauth/facebook/callback`;
+      metadata.redirectUri || this.resolveSocialCallbackUrl('facebook', params.callbackUrl);
 
     // Exchange code with Facebook Graph API
     const tokenQuery = new URLSearchParams({
-      client_id: env.FACEBOOK_APP_ID || '',
-      client_secret: env.FACEBOOK_APP_SECRET || '',
+      client_id: facebookAppId,
+      client_secret: facebookAppSecret,
       redirect_uri: redirectUri,
       code: params.code,
     });
@@ -1065,12 +1461,18 @@ export class AuthService {
       `https://graph.facebook.com/${this.facebookGraphApiVersion}/oauth/access_token?${tokenQuery.toString()}`
     );
     if (!tokenRes.ok) {
-      const errBody = await tokenRes.text().catch(() => '');
-      throw new UnauthorizedError(`Failed to exchange authorization code with Facebook: ${errBody}`);
+      const detail = await this.extractOAuthErrorDetail(
+        tokenRes,
+        'Failed to exchange authorization code with Facebook'
+      );
+      throw new UnauthorizedError(`Facebook authentication failed: ${detail}`);
     }
 
-    const tokenData = (await tokenRes.json()) as { access_token: string };
+    const tokenData = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenData.access_token;
+    if (!accessToken) {
+      throw new UnauthorizedError('Facebook did not return an OAuth access token');
+    }
 
     // Fetch user profile from Facebook Graph API (preserving id, name, email, picture fields)
     const profileRes = await fetch(
@@ -1099,7 +1501,7 @@ export class AuthService {
       name: profile.name || 'Facebook User',
       avatarUrl: profile.picture?.data?.url || null,
       selectedRole: metadata.role,
-      intent: metadata.intent,
+      intent: metadata.intent === 'signup' ? 'signup' : 'login',
     });
   }
 

@@ -57,6 +57,14 @@ export class MockAIProvider implements IAIProvider {
       systemInstruction.includes(AgentType.PAYMENT_COORDINATION)
     ) {
       successfulResult = this.generatePaymentCoordination(injectionCheck.hasInjection, prompt);
+    } else if (systemInstruction.includes(AgentType.RESUME_PARSING)) {
+      successfulResult = this.generateResumeExtraction(prompt);
+    } else if (systemInstruction.includes(`${AgentType.TALENT_MATCHING}::QUERY`)) {
+      successfulResult = this.generateTalentQueryExtraction(prompt);
+    } else if (systemInstruction.includes(`${AgentType.TALENT_MATCHING}::EVALUATE`)) {
+      successfulResult = this.generateTalentEvaluations(prompt);
+    } else if (systemInstruction.includes(AgentType.OPPORTUNITY_REFINEMENT)) {
+      successfulResult = this.generateOpportunityRefinement(prompt);
     }
 
     if (successfulResult) {
@@ -287,6 +295,192 @@ export class MockAIProvider implements IAIProvider {
         },
       ],
       isAdvisoryOnly: true as const,
+    };
+  }
+
+  private extractKnownTechKeywords(text: string): Array<{ name: string; category: 'language' | 'framework' | 'database' | 'tool' | 'domain' }> {
+    const catalog: Array<[RegExp, string, 'language' | 'framework' | 'database' | 'tool' | 'domain']> = [
+      [/\btypescript\b/i, 'TypeScript', 'language'],
+      [/\bjavascript\b/i, 'JavaScript', 'language'],
+      [/\bpython\b/i, 'Python', 'language'],
+      [/\bgo(lang)?\b/i, 'Go', 'language'],
+      [/\brust\b/i, 'Rust', 'language'],
+      [/\bjava\b(?!script)/i, 'Java', 'language'],
+      [/\breact\b/i, 'React', 'framework'],
+      [/\bnext\.?js\b/i, 'Next.js', 'framework'],
+      [/\bnode\.?js\b/i, 'Node.js', 'framework'],
+      [/\bexpress\b/i, 'Express', 'framework'],
+      [/\bfastapi\b/i, 'FastAPI', 'framework'],
+      [/\bdjango\b/i, 'Django', 'framework'],
+      [/\btailwind/i, 'Tailwind CSS', 'framework'],
+      [/\bpostgresql\b|\bpostgres\b/i, 'PostgreSQL', 'database'],
+      [/\bmongodb\b/i, 'MongoDB', 'database'],
+      [/\bredis\b/i, 'Redis', 'database'],
+      [/\bprisma\b/i, 'Prisma', 'database'],
+      [/\bdocker\b/i, 'Docker', 'tool'],
+      [/\bkubernetes\b/i, 'Kubernetes', 'tool'],
+      [/\baws\b/i, 'AWS', 'tool'],
+      [/\bgit(hub)?\b/i, 'GitHub', 'tool'],
+      [/\bpaypal\b/i, 'PayPal API', 'domain'],
+      [/\bfintech\b/i, 'Fintech', 'domain'],
+      [/\boauth\b/i, 'OAuth 2.0', 'domain'],
+    ];
+    const found: Array<{ name: string; category: 'language' | 'framework' | 'database' | 'tool' | 'domain' }> = [];
+    for (const [rx, label, category] of catalog) {
+      if (rx.test(text)) {
+        found.push({ name: label, category });
+      }
+    }
+    return found;
+  }
+
+  private generateResumeExtraction(prompt: string) {
+    const lines = prompt
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && !l.startsWith('Analyze the following') && !l.startsWith('---'));
+
+    const candidateName =
+      lines.find(
+        (l) =>
+          /^[A-Z][a-z]+(?:\s+[A-Z][a-z.'-]+){1,3}$/.test(l) &&
+          l.length < 48 &&
+          !/resume|curriculum|vitae|summary|skills|experience/i.test(l)
+      ) || null;
+
+    const yearsMatch = prompt.match(/(\d{1,2})\+?\s+years?\s+(?:of\s+)?experience/i);
+    const yearsOfExperience = yearsMatch ? Math.min(50, parseInt(yearsMatch[1], 10)) : null;
+
+    const urlMatches = prompt.match(/https?:\/\/[^\s)>"']+/gi) || [];
+    const githubUrls = urlMatches.filter((u) => /github\.com/i.test(u)).slice(0, 5);
+    const linkedinUrls = urlMatches.filter((u) => /linkedin\.com/i.test(u)).slice(0, 5);
+    const portfolioUrls = urlMatches
+      .filter((u) => !/github\.com|linkedin\.com/i.test(u))
+      .slice(0, 5);
+
+    const detectedTech = this.extractKnownTechKeywords(prompt);
+    const skills = detectedTech.map((tech) => {
+      const snippetLine = lines.find((l) => l.toLowerCase().includes(tech.name.toLowerCase().split(' ')[0])) || null;
+      return {
+        name: tech.name,
+        category: tech.category,
+        yearsUsed: null,
+        confidence: 78,
+        sourceExcerpt: snippetLine ? snippetLine.slice(0, 140) : null,
+      };
+    });
+
+    const headlineLine =
+      lines.find((l) =>
+        /(engineer|developer|architect|full[- ]stack|backend|frontend)/i.test(l) && l.length <= 100
+      ) || null;
+
+    const lowConfidenceFields: string[] = [];
+    if (!candidateName) lowConfidenceFields.push('fullName');
+    if (yearsOfExperience === null) lowConfidenceFields.push('yearsOfExperience');
+    if (skills.length === 0) lowConfidenceFields.push('skills');
+
+    return {
+      fullName: candidateName,
+      headline: headlineLine,
+      summary: null,
+      yearsOfExperience,
+      contactLinks: {
+        portfolioUrls,
+        githubUrls,
+        linkedinUrls,
+      },
+      skills,
+      previousRoles: [],
+      projects: [],
+      education: [],
+      certifications: [],
+      overallConfidence: skills.length >= 2 ? 72 : 45,
+      lowConfidenceFields,
+    };
+  }
+
+  private generateTalentQueryExtraction(prompt: string) {
+    const queryBlockMatch = prompt.match(/<CLIENT_TALENT_QUERY>([\s\S]*?)<\/CLIENT_TALENT_QUERY>/);
+    const queryText = queryBlockMatch ? queryBlockMatch[1] : prompt;
+    const techs = this.extractKnownTechKeywords(queryText);
+    const yearsMatch = queryText.match(/(\d{1,2})\+?\s+years?/i);
+
+    const mandatorySkills: string[] = [];
+    const preferredSkills: string[] = [];
+    for (const tech of techs) {
+      const idx = queryText.toLowerCase().indexOf(tech.name.toLowerCase().split(' ')[0]);
+      const context = idx >= 0 ? queryText.slice(Math.max(0, idx - 35), idx + 35).toLowerCase() : '';
+      if (/bonus|nice to have|optional|prefer|plus/.test(context)) {
+        preferredSkills.push(tech.name);
+      } else {
+        mandatorySkills.push(tech.name);
+      }
+    }
+
+    return {
+      mandatorySkills,
+      preferredSkills,
+      minYearsExperience: yearsMatch ? parseInt(yearsMatch[1], 10) : null,
+      domainKeywords: techs.filter((t) => t.category === 'domain').map((t) => t.name),
+      scopeSummary: queryText.trim().slice(0, 260) || 'Technical requirement extracted from query.',
+    };
+  }
+
+  private generateTalentEvaluations(prompt: string) {
+    const blockMatch = prompt.match(/<CANDIDATE_PROFILES>([\s\S]*?)<\/CANDIDATE_PROFILES>/);
+    let parsedCandidates: Array<{
+      profileId: string;
+      declaredSkills?: string[];
+      resumeExtractedSkills?: string[];
+      githubObservedLanguages?: string[];
+      portfolioProjects?: Array<{ title: string }>;
+    }> = [];
+    try {
+      if (blockMatch) {
+        parsedCandidates = JSON.parse(blockMatch[1]);
+      }
+    } catch {
+      parsedCandidates = [];
+    }
+
+    return {
+      evaluations: parsedCandidates.map((c) => {
+        const ghCount = c.githubObservedLanguages?.length || 0;
+        const projCount = c.portfolioProjects?.length || 0;
+        const adjustment = Math.min(8, ghCount * 2 + projCount * 2);
+        return {
+          profileId: c.profileId,
+          semanticAdjustment: adjustment,
+          explanation: `Aligned ${c.declaredSkills?.length || 0} declared skill(s), ${
+            c.resumeExtractedSkills?.length || 0
+          } resume-stated skill(s), and ${ghCount} GitHub-observed language(s).`,
+          evidenceHighlights: (c.portfolioProjects || []).slice(0, 2).map((p) => p.title),
+          missingOrUnverifiedNotes:
+            (c.resumeExtractedSkills?.length || 0) > 0 && ghCount === 0
+              ? ['Resume skills are self/document-stated and not yet linked to GitHub repositories.']
+              : [],
+        };
+      }),
+    };
+  }
+
+  private generateOpportunityRefinement(prompt: string) {
+    const techs = this.extractKnownTechKeywords(prompt);
+    const titleMatch = prompt.match(/"title":\s*"([^"]+)"/);
+    const title = titleMatch ? titleMatch[1] : 'Software Engineering Engagement';
+
+    return {
+      improvedDescription: `Scoped engineering engagement for "${title}". Deliverables focus on maintainable implementation, documented milestones, and verifiable repository checkpoints.`,
+      deliverables: [
+        'Architecture setup and core feature implementation',
+        'Automated test coverage and verification evidence',
+        'Deployment documentation and handover',
+      ],
+      mandatorySkills: techs.slice(0, 5).map((t) => ({ name: t.name, category: t.category })),
+      preferredSkills: techs.slice(5, 8).map((t) => ({ name: t.name, category: t.category })),
+      recommendedExperienceLevel: 'Mid-Senior',
+      estimatedMinYears: 3,
     };
   }
 }

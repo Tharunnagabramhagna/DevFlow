@@ -3,7 +3,11 @@ import { authController } from './auth.controller';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { authenticate } from '../../middleware/auth';
 import { validateTrustedOrigin } from '../../middleware/csrf';
-import { loginRateLimiter, passwordResetRateLimiter } from '../../middleware/rateLimiter';
+import {
+  loginRateLimiter,
+  passwordResetRateLimiter,
+  sessionReadRateLimiter,
+} from '../../middleware/rateLimiter';
 import {
   RegisterSchema,
   LoginSchema,
@@ -24,7 +28,7 @@ authRouter.post('/login', loginRateLimiter, validateBody(LoginSchema), (req, res
 authRouter.post('/guest', (req, res, next) => authController.guestLogin(req, res, next));
 authRouter.post('/refresh', validateTrustedOrigin, (req, res, next) => authController.refresh(req, res, next));
 authRouter.post('/logout', validateTrustedOrigin, (req, res, next) => authController.logout(req, res, next));
-authRouter.get('/me', authenticate, (req, res) => authController.getMe(req, res));
+authRouter.get('/me', sessionReadRateLimiter, authenticate, (req, res) => authController.getMe(req, res));
 
 // Password Reset Flow
 authRouter.post('/forgot-password', passwordResetRateLimiter, validateBody(ForgotPasswordSchema), (req, res, next) => authController.forgotPassword(req, res, next));
@@ -35,7 +39,7 @@ authRouter.get('/github', (req, res, next) => authController.initiateGitHubOAuth
 authRouter.get('/github/callback', validateQuery(GitHubCallbackQuerySchema), (req, res, next) => authController.handleGitHubCallback(req, res, next));
 
 // Google & Facebook Social OAuth 2.0
-authRouter.get('/oauth/providers', (req, res) => authController.getOAuthProviders(req, res));
+authRouter.get('/oauth/providers', sessionReadRateLimiter, (req, res) => authController.getOAuthProviders(req, res));
 authRouter.get('/oauth/google', (req, res, next) => authController.initiateGoogleOAuth(req, res, next));
 authRouter.post('/oauth/google/initiate', (req, res, next) => authController.initiateGoogleOAuth(req, res, next));
 authRouter.get('/oauth/google/callback', (req, res) => authController.handleGoogleOAuthCallback(req, res));

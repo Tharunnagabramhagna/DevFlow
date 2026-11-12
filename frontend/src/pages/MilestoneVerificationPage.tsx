@@ -97,12 +97,13 @@ export const MilestoneVerificationPage: React.FC = () => {
   const [guardActionTitle, setGuardActionTitle] = useState('Milestone Approval');
 
   // Milestone Selector States
-  const [selectedProject, setSelectedProject] = useState('Project Alpha v1.2');
-  const [selectedSprint, setSelectedSprint] = useState('Sprint 8 - Backend API');
+  const [selectedProject, setSelectedProject] = useState(isGuest ? 'Project Alpha v1.2' : '');
+  const [selectedSprint, setSelectedSprint] = useState(isGuest ? 'Sprint 8 - Backend API' : '');
 
   // Live Data & Telemetry
-  const [, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [commits, setCommits] = useState<import('@/types').GitHubCommitEvidence[]>([]);
   const [loading, setLoading] = useState(true);
 
   // SHA Copy State
@@ -130,18 +131,51 @@ export const MilestoneVerificationPage: React.FC = () => {
   };
 
   useEffect(() => {
+    setSelectedProject(isGuest ? 'Project Alpha v1.2' : '');
+    setSelectedSprint(isGuest ? 'Sprint 8 - Backend API' : '');
     loadData();
-  }, []);
+  }, [isGuest]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [pRes, mRes] = await Promise.all([
+      const [pRes, mRes, cRes] = await Promise.all([
         devFlowApi.getProjects(),
         devFlowApi.getMilestones(),
+        devFlowApi.getGitHubCommits(),
       ]);
       setProjects(pRes.data);
       setMilestones(mRes.data);
+      setCommits(cRes.data);
+
+      if (!isGuest) {
+        const firstProj = pRes.data[0];
+        if (firstProj) {
+          setSelectedProject((prev) => prev || firstProj.id);
+          if (firstProj.githubRepo) {
+            const actRes = await devFlowApi.getProjectGitHubActivity(firstProj.id);
+            if (actRes.data?.commits) {
+              setCommits(
+                actRes.data.commits.map((c) => ({
+                  sha: c.sha,
+                  message: c.message,
+                  author: c.author,
+                  authorAvatar: c.authorAvatar || undefined,
+                  date: c.date,
+                  url: c.url,
+                  filesChanged: c.filesChanged,
+                  additions: c.additions,
+                  deletions: c.deletions,
+                }))
+              );
+            }
+          }
+        }
+        const firstMs = mRes.data[0];
+        if (firstMs) {
+          setSelectedSprint((prev) => prev || firstMs.id);
+        }
+      }
     } catch (err) {
       console.error('Failed to load milestone verification data:', err);
     } finally {
@@ -149,15 +183,22 @@ export const MilestoneVerificationPage: React.FC = () => {
     }
   };
 
-  // Requirement Analysis Rows
-  const requirements: RequirementAnalysisItem[] = [
+  const projectMilestones = milestones.filter((m) => !selectedProject || m.projectId === selectedProject);
+  const activeMilestone =
+    projectMilestones.find((m) => m.id === selectedSprint) ||
+    projectMilestones[0] ||
+    milestones[0] ||
+    null;
+
+  // Demo Requirement Analysis Rows (Guest Mode only)
+  const demoRequirements: RequirementAnalysisItem[] = [
     {
       id: 'req-1',
       description: 'Implement user authentication with JWT',
       evidenceRef: 'commit: 8d49432',
       supportStatus: 'Green',
       confidence: 'High Confidence',
-      shortExplanation: 'AI Explanation Implement user authenticatio with JWT. Implemes user cap...',
+      shortExplanation: 'Validates JWT signatures and key rotation.',
       fullExplanation:
         'Implementation fully supports user authentication with JWT. Validates token signatures, enforces expiration bounds, and securely reads private keys via environment variables.',
       matchedCommits: ['8d494325368', '3e41b99a81c'],
@@ -165,11 +206,11 @@ export const MilestoneVerificationPage: React.FC = () => {
     },
     {
       id: 'req-2',
-      description: 'Implement user authentication with astovints',
+      description: 'Implement refresh token rotation and revocation',
       evidenceRef: 'commit: 5a2b109',
       supportStatus: 'Amber',
       confidence: 'High Confidence',
-      shortExplanation: 'AI Explanation Implement user authenticatio with JWT. Implemes user cap...',
+      shortExplanation: 'Token rotation active; revocation test pending.',
       fullExplanation:
         'Access token renewal endpoints are partially covered. Token exchange operates as expected, but background blacklisting on revocation requires additional test coverage.',
       matchedCommits: ['5a2b109f42c'],
@@ -177,50 +218,71 @@ export const MilestoneVerificationPage: React.FC = () => {
     },
     {
       id: 'req-3',
-      description: 'Implement user authentication with proauentication',
+      description: 'Implement rate limiting and session protection',
       evidenceRef: 'commit: 7c1e884',
       supportStatus: 'Amber',
       confidence: 'High Confidence',
-      shortExplanation: 'AI Explanation Implement user authenticatio with JWT. Implemes user cap...',
+      shortExplanation: 'Rate limiter wired; regression tests pending.',
       fullExplanation:
         'Protection layer implements basic IP rate limiting. Session hijack defense is implemented at router level but lacks automated regression suite validation.',
       matchedCommits: ['7c1e884d09a'],
       testStatus: 'pending',
     },
-    {
-      id: 'req-4',
-      description: 'Implement user authentication with userausers',
-      evidenceRef: 'commit: 9f03c11',
-      supportStatus: 'Amber',
-      confidence: 'High Confidence',
-      shortExplanation: 'AI Explanation Implement user authenticatio with JWT. Implemes user cap...',
-      fullExplanation:
-        'User roles and authorization claims are parsed in JWT payloads. Admin role escalation barriers are in place; client-level scopes require sign-off.',
-      matchedCommits: ['9f03c11e741'],
-      testStatus: 'passed',
-    },
-    {
-      id: 'req-5',
-      description: 'Implement user authentication with from user.',
-      evidenceRef: 'commit: 2d88b40',
-      supportStatus: 'Amber',
-      confidence: 'High Confidence',
-      shortExplanation: 'AI Explanation Implement user authenticatio with JWT. Implemes user cap...',
-      fullExplanation:
-        'Granular resource permission checks mapped against user identity. Minor documentation gaps identified in OpenAPI route declarations.',
-      matchedCommits: ['2d88b40a359'],
-      testStatus: 'passed',
-    },
   ];
 
-  // Dynamic Metrics based on selected sprint
-  const metrics = {
-    requirementsEvaluated: 12,
-    supportedRequirements: 9,
-    partiallySupported: 2,
-    missingEvidence: 1,
-    overallSupport: 85,
-  };
+  const liveRequirements: RequirementAnalysisItem[] = React.useMemo(() => {
+    if (!activeMilestone) return [];
+    const analysis = activeMilestone.aiReport?.requirementsAnalysis || [];
+    if (analysis.length > 0) {
+      return analysis.map((item) => ({
+        id: item.requirementId,
+        description: item.requirementTitle,
+        evidenceRef: item.matchedCommits?.[0] ? `commit: ${item.matchedCommits[0].substring(0, 7)}` : 'Pending',
+        supportStatus: item.status === 'satisfied' ? 'Green' : item.status === 'partial' ? 'Amber' : 'Missing',
+        confidence: item.score >= 80 ? 'High Confidence' : item.score >= 50 ? 'Medium Confidence' : 'Low Confidence',
+        shortExplanation: item.explanation,
+        fullExplanation: item.explanation,
+        matchedCommits: item.matchedCommits || [],
+        testStatus: item.status === 'satisfied' ? 'passed' : 'pending',
+      }));
+    }
+    return (activeMilestone.requirements || []).map((req) => ({
+      id: req.id,
+      description: req.title,
+      evidenceRef: req.verifiedCommitSha ? `commit: ${req.verifiedCommitSha.substring(0, 7)}` : 'Unlinked',
+      supportStatus: req.satisfied ? 'Green' : 'Missing',
+      confidence: req.satisfied ? 'High Confidence' : 'Low Confidence',
+      shortExplanation: req.description || 'Awaiting AI verification analysis.',
+      fullExplanation: req.description || 'Run AI verification to generate code-to-requirement mapping explanation.',
+      matchedCommits: req.verifiedCommitSha ? [req.verifiedCommitSha] : [],
+      testStatus: req.satisfied ? 'passed' : 'pending',
+    }));
+  }, [activeMilestone]);
+
+  const requirements = isGuest ? demoRequirements : liveRequirements;
+
+  // Dynamic Metrics
+  const metrics = isGuest
+    ? {
+        requirementsEvaluated: 12,
+        supportedRequirements: 9,
+        partiallySupported: 2,
+        missingEvidence: 1,
+        overallSupport: 85,
+      }
+    : {
+        requirementsEvaluated: requirements.length,
+        supportedRequirements: requirements.filter((r) => r.supportStatus === 'Green').length,
+        partiallySupported: requirements.filter((r) => r.supportStatus === 'Amber').length,
+        missingEvidence: requirements.filter((r) => r.supportStatus === 'Missing').length,
+        overallSupport:
+          activeMilestone?.aiReport?.confidenceScore ??
+          activeMilestone?.aiReport?.overallScore ??
+          activeMilestone?.aiReport?.confidence ??
+          (requirements.length > 0
+            ? Math.round((requirements.filter((r) => r.supportStatus === 'Green').length / requirements.length) * 100)
+            : 0),
+      };
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -395,32 +457,49 @@ export const MilestoneVerificationPage: React.FC = () => {
                   value={selectedProject}
                   onChange={(e) => {
                     setSelectedProject(e.target.value);
-                    showToast('Project Selected', `Loaded verification scope for ${e.target.value}.`, 'info');
+                    showToast('Project Selected', 'Updated verification scope for selected project.', 'info');
                   }}
                   className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-3.5 py-2 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
                 >
-                  <option value="Project Alpha v1.2">Project Alpha v1.2</option>
-                  <option value="Apollo Portal">Apollo Portal</option>
-                  <option value="Project Nova">Project Nova</option>
-                  <option value="Aether Platform">Aether Platform</option>
+                  {isGuest ? (
+                    <>
+                      <option value="Project Alpha v1.2">Project Alpha v1.2 (DEMO)</option>
+                      <option value="Project Nova">Project Nova (DEMO)</option>
+                      <option value="Aether Platform">Aether Platform (DEMO)</option>
+                    </>
+                  ) : projects.length === 0 ? (
+                    <option value="">No projects created yet</option>
+                  ) : (
+                    projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))
+                  )}
                 </select>
                 <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
-              {/* Sprint Dropdown */}
+              {/* Milestone Dropdown */}
               <div className="relative min-w-[220px]">
                 <select
                   value={selectedSprint}
                   onChange={(e) => {
                     setSelectedSprint(e.target.value);
-                    showToast('Sprint Selected', `Telemetry synchronized for ${e.target.value}.`, 'info');
+                    showToast('Milestone Selected', 'Synchronized requirement verification panel.', 'info');
                   }}
                   className="w-full bg-[#111C30] text-xs sm:text-sm font-semibold text-white px-3.5 py-2 rounded-xl border border-[#26344B] focus:border-blue-500 focus:outline-hidden appearance-none cursor-pointer pr-9"
                 >
-                  <option value="Sprint 8 - Backend API">Sprint 8 - Backend API</option>
-                  <option value="Sprint 7 - Auth Gateway">Sprint 7 - Auth Gateway</option>
-                  <option value="Sprint 9 - PayPal Settlements">Sprint 9 - PayPal Settlements</option>
-                  <option value="Sprint 10 - Enterprise Audit">Sprint 10 - Enterprise Audit</option>
+                  {isGuest ? (
+                    <>
+                      <option value="Sprint 8 - Backend API">Sprint 8 - Backend API (DEMO)</option>
+                      <option value="Sprint 7 - Auth Gateway">Sprint 7 - Auth Gateway (DEMO)</option>
+                    </>
+                  ) : projectMilestones.length === 0 ? (
+                    <option value="">No milestones in this project</option>
+                  ) : (
+                    projectMilestones.map((m) => (
+                      <option key={m.id} value={m.id}>{m.title}</option>
+                    ))
+                  )}
                 </select>
                 <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -501,7 +580,7 @@ export const MilestoneVerificationPage: React.FC = () => {
                     Requirement Analysis
                   </span>
                   <span className="text-xs text-slate-400 font-mono">
-                    5 Criteria
+                    {requirements.length} Criteria
                   </span>
                 </div>
 
@@ -517,7 +596,13 @@ export const MilestoneVerificationPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
-                      {requirements.map((req) => {
+                      {requirements.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 px-4 text-center text-xs text-slate-400">
+                            No milestone requirements available to analyze yet. Select or create a milestone with acceptance criteria.
+                          </td>
+                        </tr>
+                      ) : requirements.map((req) => {
                         const isExpanded = !!expandedRows[req.id];
                         return (
                           <React.Fragment key={req.id}>
@@ -621,7 +706,9 @@ export const MilestoneVerificationPage: React.FC = () => {
 
               <div className="p-3.5 bg-[#0C1524] border-t border-[#26344B] flex items-center justify-between text-xs text-slate-400">
                 <span>Click any row to inspect complete syntactic proof.</span>
-                <span className="font-mono text-emerald-400 font-bold">100% Evaluated</span>
+                <span className="font-mono text-emerald-400 font-bold">
+                  {requirements.length > 0 ? `${metrics.overallSupport}% Evaluated` : 'Awaiting Analysis'}
+                </span>
               </div>
             </div>
 
@@ -638,39 +725,76 @@ export const MilestoneVerificationPage: React.FC = () => {
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Commit References
                 </span>
-                <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs sm:text-sm text-blue-400 font-semibold">
-                      commit: 8d494325368
-                    </span>
-                    <button
-                      onClick={() => handleCopySha('8d494325368')}
-                      className="px-2 py-0.5 rounded-md bg-[#152238] border border-[#26344B] text-xs text-slate-300 hover:text-white flex items-center gap-1 font-mono cursor-pointer"
-                      title="Copy full commit SHA"
-                    >
-                      {copiedSha === '8d494325368' ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="text-emerald-400">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>protocol</span>
-                        </>
-                      )}
-                    </button>
+                {isGuest ? (
+                  <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs sm:text-sm text-blue-400 font-semibold">
+                        commit: 8d494325368 (DEMO)
+                      </span>
+                      <button
+                        onClick={() => handleCopySha('8d494325368')}
+                        className="px-2 py-0.5 rounded-md bg-[#152238] border border-[#26344B] text-xs text-slate-300 hover:text-white flex items-center gap-1 font-mono cursor-pointer"
+                        title="Copy full commit SHA"
+                      >
+                        {copiedSha === '8d494325368' ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-400">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="text-xs sm:text-sm text-slate-300">
+                      Author: <span className="text-white font-medium">Demo Contributor</span>
+                    </div>
+                    <div className="text-xs text-slate-400 font-mono">
+                      Timestamp: Sample Commit Record
+                    </div>
+                    <div className="text-xs text-slate-400 truncate">
+                      Commit message: Implement JWT authentication flow
+                    </div>
                   </div>
-                  <div className="text-xs sm:text-sm text-slate-300">
-                    Author: <span className="text-white font-medium">Dackerd Alpha</span>
+                ) : commits.length === 0 ? (
+                  <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] text-xs text-slate-400">
+                    No synced repository commits for this project yet.
                   </div>
-                  <div className="text-xs text-slate-400 font-mono">
-                    Timestamp: 8 Jul 2024 11:33:47
-                  </div>
-                  <div className="text-xs text-slate-400 truncate">
-                    Commit message: Implement user auth...
-                  </div>
-                </div>
+                ) : (
+                  commits.slice(0, 2).map((c) => (
+                    <div key={c.sha} className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs sm:text-sm text-blue-400 font-semibold">
+                          commit: {c.sha.substring(0, 11)}
+                        </span>
+                        <button
+                          onClick={() => handleCopySha(c.sha)}
+                          className="px-2 py-0.5 rounded-md bg-[#152238] border border-[#26344B] text-xs text-slate-300 hover:text-white flex items-center gap-1 font-mono cursor-pointer"
+                          title="Copy full commit SHA"
+                        >
+                          {copiedSha === c.sha ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              <span className="text-emerald-400">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="text-xs text-slate-300">
+                        Author: <span className="text-white font-medium">{c.author}</span>
+                      </div>
+                      <div className="text-xs text-slate-400 truncate">{c.message}</div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Subsection B: Changed Files */}
@@ -679,47 +803,56 @@ export const MilestoneVerificationPage: React.FC = () => {
                   Changed Files
                 </span>
                 <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-1.5 font-mono text-xs text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>changed.iss</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>document.php</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>cooument.json</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>changed.log</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>changed.me</span>
-                  </div>
+                  {isGuest ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>src/auth/jwt.service.ts</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>src/middleware/auth.ts</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>tests/auth.test.ts</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-slate-400 font-sans">
+                      {commits[0]?.changedFiles && commits[0].changedFiles.length > 0
+                        ? commits[0].changedFiles.map((f) => f.filename).join(', ')
+                        : 'Changed file paths are inspected via linked GitHub repository commits.'}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Subsection C: Test Results */}
               <div className="space-y-2 text-xs sm:text-sm">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                  Test Results
+                  Test &amp; Verification Status
                 </span>
                 <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2 text-xs sm:text-sm">
-                  <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span>Test results: high</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-amber-400 font-medium">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>Test results: missind</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span>Test results: high</span>
-                  </div>
+                  {isGuest ? (
+                    <>
+                      <div className="flex items-center gap-2 text-emerald-400 font-medium">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span>Auth unit tests: Passed (DEMO)</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-amber-400 font-medium">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>Revocation suite: Pending (DEMO)</span>
+                      </div>
+                    </>
+                  ) : activeMilestone?.aiReport ? (
+                    <div className="flex items-center gap-2 text-emerald-400 font-medium">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>AI Verification Score: {metrics.overallSupport}%</span>
+                    </div>
+                  ) : (
+                    <div className="text-slate-400 text-xs">No automated test report recorded yet.</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -738,22 +871,22 @@ export const MilestoneVerificationPage: React.FC = () => {
                   What is Supported
                 </span>
                 <ul className="space-y-1.5 text-xs text-slate-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>What is supported</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>What is supported</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>What is user supported</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>What is auchentication</span>
-                  </li>
+                  {(isGuest
+                    ? ['JWT authentication flow validated (DEMO)', 'Role claims enforced in middleware (DEMO)']
+                    : requirements.filter((r) => r.supportStatus === 'Green').map((r) => r.description)
+                  ).length === 0 ? (
+                    <li className="text-slate-400">No verified requirements recorded yet.</li>
+                  ) : (
+                    (isGuest
+                      ? ['JWT authentication flow validated (DEMO)', 'Role claims enforced in middleware (DEMO)']
+                      : requirements.filter((r) => r.supportStatus === 'Green').map((r) => r.description)
+                    ).map((txt, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-emerald-400 font-bold">•</span>
+                        <span>{txt}</span>
+                      </li>
+                    ))
+                  )}
                 </ul>
               </div>
 
@@ -763,18 +896,22 @@ export const MilestoneVerificationPage: React.FC = () => {
                   What is Incomplete
                 </span>
                 <ul className="space-y-1.5 text-xs text-slate-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 font-bold">•</span>
-                    <span>What is Incomplete</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 font-bold">•</span>
-                    <span>What is Incomplete</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 font-bold">•</span>
-                    <span>What is Incompliate Missing</span>
-                  </li>
+                  {(isGuest
+                    ? ['Token revocation regression suite pending (DEMO)']
+                    : requirements.filter((r) => r.supportStatus === 'Amber').map((r) => r.description)
+                  ).length === 0 ? (
+                    <li className="text-slate-400">None flagged.</li>
+                  ) : (
+                    (isGuest
+                      ? ['Token revocation regression suite pending (DEMO)']
+                      : requirements.filter((r) => r.supportStatus === 'Amber').map((r) => r.description)
+                    ).map((txt, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-amber-400 font-bold">•</span>
+                        <span>{txt}</span>
+                      </li>
+                    ))
+                  )}
                 </ul>
               </div>
 
@@ -784,14 +921,22 @@ export const MilestoneVerificationPage: React.FC = () => {
                   What Evidence is Missing
                 </span>
                 <ul className="space-y-1.5 text-xs text-slate-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
-                    <span>What Evidence is Missing</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
-                    <span>What Evidence is Missing Missing</span>
-                  </li>
+                  {(isGuest
+                    ? ['Revocation integration test proof (DEMO)']
+                    : requirements.filter((r) => r.supportStatus === 'Missing').map((r) => r.description)
+                  ).length === 0 ? (
+                    <li className="text-slate-400">No missing requirement evidence flagged.</li>
+                  ) : (
+                    (isGuest
+                      ? ['Revocation integration test proof (DEMO)']
+                      : requirements.filter((r) => r.supportStatus === 'Missing').map((r) => r.description)
+                    ).map((txt, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-amber-500 font-bold">•</span>
+                        <span>{txt}</span>
+                      </li>
+                    ))
+                  )}
                 </ul>
               </div>
 
@@ -801,18 +946,29 @@ export const MilestoneVerificationPage: React.FC = () => {
                   Suggested Next Steps
                 </span>
                 <ul className="space-y-1.5 text-xs text-blue-400 font-medium">
-                  <li className="flex items-start gap-2 hover:text-white cursor-pointer transition-colors">
-                    <span>•</span>
-                    <span>Suggested struse of Client Review</span>
-                  </li>
-                  <li className="flex items-start gap-2 hover:text-white cursor-pointer transition-colors">
-                    <span>•</span>
-                    <span>Request libed Next Steps</span>
-                  </li>
-                  <li className="flex items-start gap-2 hover:text-white cursor-pointer transition-colors">
-                    <span>•</span>
-                    <span>Suggested Next Steps for confidences</span>
-                  </li>
+                  {isGuest ? (
+                    <>
+                      <li className="flex items-start gap-2">
+                        <span>•</span>
+                        <span>Add integration tests for token revocation (DEMO)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span>•</span>
+                        <span>Submit deliverable for client sign-off (DEMO)</span>
+                      </li>
+                    </>
+                  ) : (activeMilestone?.aiReport?.recommendations || []).length === 0 ? (
+                    <li className="text-slate-400 font-normal">
+                      Run AI verification on a milestone with a linked GitHub repo to view tailored next steps.
+                    </li>
+                  ) : (
+                    (activeMilestone?.aiReport?.recommendations || []).map((rec, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span>•</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))
+                  )}
                 </ul>
               </div>
 

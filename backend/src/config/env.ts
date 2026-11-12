@@ -33,6 +33,7 @@ export const CombinedEnvSchema = z.object({
   GITHUB_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().optional()),
   GITHUB_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
   GITHUB_CALLBACK_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
+  GITHUB_WEBHOOK_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
 
   // Email / SMTP Configuration
   EMAIL_HOST: z.preprocess(emptyToUndefined, z.string().optional()),

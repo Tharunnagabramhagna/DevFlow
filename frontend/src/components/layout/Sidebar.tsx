@@ -22,6 +22,11 @@ import {
   LogOut,
   BriefcaseBusiness,
   Code2,
+  UserSearch,
+  UserCheck,
+  Briefcase,
+  ClipboardList,
+  FileBadge2,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -53,14 +58,18 @@ export const Sidebar: React.FC = () => {
     navigate(targetLogin, { replace: true });
   };
 
-  const userName = user?.name || (isClient ? 'Marcus Vance' : 'Alex Morgan');
-  const initials = userName
-    .split(' ')
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || (isClient ? 'MV' : 'AM');
+  const userName =
+    user?.name ||
+    user?.email ||
+    (isGuest ? (isClient ? 'Client Demo' : 'Developer Demo') : 'Workspace Member');
+  const initials =
+    userName
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || (isClient ? 'CL' : 'DV');
 
   const avatarGradient = isGuest
     ? isClient
@@ -98,6 +107,13 @@ export const Sidebar: React.FC = () => {
       ],
     },
     {
+      title: 'TALENT MARKETPLACE',
+      items: [
+        { name: 'Find Developers', path: '/find-developers', icon: UserSearch, iconColor: 'text-blue-400' },
+        { name: 'Applications / Talent Pipeline', path: '/talent-pipeline', icon: UserCheck, iconColor: 'text-emerald-400' },
+      ],
+    },
+    {
       title: 'PROJECT MANAGEMENT',
       items: [
         { name: 'AI Verification Agents', path: '/agents', icon: Sparkles, iconColor: 'text-purple-400' },
@@ -130,6 +146,14 @@ export const Sidebar: React.FC = () => {
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-[#2563EB]' },
         { name: 'My Projects', path: '/projects', icon: FolderGit2, iconColor: 'text-[#2563EB]' },
         { name: 'Milestones', path: '/milestones', icon: CheckCircle2, iconColor: 'text-[#2563EB]' },
+      ],
+    },
+    {
+      title: 'CAREER & MARKETPLACE',
+      items: [
+        { name: 'Career Profile / Resume Studio', path: '/career-profile', icon: FileBadge2, iconColor: 'text-emerald-400' },
+        { name: 'Find Opportunities', path: '/opportunities', icon: Briefcase, iconColor: 'text-blue-400' },
+        { name: 'My Applications', path: '/my-applications', icon: ClipboardList, iconColor: 'text-purple-400' },
       ],
     },
     {
@@ -348,17 +372,27 @@ export const Sidebar: React.FC = () => {
           isSidebarCollapsed ? 'flex lg:hidden' : 'flex'
         }`}
       >
-        <span>DevFlow Sandbox v2.4 (Demo)</span>
-        <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+        <span>{isGuest ? 'DevFlow Demo Workspace (Guest)' : 'DevFlow Live Workspace'}</span>
+        <span
+          className={`w-2 h-2 rounded-full ${
+            isGuest
+              ? 'bg-amber-400'
+              : 'bg-emerald-500 dark:bg-emerald-400'
+          }`}
+        />
       </div>
 
       <div
         className={`p-3 border-t border-slate-200/60 dark:border-white/10 text-[10px] text-slate-500 items-center justify-center shrink-0 ${
           isSidebarCollapsed ? 'hidden lg:flex' : 'hidden'
         }`}
-        title="DevFlow Sandbox v2.4 (Demo)"
+        title={isGuest ? 'DevFlow Demo Workspace (Guest)' : 'DevFlow Live Workspace'}
       >
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+        <span
+          className={`w-2.5 h-2.5 rounded-full animate-pulse ${
+            isGuest ? 'bg-amber-400' : 'bg-emerald-500 dark:bg-emerald-400'
+          }`}
+        />
       </div>
     </aside>
   );

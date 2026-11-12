@@ -6,6 +6,9 @@ export enum AgentType {
   RISK_DETECTION = 'RISK_DETECTION',
   PROJECT_MONITORING = 'PROJECT_MONITORING',
   PAYMENT_COORDINATION = 'PAYMENT_COORDINATION',
+  RESUME_PARSING = 'RESUME_PARSING',
+  TALENT_MATCHING = 'TALENT_MATCHING',
+  OPPORTUNITY_REFINEMENT = 'OPPORTUNITY_REFINEMENT',
 }
 
 // -------------------------------------------------------------
@@ -165,4 +168,121 @@ export const ExecuteAgentOptionsSchema = z.object({
 });
 
 export type ExecuteAgentOptions = z.infer<typeof ExecuteAgentOptionsSchema>;
+
+// -------------------------------------------------------------
+// AGENT 6: Resume Parsing Agent Schema
+// -------------------------------------------------------------
+export const ExtractedSkillSchema = z.object({
+  name: z.string(),
+  category: z.enum(['language', 'framework', 'database', 'tool', 'domain']).default('tool'),
+  yearsUsed: z.number().nullable().optional(),
+  confidence: z.number().min(0).max(100),
+  sourceExcerpt: z.string().nullable().optional(),
+});
+
+export const ExtractedRoleSchema = z.object({
+  title: z.string(),
+  company: z.string().nullable().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+  confidence: z.number().min(0).max(100),
+  sourceExcerpt: z.string().nullable().optional(),
+});
+
+export const ExtractedProjectSchema = z.object({
+  title: z.string(),
+  role: z.string().nullable().optional(),
+  summary: z.string(),
+  technologies: z.array(z.string()).default([]),
+  url: z.string().nullable().optional(),
+  confidence: z.number().min(0).max(100),
+  sourceExcerpt: z.string().nullable().optional(),
+});
+
+export const ExtractedEducationSchema = z.object({
+  degree: z.string(),
+  institution: z.string(),
+  graduationYear: z.string().nullable().optional(),
+  confidence: z.number().min(0).max(100),
+});
+
+export const ExtractedCertificationSchema = z.object({
+  name: z.string(),
+  issuer: z.string().nullable().optional(),
+  year: z.string().nullable().optional(),
+  confidence: z.number().min(0).max(100),
+});
+
+export const ResumeExtractionOutputSchema = z.object({
+  fullName: z.string().nullable().optional(),
+  headline: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+  yearsOfExperience: z.number().min(0).max(60).nullable().optional(),
+  contactLinks: z
+    .object({
+      portfolioUrls: z.array(z.string()).default([]),
+      githubUrls: z.array(z.string()).default([]),
+      linkedinUrls: z.array(z.string()).default([]),
+    })
+    .default({ portfolioUrls: [], githubUrls: [], linkedinUrls: [] }),
+  skills: z.array(ExtractedSkillSchema).default([]),
+  previousRoles: z.array(ExtractedRoleSchema).default([]),
+  projects: z.array(ExtractedProjectSchema).default([]),
+  education: z.array(ExtractedEducationSchema).default([]),
+  certifications: z.array(ExtractedCertificationSchema).default([]),
+  overallConfidence: z.number().min(0).max(100),
+  lowConfidenceFields: z.array(z.string()).default([]),
+});
+
+export type ResumeExtractionOutput = z.infer<typeof ResumeExtractionOutputSchema>;
+
+// -------------------------------------------------------------
+// AGENT 7: Talent Matching Agent Schemas
+// -------------------------------------------------------------
+export const TalentQueryExtractionOutputSchema = z.object({
+  mandatorySkills: z.array(z.string()).default([]),
+  preferredSkills: z.array(z.string()).default([]),
+  minYearsExperience: z.number().min(0).max(40).nullable().optional(),
+  domainKeywords: z.array(z.string()).default([]),
+  scopeSummary: z.string(),
+});
+
+export type TalentQueryExtractionOutput = z.infer<typeof TalentQueryExtractionOutputSchema>;
+
+export const TalentCandidateEvaluationOutputSchema = z.object({
+  evaluations: z
+    .array(
+      z.object({
+        profileId: z.string(),
+        semanticAdjustment: z.number().min(-15).max(15),
+        explanation: z.string(),
+        evidenceHighlights: z.array(z.string()).default([]),
+        missingOrUnverifiedNotes: z.array(z.string()).default([]),
+      })
+    )
+    .default([]),
+});
+
+export type TalentCandidateEvaluationOutput = z.infer<
+  typeof TalentCandidateEvaluationOutputSchema
+>;
+
+// -------------------------------------------------------------
+// AGENT 8: Opportunity Refinement Agent Schema
+// -------------------------------------------------------------
+export const OpportunityRefinementOutputSchema = z.object({
+  improvedDescription: z.string(),
+  deliverables: z.array(z.string()).default([]),
+  mandatorySkills: z
+    .array(z.object({ name: z.string(), category: z.string().default('general') }))
+    .default([]),
+  preferredSkills: z
+    .array(z.object({ name: z.string(), category: z.string().default('general') }))
+    .default([]),
+  recommendedExperienceLevel: z.string(),
+  estimatedMinYears: z.number().min(0).max(30).nullable().optional(),
+});
+
+export type OpportunityRefinementOutput = z.infer<typeof OpportunityRefinementOutputSchema>;
 

@@ -54,7 +54,15 @@ interface DisplayMilestone extends Milestone {
 export const MilestonesPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isGuest, isClient } = useAuth();
+  const { user, isGuest, isClient } = useAuth();
+  const userInitials = isGuest
+    ? 'DG'
+    : (user?.name || 'DU')
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((n) => n[0]?.toUpperCase() || '')
+        .join('') || 'DU';
   const isDeliverablesView = new URLSearchParams(location.search).get('view') === 'deliverables';
   const [isGuestGuardOpen, setIsGuestGuardOpen] = useState(false);
   const [guardActionTitle, setGuardActionTitle] = useState('Create Milestone');
@@ -98,7 +106,7 @@ export const MilestonesPage: React.FC = () => {
 
   useEffect(() => {
     loadMilestonesData();
-  }, []);
+  }, [isGuest]);
 
   const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ title, desc, type });
@@ -122,16 +130,27 @@ export const MilestonesPage: React.FC = () => {
 
       const mapped: DisplayMilestone[] = mRes.data.map((m, idx) => {
         const parent = pRes.data.find((p) => p.id === m.projectId);
-        const version = versionTags[idx % versionTags.length];
+        const version = isGuest ? versionTags[idx % versionTags.length] : undefined;
+        const reqs = Array.isArray(m.requirements) ? m.requirements : [];
+        const unsatisfied = reqs.filter((r) => !r.satisfied).map((r) => r.title);
+        const satisfiedCount = reqs.filter((r) => r.satisfied).length;
 
         return {
           ...m,
           versionTag: version,
-          projectName: parent?.name || 'Apollo Portal',
-          evidenceLinkedCount: 8,
-          evidenceTotalCount: 11,
-          requiredDeliverables: ['Codebase Deployment', 'User Documentation', 'Test Reports'],
-          missingRequirements: ['4 Unit Tests failing', 'User Docs draft incomplete', '2 Mobile UI issues open'],
+          projectName: parent?.name || (isGuest ? 'Apollo Portal' : 'Unassigned Project'),
+          evidenceLinkedCount: isGuest ? 8 : (m.commitsCount || 0),
+          evidenceTotalCount: isGuest ? 11 : Math.max(reqs.length, m.commitsCount || 0),
+          requiredDeliverables: isGuest
+            ? ['Codebase Deployment', 'User Documentation', 'Test Reports']
+            : reqs.map((r) => r.title),
+          missingRequirements: isGuest
+            ? ['4 Unit Tests failing', 'User Docs draft incomplete', '2 Mobile UI issues open']
+            : unsatisfied.length > 0
+              ? unsatisfied
+              : satisfiedCount === reqs.length
+                ? []
+                : [],
         };
       });
 
@@ -189,14 +208,15 @@ export const MilestonesPage: React.FC = () => {
       });
 
       const parent = projects.find((p) => p.id === res.data.projectId);
+      const reqs = Array.isArray(res.data.requirements) ? res.data.requirements : [];
       const newDisplay: DisplayMilestone = {
         ...res.data,
-        versionTag: `V1.${milestones.length} RELEASE`,
-        projectName: parent?.name || 'Apollo Portal',
-        evidenceLinkedCount: 8,
-        evidenceTotalCount: 11,
-        requiredDeliverables: ['Codebase Deployment', 'User Documentation', 'Test Reports'],
-        missingRequirements: ['User Docs draft incomplete'],
+        versionTag: isGuest ? `V1.${milestones.length} RELEASE` : undefined,
+        projectName: parent?.name || (isGuest ? 'Apollo Portal' : 'Workspace Project'),
+        evidenceLinkedCount: res.data.commitsCount || 0,
+        evidenceTotalCount: Math.max(reqs.length, res.data.commitsCount || 0),
+        requiredDeliverables: reqs.map((r) => r.title),
+        missingRequirements: reqs.filter((r) => !r.satisfied).map((r) => r.title),
       };
 
       setMilestones([newDisplay, ...milestones]);
@@ -424,7 +444,7 @@ export const MilestonesPage: React.FC = () => {
                 className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#60A5FA] text-white flex items-center justify-center font-bold text-xs sm:text-sm ring-1 ring-[#26344B] cursor-pointer shadow-sm"
                 title="Account Settings"
               >
-                AM
+                {userInitials}
               </div>
             </div>
           </div>
@@ -437,7 +457,7 @@ export const MilestonesPage: React.FC = () => {
               onChange={(e) => setSelectedProjectFilter(e.target.value)}
               className="bg-[#080D18] text-slate-300 border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#2563EB] truncate"
             >
-              <option value="all">All Projects (Northstar)</option>
+              <option value="all">All Projects</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   Project: {p.name}
@@ -589,7 +609,7 @@ export const MilestonesPage: React.FC = () => {
                             {ms.versionTag || ms.title}
                           </h4>
                           <p className="text-xs text-slate-400 uppercase font-sans tracking-wider truncate">
-                            PROJECT: {ms.projectName || 'APOLLO PORTAL'}
+                            PROJECT: {ms.projectName || 'Workspace Project'}
                           </p>
                         </div>
                         <ChevronRight
@@ -618,7 +638,7 @@ export const MilestonesPage: React.FC = () => {
                         </h3>
                       </div>
                       <p className="text-xs font-sans uppercase tracking-wider text-slate-400">
-                        PROJECT: {selectedMilestone.projectName || 'APOLLO PORTAL'}
+                        PROJECT: {selectedMilestone.projectName || 'Workspace Project'}
                       </p>
                     </div>
 
@@ -635,8 +655,7 @@ export const MilestonesPage: React.FC = () => {
                     <>
                       {/* DESCRIPTION */}
                       <p className="font-sans text-sm text-slate-300 leading-relaxed font-normal">
-                        {selectedMilestone.description ||
-                          'Deploy V1.1 Release, including multi-factor authentication and payment gateway integration.'}
+                        {selectedMilestone.description || 'No milestone description provided yet.'}
                       </p>
 
                       {/* TWO-COLUMN DETAIL BODY */}
@@ -649,22 +668,36 @@ export const MilestonesPage: React.FC = () => {
                               Acceptance Criteria
                             </h4>
                             <div className="space-y-2 text-xs sm:text-sm text-slate-300">
-                              <div className="flex items-center gap-2.5 text-emerald-400 font-medium">
-                                <Check className="w-4 h-4" />
-                                <span className="text-slate-200 font-sans">MFA fully implemented</span>
-                              </div>
-                              <div className="flex items-center gap-2.5 text-emerald-400 font-medium">
-                                <Check className="w-4 h-4" />
-                                <span className="text-slate-200 font-sans">Payment integration tested</span>
-                              </div>
-                              <div className="flex items-center gap-2.5 text-amber-400 font-medium">
-                                <AlertTriangle className="w-4 h-4" />
-                                <span className="text-slate-200 font-sans">Unit tests &gt; 95% coverage</span>
-                              </div>
-                              <div className="flex items-center gap-2.5 text-rose-400 font-medium">
-                                <X className="w-4 h-4" />
-                                <span className="text-slate-200 font-sans">Mobile responsive bugs fixed</span>
-                              </div>
+                              {isGuest && (!selectedMilestone.requirements || selectedMilestone.requirements.length === 0) ? (
+                                <>
+                                  <div className="flex items-center gap-2.5 text-emerald-400 font-medium">
+                                    <Check className="w-4 h-4" />
+                                    <span className="text-slate-200 font-sans">MFA fully implemented</span>
+                                  </div>
+                                  <div className="flex items-center gap-2.5 text-emerald-400 font-medium">
+                                    <Check className="w-4 h-4" />
+                                    <span className="text-slate-200 font-sans">Payment integration tested</span>
+                                  </div>
+                                  <div className="flex items-center gap-2.5 text-amber-400 font-medium">
+                                    <AlertTriangle className="w-4 h-4" />
+                                    <span className="text-slate-200 font-sans">Unit tests &gt; 95% coverage</span>
+                                  </div>
+                                </>
+                              ) : selectedMilestone.requirements && selectedMilestone.requirements.length > 0 ? (
+                                selectedMilestone.requirements.map((req) => (
+                                  <div
+                                    key={req.id}
+                                    className={`flex items-center gap-2.5 font-medium ${
+                                      req.satisfied ? 'text-emerald-400' : 'text-amber-400'
+                                    }`}
+                                  >
+                                    {req.satisfied ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                                    <span className="text-slate-200 font-sans">{req.title}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-xs text-slate-400">No acceptance criteria defined for this milestone.</p>
+                              )}
                             </div>
                           </div>
 
@@ -673,23 +706,31 @@ export const MilestonesPage: React.FC = () => {
                             <h4 className="font-heading text-sm font-bold text-white tracking-wide">
                               Required Deliverables
                             </h4>
-                            <ul className="text-xs sm:text-sm text-slate-400 space-y-1.5 list-disc list-inside">
-                              <li>Codebase Deployment</li>
-                              <li>User Documentation</li>
-                              <li>Test Reports</li>
-                            </ul>
+                            {(selectedMilestone.requiredDeliverables || []).length > 0 ? (
+                              <ul className="text-xs sm:text-sm text-slate-400 space-y-1.5 list-disc list-inside">
+                                {(selectedMilestone.requiredDeliverables || []).map((item, idx) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-xs text-slate-400">No separate deliverable checklist attached.</p>
+                            )}
                           </div>
 
                           {/* 3. Missing Requirements */}
                           <div className="space-y-2 pt-1">
                             <h4 className="text-sm font-bold text-white tracking-wide">
-                              Missing Requirements
+                              Pending / Unsatisfied Criteria
                             </h4>
-                            <ul className="text-xs sm:text-sm text-rose-400 space-y-1.5 list-disc list-inside">
-                              <li>4 Unit Tests failing</li>
-                              <li>User Docs draft incomplete</li>
-                              <li>2 Mobile UI issues open</li>
-                            </ul>
+                            {(selectedMilestone.missingRequirements || []).length > 0 ? (
+                              <ul className="text-xs sm:text-sm text-rose-400 space-y-1.5 list-disc list-inside">
+                                {(selectedMilestone.missingRequirements || []).map((item, idx) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-xs text-emerald-400">All listed milestone criteria satisfied.</p>
+                            )}
                           </div>
                         </div>
 
@@ -698,63 +739,86 @@ export const MilestonesPage: React.FC = () => {
                           {/* Associated GitHub Evidence */}
                           <div className="space-y-2.5">
                             <h4 className="text-sm font-bold text-white tracking-wide">
-                              Associated GitHub Evidence
+                              Associated Deliverable Evidence
                             </h4>
                             <div className="text-xs font-mono text-emerald-400 font-bold uppercase">
-                              EVIDENCE STATUS: 8/11 ITEMS LINKED
+                              EVIDENCE STATUS: {selectedMilestone.commitsCount ?? selectedMilestone.evidenceLinkedCount ?? 0} ITEM(S) SUBMITTED
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                              <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
-                                2 PRs (#124, #130)
-                              </span>
-                              <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
-                                27 COMMITS
-                              </span>
-                              <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
-                                3 ISSUES
-                              </span>
-                            </div>
+                            {isGuest && (
+                              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                                <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
+                                  Demo PRs (#124, #130)
+                                </span>
+                                <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 font-bold">
+                                  27 COMMITS (DEMO)
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           {/* AI Confidence */}
+                          {(() => {
+                            const score = selectedMilestone.aiReport?.confidence ?? selectedMilestone.aiReport?.confidenceScore ?? selectedMilestone.aiReport?.overallScore;
+                            return (
                           <div className="space-y-2 p-4 rounded-xl bg-[#080D18] border border-[#26344B]">
                             <div className="text-sm font-bold text-emerald-400 font-mono flex items-center justify-between">
-                              <span>AI CONFIDENCE: 88%</span>
-                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                              <span>
+                                AI CONFIDENCE:{' '}
+                                {isGuest
+                                  ? '88%'
+                                  : typeof score === 'number'
+                                    ? `${score}%`
+                                    : 'Pending Verification'}
+                              </span>
+                              <span
+                                className={`w-2.5 h-2.5 rounded-full ${
+                                  typeof score === 'number' || isGuest
+                                    ? 'bg-emerald-400'
+                                    : 'bg-slate-600'
+                                }`}
+                              />
                             </div>
                             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                              Based on analysis, requirements are partially met. Documentation needs final
-                              update. MFA and Payment features verified.
+                              {isGuest
+                                ? 'Demo analysis: requirements partially met. Documentation needs final update.'
+                                : typeof score === 'number'
+                                  ? `Automated AI pipeline evaluated submitted evidence with ${score}% confidence.`
+                                  : 'Submit evidence to trigger AI requirement verification for this milestone.'}
                             </p>
                           </div>
+                            );
+                          })()}
 
                           {/* Missing Requirements Tags */}
-                          <div className="space-y-2">
-                            <span className="text-xs sm:text-sm font-bold text-white">Missing Requirements</span>
-                            <div className="flex flex-wrap gap-2">
-                              <span className="text-xs bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-md">
-                                4 Unit Tests failing
-                              </span>
-                              <span className="text-xs bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-md">
-                                User Docs draft incomplete
-                              </span>
-                              <span className="text-xs bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-md">
-                                2 Mobile UI issues open
-                              </span>
+                          {(selectedMilestone.missingRequirements || []).length > 0 && (
+                            <div className="space-y-2">
+                              <span className="text-xs sm:text-sm font-bold text-white">Open Blockers</span>
+                              <div className="flex flex-wrap gap-2">
+                                {(selectedMilestone.missingRequirements || []).map((req, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-xs bg-rose-950/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-md"
+                                  >
+                                    {req}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           {/* Related Invoice Information */}
                           <div className="space-y-1.5 pt-1.5 border-t border-[#26344B]/70 text-xs sm:text-sm">
                             <div className="text-xs font-mono text-slate-400 uppercase font-bold">
-                              Related Invoice Information
+                              Milestone Budget &amp; Settlement Status
                             </div>
-                            <div className="text-xs sm:text-sm text-amber-400 font-semibold font-mono">
-                              INVOICE STATUS: PENDING APPROVAL
+                            <div className="text-xs sm:text-sm text-amber-400 font-semibold font-mono uppercase">
+                              STATUS: {selectedMilestone.status.replace(/_/g, ' ')}
                             </div>
                             <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-300 font-mono">
                               <PayPalIcon className="w-4 h-4" />
-                              <span>INV-2023-11-04 (PayPal)</span>
+                              <span>
+                                ${Number(selectedMilestone.amount || 0).toLocaleString()} {selectedMilestone.currency || 'USD'}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -765,20 +829,17 @@ export const MilestonesPage: React.FC = () => {
                         {/* Left: Preview Badges & Pagination */}
                         <div className="space-y-2">
                           <div className="text-xs font-mono uppercase text-slate-400 font-bold">
-                            MILESTONE TIMELINE AND DETAILS PREVIEW
+                            MILESTONE DETAILS &amp; EVIDENCE SUMMARY
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
-                              8/11 ITEMS LINKED
+                              {selectedMilestone.commitsCount ?? 0} EVIDENCE ITEM(S)
                             </span>
                             <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
-                              2 PRs (#124, #130)
+                              {(selectedMilestone.requirements || []).length} ACCEPTANCE CRITERIA
                             </span>
                             <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
-                              27 COMMITS
-                            </span>
-                            <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#080D18] border border-[#26344B] text-slate-300">
-                              3 ISSUES (3)
+                              DUE {selectedMilestone.dueDate ? new Date(selectedMilestone.dueDate).toLocaleDateString() : '—'}
                             </span>
 
                             {/* Pagination Controls */}

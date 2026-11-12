@@ -3,6 +3,44 @@ import { env } from '../config/env';
 import { ForbiddenError } from '../utils/errors';
 
 /**
+ * Returns whether a candidate Origin/Referer matches the configured CLIENT_URL,
+ * allowing localhost <-> 127.0.0.1 loopback equivalents on the same protocol/port in non-production.
+ */
+export function isTrustedClientOrigin(candidateUrl: string): boolean {
+  let expectedUrl: URL;
+  try {
+    expectedUrl = new URL(env.CLIENT_URL);
+  } catch {
+    return candidateUrl === env.CLIENT_URL;
+  }
+
+  let parsedCandidate: URL;
+  try {
+    parsedCandidate = new URL(candidateUrl);
+  } catch {
+    return false;
+  }
+
+  if (parsedCandidate.origin === expectedUrl.origin) {
+    return true;
+  }
+
+  if (env.NODE_ENV !== 'production') {
+    const isLoopback = (host: string) => host === 'localhost' || host === '127.0.0.1';
+    if (
+      isLoopback(expectedUrl.hostname) &&
+      isLoopback(parsedCandidate.hostname) &&
+      parsedCandidate.protocol === expectedUrl.protocol &&
+      parsedCandidate.port === expectedUrl.port
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Validates Origin/Referer and custom headers on cookie-authenticated state-changing endpoints.
  * Protects against Cross-Site Request Forgery (CSRF).
  */
@@ -15,24 +53,9 @@ export const validateTrustedOrigin = (req: Request, _res: Response, next: NextFu
   const origin = req.headers.origin;
   const referer = req.headers.referer;
 
-  // Extract expected origin URL base
-  let expectedOrigin: string;
-  try {
-    expectedOrigin = new URL(env.CLIENT_URL).origin;
-  } catch {
-    expectedOrigin = env.CLIENT_URL;
-  }
-
   // 1. Validate Origin header if present
   if (origin) {
-    let requestOrigin: string;
-    try {
-      requestOrigin = new URL(origin).origin;
-    } catch {
-      requestOrigin = origin;
-    }
-
-    if (requestOrigin !== expectedOrigin) {
+    if (!isTrustedClientOrigin(origin)) {
       throw new ForbiddenError(
         'Request origin header does not match authorized client URL',
         undefined,
@@ -41,14 +64,7 @@ export const validateTrustedOrigin = (req: Request, _res: Response, next: NextFu
     }
   } else if (referer) {
     // 2. Fall back to Referer validation if Origin is omitted
-    let refererOrigin: string;
-    try {
-      refererOrigin = new URL(referer).origin;
-    } catch {
-      refererOrigin = referer;
-    }
-
-    if (refererOrigin !== expectedOrigin) {
+    if (!isTrustedClientOrigin(referer)) {
       throw new ForbiddenError(
         'Request referer header does not match authorized client URL',
         undefined,

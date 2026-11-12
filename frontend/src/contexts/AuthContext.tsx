@@ -17,6 +17,10 @@ export interface AuthContextType {
   isClient: boolean;
   isDeveloper: boolean;
   isGuest: boolean;
+  githubConnected: boolean;
+  shouldShowGitHubOnboarding: boolean;
+  dismissGitHubOnboardingForSession: () => void;
+  updateGitHubConnectionState: (connected: boolean, username?: string | null, connectedAt?: string | null) => void;
   login: (credentials: { email: string; password: string; selectedRole: UserRole }) => Promise<void>;
   register: (data: { name: string; email: string; password: string; role: UserRole; organization?: string }) => Promise<void>;
   continueAsGuest: (guestPersona?: EffectiveRole) => Promise<void>;
@@ -28,6 +32,7 @@ export interface AuthContextType {
 
 const AUTH_STORAGE_KEY = 'devflow_auth_session';
 const PROFILE_STORAGE_KEY = 'devflow_user_profile_preferences';
+const GH_SKIP_SESSION_KEY_PREFIX = 'devflow_gh_onboarding_skipped_';
 
 function isJwtExpired(token: string): boolean {
   const parts = token.split('.');
@@ -176,15 +181,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []); // initial verification and cleanup only
 
+  const [githubDismissTick, setGithubDismissTick] = useState(0);
+
+  const clearSkipFlag = useCallback((userId?: string | null) => {
+    try {
+      if (userId) {
+        sessionStorage.removeItem(`${GH_SKIP_SESSION_KEY_PREFIX}${userId}`);
+      }
+    } catch {}
+    setGithubDismissTick((t) => t + 1);
+  }, []);
+
+  const updateGitHubConnectionState = useCallback(
+    (connected: boolean, username?: string | null, connectedAt?: string | null) => {
+      setSession((prev) => {
+        if (!prev) return prev;
+        const updated: AuthSession = {
+          ...prev,
+          user: {
+            ...prev.user,
+            githubConnected: connected,
+            githubUsername: username !== undefined ? username : prev.user.githubUsername,
+            githubConnectedAt: connectedAt !== undefined ? connectedAt : prev.user.githubConnectedAt,
+          },
+        };
+        try {
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+    },
+    []
+  );
+
+  // Sync live GitHub connection state from backend once when authenticated developer loads workspace
+  useEffect(() => {
+    if (!session?.user || isGuestSession || session.user.role === 'CLIENT') {
+      return;
+    }
+    let active = true;
+    fetch('/api/github/status', {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+      signal: AbortSignal.timeout(5000),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data && typeof data.connected === 'boolean') {
+          updateGitHubConnectionState(
+            data.connected,
+            data.username ?? null,
+            data.connectedAt ?? null
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id, session?.user?.role, session?.accessToken, isGuestSession, updateGitHubConnectionState]);
+
+  const dismissGitHubOnboardingForSession = useCallback(() => {
+    if (session?.user?.id) {
+      try {
+        sessionStorage.setItem(`${GH_SKIP_SESSION_KEY_PREFIX}${session.user.id}`, '1');
+      } catch {}
+    }
+    setGithubDismissTick((t) => t + 1);
+  }, [session?.user?.id]);
+
   const login = useCallback(async (credentials: { email: string; password: string; selectedRole: UserRole }) => {
     setLoading(true);
     try {
       const newSession = await authService.login(credentials);
+      clearSkipFlag(newSession.user.id);
       persistSession(newSession);
     } finally {
       setLoading(false);
     }
-  }, [persistSession]);
+  }, [persistSession, clearSkipFlag]);
 
   const register = useCallback(async (data: {
     name: string;
@@ -196,11 +270,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const newSession = await authService.register(data);
+      clearSkipFlag(newSession.user.id);
       persistSession(newSession);
     } finally {
       setLoading(false);
     }
-  }, [persistSession]);
+  }, [persistSession, clearSkipFlag]);
 
   const continueAsGuest = useCallback(async (guestPersona?: EffectiveRole) => {
     setLoading(true);
@@ -216,11 +291,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const newSession = await authService.exchangeOAuthCode(code);
+      clearSkipFlag(newSession.user.id);
       persistSession(newSession);
     } finally {
       setLoading(false);
     }
-  }, [persistSession]);
+  }, [persistSession, clearSkipFlag]);
 
   const handleMockSocialAuth = useCallback(async (params: {
     provider: 'google' | 'facebook';
@@ -232,16 +308,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const newSession = await authService.mockSocialAuth(params);
+      clearSkipFlag(newSession.user.id);
       persistSession(newSession);
     } finally {
       setLoading(false);
     }
-  }, [persistSession]);
+  }, [persistSession, clearSkipFlag]);
 
   const logout = useCallback(async () => {
     setLoading(true);
+    const currentUserId = session?.user?.id;
     try {
       await authService.logout(isGuestSession);
+      clearSkipFlag(currentUserId);
       persistSession(null);
       try {
         localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -250,7 +329,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  }, [isGuestSession, persistSession]);
+  }, [isGuestSession, persistSession, clearSkipFlag, session?.user?.id]);
 
   const contextValue = useMemo<AuthContextType>(() => {
     const guestPersona: EffectiveRole | null = isGuestSession
@@ -267,6 +346,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ? 'CLIENT'
       : 'DEVELOPER';
 
+    const githubConnected = Boolean(session?.user?.githubConnected);
+    let skippedThisSession = false;
+    if (session?.user?.id) {
+      try {
+        skippedThisSession =
+          sessionStorage.getItem(`${GH_SKIP_SESSION_KEY_PREFIX}${session.user.id}`) === '1';
+      } catch {}
+    }
+
+    const shouldShowGitHubOnboarding = Boolean(
+      session?.user &&
+        !isGuestSession &&
+        effectiveRole === 'DEVELOPER' &&
+        !githubConnected &&
+        !skippedThisSession
+    );
+
     return {
       user: session?.user || null,
       token: isGuestSession ? null : session?.accessToken || null,
@@ -278,6 +374,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isClient: effectiveRole === 'CLIENT',
       isDeveloper: effectiveRole === 'DEVELOPER',
       isGuest: isGuestSession,
+      githubConnected,
+      shouldShowGitHubOnboarding,
+      dismissGitHubOnboardingForSession,
+      updateGitHubConnectionState,
       login,
       register,
       continueAsGuest,
@@ -290,6 +390,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     isGuestSession,
     loading,
+    githubDismissTick,
+    dismissGitHubOnboardingForSession,
+    updateGitHubConnectionState,
     login,
     register,
     continueAsGuest,

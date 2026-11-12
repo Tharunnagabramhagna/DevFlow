@@ -24,7 +24,7 @@ import {
   Check,
 } from 'lucide-react';
 import { devFlowApi } from '@/services/api';
-import { Milestone, Project } from '@/types';
+import { Milestone, Project, DeveloperTelemetry } from '@/types';
 import { GuestGuardModal } from '@/components/common';
 
 // Octocat GitHub SVG Icon
@@ -59,7 +59,7 @@ interface ActivityItem {
 
 export const VerificationPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isClient, isGuest } = useAuth();
+  const { user, isClient, isGuest } = useAuth();
 
   // Navigation & UI States
   const { openMobileSidebar } = useSidebar();
@@ -75,16 +75,24 @@ export const VerificationPage: React.FC = () => {
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [changesFeedback, setChangesFeedback] = useState('');
   const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
+  const [isRunningVerification, setIsRunningVerification] = useState(false);
   const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
 
-  // Sample data vs Live mode state
-  const [sampleDataMode, setSampleDataMode] = useState<'sample' | 'live'>('sample');
+  // Sample data vs Live mode state (mock mode strictly gated to guest sessions)
+  const [sampleDataMode, setSampleDataMode] = useState<'sample' | 'live'>(isGuest ? 'sample' : 'live');
   const [sampleDataDropdownOpen, setSampleDataDropdownOpen] = useState(false);
 
   // Live Data & Loading
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [telemetry, setTelemetry] = useState<DeveloperTelemetry | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const userInitials = React.useMemo(() => {
+    if (isGuest) return 'DG';
+    const parts = (user?.name || 'Dev User').trim().split(/\s+/);
+    return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() || '').join('') || 'DU';
+  }, [isGuest, user?.name]);
 
   // Approval status state for the interactive card
   const [approvalState, setApprovalState] = useState<'pending' | 'approved' | 'changes_requested'>('pending');
@@ -95,18 +103,21 @@ export const VerificationPage: React.FC = () => {
   };
 
   useEffect(() => {
+    setSampleDataMode(isGuest ? 'sample' : 'live');
     loadData();
-  }, []);
+  }, [isGuest]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [mRes, pRes] = await Promise.all([
+      const [mRes, pRes, tRes] = await Promise.all([
         devFlowApi.getMilestones(),
         devFlowApi.getProjects(),
+        devFlowApi.getTelemetry('30d'),
       ]);
       setMilestones(mRes.data);
       setProjects(pRes.data);
+      setTelemetry(tRes.data);
     } catch (err) {
       console.error('Failed to load telemetry for AI Agents:', err);
     } finally {
@@ -114,110 +125,154 @@ export const VerificationPage: React.FC = () => {
     }
   };
 
-  // Execution Records for Left Main Table
-  const executionRecords: AgentExecution[] = [
+  const handleRunVerification = async () => {
+    if (isGuest) {
+      showToast('Demo Mode', 'AI verification simulation runs against sandbox fixtures.', 'info');
+      return;
+    }
+    const target = milestones[0];
+    if (!target) {
+      showToast('No Milestone Found', 'Create a project milestone first before running AI verification.', 'info');
+      return;
+    }
+    setIsRunningVerification(true);
+    try {
+      await devFlowApi.runAIVerification(target.id);
+      await loadData();
+      showToast('Verification Complete', `AI verification ran on "${target.title}".`, 'success');
+    } catch (err) {
+      showToast('Verification Failed', err instanceof Error ? err.message : 'Unable to run verification.', 'error');
+    } finally {
+      setIsRunningVerification(false);
+    }
+  };
+
+  // Execution Records (Guest Demo only vs Live workspace telemetry)
+  const demoExecutionRecords: AgentExecution[] = [
     {
       id: 'exec-1',
       name: 'Milestone 3 #33',
-      project: 'Project Nova',
+      project: 'Project Nova (DEMO)',
       agent: 'Analyzer',
       status: 'SUCCESS',
-      statusCodeDesc: 'Status codes: 200, mtins and logs',
+      statusCodeDesc: 'Status codes: 200',
       timestamp: '10 Apr 28 20:06:39',
       fullDate: '2026-04-28 20:06:39 UTC',
     },
     {
       id: 'exec-2',
       name: 'Milestone 3 #39',
-      project: 'Project Nova',
+      project: 'Project Nova (DEMO)',
       agent: 'GitHub',
       status: 'FAILED',
-      statusCodeDesc: 'Status codes: 200, mtins and logs',
+      statusCodeDesc: 'Rate limit retry logged',
       timestamp: '10 Apr 25 22:02:38',
       fullDate: '2026-04-25 22:02:38 UTC',
     },
     {
       id: 'exec-3',
       name: 'Milestone 3 #39',
-      project: 'Project Nova',
+      project: 'Project Nova (DEMO)',
       agent: 'Milestone',
       status: 'RUNNING',
-      statusCodeDesc: 'Status codes: 400, ntins and logs',
+      statusCodeDesc: 'Evaluating AST diffs',
       timestamp: '10 Apr 23 20:06:37',
       fullDate: '2026-04-23 20:06:37 UTC',
     },
     {
       id: 'exec-4',
-      name: 'Milestone 3 #39',
-      project: 'Project Nova',
-      agent: 'Milestone',
-      status: 'RUNNING',
-      statusCodeDesc: 'Status codes: 200, ntins and logs',
+      name: 'Milestone #2',
+      project: 'Aether (DEMO)',
+      agent: 'Analyzer',
+      status: 'FAILED',
+      statusCodeDesc: 'Sample timeout event',
       timestamp: '10 Apr 25 20:07:42',
       fullDate: '2026-04-25 20:07:42 UTC',
     },
   ];
 
-  // Right Panel Compact Recent Executions
-  const rightRecentExecutions = [
-    {
-      id: 'r-exec-1',
-      execution: 'Agreement N1',
-      agent: 'Project Nova',
-      status: 'SUCCESS',
-      statusDesc: 'Status codes: 420 logs',
-      time: '13 hours ago',
-    },
-    {
-      id: 'r-exec-2',
-      execution: 'Milestone #2',
-      agent: 'Aether',
-      status: 'FAILED',
-      statusDesc: 'Status codes: 4381 Logs: Error: not failed successfull...',
-      time: '12 hours ago',
-    },
-  ];
+  const liveExecutionRecords: AgentExecution[] = React.useMemo(() => {
+    const projectMap = new Map(projects.map((p) => [p.id, p.name]));
+    return milestones
+      .filter((m) => Boolean(m.aiReport || m.status === 'ai_analyzing' || m.status === 'ai_verified'))
+      .map((m) => ({
+        id: `exec-${m.id}`,
+        name: m.title,
+        project: projectMap.get(m.projectId) || 'Workspace Project',
+        agent: telemetry?.integrations?.ai?.provider || 'AI Verifier',
+        status: m.aiReport?.status === 'passed' ? 'SUCCESS' : m.aiReport?.status === 'failed' ? 'FAILED' : 'RUNNING',
+        statusCodeDesc: `Score: ${m.aiReport?.confidenceScore ?? m.aiReport?.overallScore ?? m.aiReport?.confidence ?? 0}%`,
+        timestamp: m.aiReport?.evaluatedAt || m.aiReport?.analyzedAt ? new Date(m.aiReport?.evaluatedAt || m.aiReport?.analyzedAt!).toLocaleDateString() : 'Recorded',
+        fullDate: m.aiReport?.evaluatedAt || m.aiReport?.analyzedAt || new Date().toISOString(),
+      }));
+  }, [milestones, projects, telemetry]);
 
-  // Activity Log Timeline items
-  const activityLogs: ActivityItem[] = [
-    {
-      id: 'act-1',
-      timeAgo: '16h ago',
-      agentName: 'Agreement Analyzer',
-      description: 'completed M1 structuring for Project Nova',
-    },
-    {
-      id: 'act-2',
-      timeAgo: '18h ago',
-      agentName: 'GitHub Evidence Agent',
-      description: 'mapped 15 commits to PR #39 to illustrative',
-    },
-    {
-      id: 'act-3',
-      timeAgo: '16h ago',
-      agentName: 'Agreement Analyzer',
-      description: 'completed M1 structuring Project Nova',
-    },
-    {
-      id: 'act-4',
-      timeAgo: '10h ago',
-      agentName: 'Agreement Analyzer',
-      description: 'completed M1 Project Not #29',
-    },
-    {
-      id: 'act-5',
-      timeAgo: '10h ago',
-      agentName: 'GitHub Evidence Agent',
-      description: 'mapped 15 commits to PR #39',
-    },
-  ];
+  const executionRecords = isGuest ? demoExecutionRecords : liveExecutionRecords;
+
+  const rightRecentExecutions = isGuest
+    ? [
+        {
+          id: 'r-exec-1',
+          execution: 'Agreement N1 (DEMO)',
+          agent: 'Project Nova',
+          status: 'SUCCESS',
+          statusDesc: '420 sample logs',
+          time: '13 hours ago',
+        },
+        {
+          id: 'r-exec-2',
+          execution: 'Milestone #2 (DEMO)',
+          agent: 'Aether',
+          status: 'FAILED',
+          statusDesc: 'Missing test evidence sample',
+          time: '12 hours ago',
+        },
+      ]
+    : liveExecutionRecords.slice(0, 4).map((r) => ({
+        id: `r-${r.id}`,
+        execution: r.name,
+        agent: r.agent,
+        status: r.status,
+        statusDesc: r.statusCodeDesc,
+        time: r.timestamp,
+      }));
+
+  const activityLogs: ActivityItem[] = isGuest
+    ? [
+        {
+          id: 'act-1',
+          timeAgo: '16h ago',
+          agentName: 'Agreement Analyzer',
+          description: 'completed M1 structuring for Project Nova (DEMO)',
+        },
+        {
+          id: 'act-2',
+          timeAgo: '18h ago',
+          agentName: 'GitHub Evidence Agent',
+          description: 'mapped 15 commits to PR #39 (DEMO)',
+        },
+      ]
+    : (telemetry?.recentActivity || []).slice(0, 5).map((item) => ({
+        id: item.id,
+        timeAgo: new Date(item.createdAt).toLocaleDateString(),
+        agentName: item.action.replace(/_/g, ' '),
+        description:
+          typeof item.details === 'string'
+            ? item.details
+            : item.projectTitle
+              ? `Project: ${item.projectTitle}`
+              : item.entityType,
+      }));
 
   // Filtered executions based on active tab
   const displayedExecutions = executionRecords.filter((record) => {
-    if (activeTab === 'projects') return record.project === 'Project Nova';
+    if (activeTab === 'projects') return Boolean(record.project);
     if (activeTab === 'agents') return record.agent !== '';
     return true;
   });
+
+  const activeTargetMilestone = milestones[0] || null;
+  const activeTargetProject = projects.find((p) => p.id === activeTargetMilestone?.projectId) || projects[0] || null;
 
   // Action Handlers
   const handleApproveAndPay = async () => {
@@ -340,35 +395,49 @@ export const VerificationPage: React.FC = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
-                    <span className="font-semibold text-blue-400">GitHub Evidence Agent</span> mapped 15 commits for Project Nova.
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
-                    <span className="font-semibold text-emerald-400">Milestone Intelligence</span> verified AST syntax for V1.1.
-                  </div>
+                  {isGuest ? (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-blue-400">GitHub Evidence Agent</span> mapped 15 commits for Project Nova (DEMO).
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-emerald-400">Milestone Intelligence</span> verified AST syntax for V1.1 (DEMO).
+                      </div>
+                    </>
+                  ) : activityLogs.length === 0 ? (
+                    <div className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-400">
+                      No AI verification notifications yet.
+                    </div>
+                  ) : (
+                    activityLogs.slice(0, 3).map((item) => (
+                      <div key={item.id} className="p-2.5 rounded-xl bg-[#152238] text-xs text-slate-300">
+                        <span className="font-semibold text-blue-400">{item.agentName}</span> {item.description}
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>
 
-            {/* User Profile & Sample Data Dropdown */}
+            {/* User Profile / Data Environment Indicator */}
             <div className="relative">
               <button
-                onClick={() => setSampleDataDropdownOpen(!sampleDataDropdownOpen)}
+                onClick={() => isGuest && setSampleDataDropdownOpen(!sampleDataDropdownOpen)}
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#111C30] hover:bg-[#152238] border border-[#26344B] transition-colors"
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold">
-                  TM
+                  {userInitials}
                 </div>
                 <span className="text-xs font-semibold text-slate-200 whitespace-nowrap">
-                  {sampleDataMode === 'sample' ? 'Sample data' : 'Live API'}
+                  {isGuest ? (sampleDataMode === 'sample' ? 'Demo Sample' : 'Live API') : 'Live Workspace'}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                {isGuest && <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
               </button>
 
-              {sampleDataDropdownOpen && (
+              {isGuest && sampleDataDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-[#111C30] border border-[#26344B] rounded-2xl shadow-2xl p-2.5 z-50 space-y-1.5 text-xs">
                   <div className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Data Environment
+                    Demo Preview
                   </div>
                   <button
                     onClick={() => {
@@ -382,28 +451,9 @@ export const VerificationPage: React.FC = () => {
                         : 'text-slate-300 hover:bg-[#152238]'
                     }`}
                   >
-                    <span className="text-xs sm:text-sm">Sample Data (Mock)</span>
+                    <span className="text-xs sm:text-sm">Sample Data (Demo)</span>
                     {sampleDataMode === 'sample' && <Check className="w-4 h-4" />}
                   </button>
-                  <button
-                    onClick={() => {
-                      setSampleDataMode('live');
-                      setSampleDataDropdownOpen(false);
-                      loadData();
-                      showToast('Environment: Live API', 'Querying backend service /api endpoints.', 'success');
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${
-                      sampleDataMode === 'live'
-                        ? 'bg-[#2563EB] text-white font-medium'
-                        : 'text-slate-300 hover:bg-[#152238]'
-                    }`}
-                  >
-                    <span className="text-xs sm:text-sm">Live Backend API</span>
-                    {sampleDataMode === 'live' && <Check className="w-4 h-4" />}
-                  </button>
-                  <div className="pt-1.5 border-t border-[#26344B]/60 text-xs text-slate-400 px-2 leading-tight">
-                    Explicitly distinguishes mock hackathon data from connected backend states.
-                  </div>
                 </div>
               )}
             </div>
@@ -450,9 +500,15 @@ export const VerificationPage: React.FC = () => {
                   {/* Current Task Description */}
                   <div className="text-xs text-slate-400 leading-relaxed">
                     <span className="text-slate-300 font-medium block">Current Task</span>
-                    <span>(No current task</span>
-                    <br />
-                    <span>Last executed: 10 mins ago)</span>
+                    {isGuest ? (
+                      <>
+                        <span>(No current task</span>
+                        <br />
+                        <span>Last executed: 10 mins ago)</span>
+                      </>
+                    ) : (
+                      <span>{telemetry?.aiAgents?.[0]?.summary || (telemetry?.integrations?.ai?.geminiConfigured ? 'Ready for milestone requirement parsing' : 'AI provider awaiting configuration')}</span>
+                    )}
                   </div>
                 </div>
 
@@ -483,16 +539,22 @@ export const VerificationPage: React.FC = () => {
                   {/* Status Badge */}
                   <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#132644] border border-blue-500/30 text-xs">
                     <div className="flex items-center gap-2 text-blue-400 font-bold">
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse" />
-                      <span>ACTIVE</span>
+                      <span className={`w-2.5 h-2.5 rounded-full bg-blue-400 ${isGuest ? 'animate-pulse' : ''}`} />
+                      <span>{isGuest ? 'ACTIVE' : telemetry?.integrations?.github?.connected ? 'CONNECTED' : 'STANDBY'}</span>
                     </div>
-                    <RotateCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
+                    {isGuest && <RotateCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />}
                   </div>
 
                   {/* Current Task Description */}
                   <div className="text-xs text-slate-400 leading-relaxed">
                     <span className="text-slate-300 font-medium block">Current Task</span>
-                    <span>Retrieving PR #42 for &apos;Aether Platform&apos;</span>
+                    <span>
+                      {isGuest
+                        ? "Retrieving PR #42 for 'Aether Platform'"
+                        : telemetry?.integrations?.github?.connected
+                        ? 'Synced with linked GitHub repositories'
+                        : 'Connect GitHub to inspect repository commits'}
+                    </span>
                   </div>
                 </div>
 
@@ -652,7 +714,7 @@ export const VerificationPage: React.FC = () => {
                 <div className="relative">
                   <div className="w-14 h-14 rounded-2xl bg-[#16233B] border border-[#26344B] flex items-center justify-center overflow-hidden">
                     <div className="w-9 h-9 rounded-full bg-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-xs">
-                      {isClient ? 'MV' : 'AM'}
+                      {userInitials}
                     </div>
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-black text-[10px] font-bold">
@@ -759,7 +821,13 @@ export const VerificationPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/60">
-                      {displayedExecutions.map((row) => (
+                      {displayedExecutions.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 px-4 text-center text-xs text-slate-400">
+                            No AI verification executions yet. Run AI Verification on a milestone to record agent runs.
+                          </td>
+                        </tr>
+                      ) : displayedExecutions.map((row) => (
                         <tr
                           key={row.id}
                           className="hover:bg-[#152238]/60 transition-colors cursor-pointer group"
@@ -840,7 +908,13 @@ export const VerificationPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
-                      {rightRecentExecutions.map((r) => (
+                      {rightRecentExecutions.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="py-6 text-center text-xs text-slate-400">
+                            No recent agent executions yet.
+                          </td>
+                        </tr>
+                      ) : rightRecentExecutions.map((r) => (
                         <tr key={r.id} className="hover:bg-[#152238]/40 transition-colors">
                           <td className="py-3 font-medium text-slate-200 text-xs sm:text-sm">
                             {r.execution}
@@ -896,7 +970,13 @@ export const VerificationPage: React.FC = () => {
                     <div className="flex items-center gap-2.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
                       <span className="text-sm font-bold text-white">
-                        {isClient ? 'Acceptance for Alpha Milestone 3' : 'Code Verification: Alpha Milestone 3'}
+                        {isGuest
+                          ? isClient
+                            ? 'Acceptance for Alpha Milestone 3 (DEMO)'
+                            : 'Code Verification: Alpha Milestone 3 (DEMO)'
+                          : activeTargetMilestone
+                          ? `${isClient ? 'Acceptance for' : 'Code Verification:'} ${activeTargetMilestone.title}`
+                          : 'No Milestone Selected for Review'}
                       </span>
                     </div>
                     {approvalAccordionOpen ? (
@@ -908,10 +988,18 @@ export const VerificationPage: React.FC = () => {
 
                   {approvalAccordionOpen && (
                     <div className="space-y-3.5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-[#26344B]/60 pt-3">
-                      {isClient ? (
+                      {!isGuest && !activeTargetMilestone ? (
+                        <div className="p-3 rounded-xl bg-[#152238] border border-[#26344B] text-xs text-slate-400">
+                          No milestones exist yet. Create a project and milestone to run AI verification and client approval gates.
+                        </div>
+                      ) : isClient ? (
                         <>
                           <p>
-                            <strong className="text-slate-100">Deliverable Assessment:</strong> Milestone 3 meets 94.2% of requirement acceptance criteria. AST code validation passed for Commit <code className="text-blue-400">8c92a10</code>. Ready for client review and escrow release authorization.
+                            <strong className="text-slate-100">Deliverable Assessment:</strong>{' '}
+                            {isGuest
+                              ? 'Milestone 3 meets 94.2% of requirement acceptance criteria. AST code validation passed for Commit 8c92a10. Ready for client review and escrow release authorization.'
+                              : activeTargetMilestone?.aiReport?.summary ||
+                                `Milestone "${activeTargetMilestone?.title}" is awaiting verification report review.`}
                           </p>
 
                           {/* Approval Status State pill if triggered */}
@@ -955,21 +1043,37 @@ export const VerificationPage: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <div className="space-y-2 text-xs">
-                            <p>
-                              <strong className="text-slate-100">AST Analysis:</strong> 98.4% syntax conformance across 14 AST parse nodes. Cryptographic signatures validated for 15 commits on branch <code className="text-blue-400">main</code>.
-                            </p>
-                            <div className="p-2.5 rounded-lg bg-[#152238] border border-[#26344B] space-y-1">
-                              <span className="text-slate-400 font-semibold block text-[11px]">Identified Checks &amp; Code Feedback:</span>
-                              <div className="text-emerald-400 font-mono text-[11px]">✓ OAuth2 PKCE Token Flow: Verified (100% AST match)</div>
-                              <div className="text-emerald-400 font-mono text-[11px]">✓ Refresh Token Storage: Verified (Signed JWTs)</div>
-                              <div className="text-amber-400 font-mono text-[11px]">⚠ Session Revocation: Missing automated integration test</div>
+                          {isGuest ? (
+                            <div className="space-y-2 text-xs">
+                              <p>
+                                <strong className="text-slate-100">AST Analysis (DEMO):</strong> 98.4% syntax conformance across 14 AST parse nodes. Cryptographic signatures validated for 15 commits on branch <code className="text-blue-400">main</code>.
+                              </p>
+                              <div className="p-2.5 rounded-lg bg-[#152238] border border-[#26344B] space-y-1">
+                                <span className="text-slate-400 font-semibold block text-[11px]">Identified Checks &amp; Code Feedback:</span>
+                                <div className="text-emerald-400 font-mono text-[11px]">✓ OAuth2 PKCE Token Flow: Verified (100% AST match)</div>
+                                <div className="text-emerald-400 font-mono text-[11px]">✓ Refresh Token Storage: Verified (Signed JWTs)</div>
+                                <div className="text-amber-400 font-mono text-[11px]">⚠ Session Revocation: Missing automated integration test</div>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div className="space-y-2 text-xs">
+                              <p>
+                                <strong className="text-slate-100">AI Verification Summary:</strong>{' '}
+                                {activeTargetMilestone?.aiReport?.summary ||
+                                  'Click "Re-run Agent Verification" to evaluate milestone requirements against synced repository commits.'}
+                              </p>
+                            </div>
+                          )}
 
                           <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-300 text-xs sm:text-sm flex items-center gap-2.5 font-medium">
                             <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
-                            <span>Deliverable verified by AI agents. Awaiting client review in the milestone approval queue.</span>
+                            <span>
+                              {isGuest
+                                ? 'Deliverable verified by AI agents. Awaiting client review in the milestone approval queue.'
+                                : activeTargetMilestone?.status === 'client_approved'
+                                ? 'Milestone approved by client.'
+                                : 'AI verification is advisory; human client sign-off is required before payment preparation.'}
+                            </span>
                           </div>
 
                           {/* Developer action buttons (Strictly NO client payment or approval buttons!) */}
@@ -982,13 +1086,12 @@ export const VerificationPage: React.FC = () => {
                               Inspect AST Code Proofs
                             </button>
                             <button
-                              onClick={() => {
-                                showToast('Agent Re-evaluation Triggered', 'Re-analyzing AST trees against requirement acceptance criteria.', 'info');
-                              }}
-                              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
+                              onClick={handleRunVerification}
+                              disabled={isRunningVerification}
+                              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-600 disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-colors cursor-pointer"
                             >
-                              <RotateCw className="w-4 h-4" />
-                              <span>Re-run Agent Verification</span>
+                              <RotateCw className={`w-4 h-4 ${isRunningVerification ? 'animate-spin' : ''}`} />
+                              <span>{isRunningVerification ? 'Running Agent Verification...' : 'Re-run Agent Verification'}</span>
                             </button>
                           </div>
                         </>
@@ -1012,7 +1115,11 @@ export const VerificationPage: React.FC = () => {
                   {/* Vertical Line */}
                   <div className="absolute top-4 bottom-4 left-2.5 w-0.5 bg-blue-500/30" />
 
-                  {activityLogs.map((item) => (
+                  {activityLogs.length === 0 ? (
+                    <div className="text-xs text-slate-400 py-2">
+                      No agent or repository events recorded yet.
+                    </div>
+                  ) : activityLogs.map((item) => (
                     <div key={item.id} className="relative flex items-start gap-2 text-xs">
                       {/* Node Dot */}
                       <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#2563EB] ring-4 ring-[#111C30]" />
@@ -1154,7 +1261,9 @@ export const VerificationPage: React.FC = () => {
               <div>
                 <h3 className="text-sm font-bold text-white">GitHub Evidence & Verification Proofs</h3>
                 <span className="text-[11px] text-slate-400 font-mono">
-                  Milestone: V1.1 Release &bull; Repo: devflow-core
+                  {isGuest
+                    ? 'Milestone: V1.1 Release • Repo: devflow-core (DEMO)'
+                    : `Milestone: ${activeTargetMilestone?.title || 'None'} • Repo: ${activeTargetProject?.githubRepo || 'Not linked'}`}
                 </span>
               </div>
               <button
@@ -1166,47 +1275,55 @@ export const VerificationPage: React.FC = () => {
             </div>
 
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1 text-xs text-slate-300">
-              <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-white flex items-center gap-1.5">
-                    <FileCode className="w-4 h-4 text-blue-400" />
-                    PR #124: Multi-Factor Authentication Gateway
-                  </span>
-                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                    MERGED
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  Adds TOTP validator, encrypted session tokens, and recovery codes with 98% branch coverage.
-                </p>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-                  <span>SHA: 4a2f819</span>
-                  <span>&bull;</span>
-                  <span>14 files changed</span>
-                  <span>&bull;</span>
-                  <span>+482 / -31 lines</span>
-                </div>
-              </div>
+              {isGuest ? (
+                <>
+                  <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <FileCode className="w-4 h-4 text-blue-400" />
+                        PR #124: Multi-Factor Authentication Gateway (DEMO)
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                        MERGED
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Adds TOTP validator, encrypted session tokens, and recovery codes with 98% branch coverage.
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                      <span>SHA: 4a2f819</span>
+                      <span>&bull;</span>
+                      <span>14 files changed</span>
+                      <span>&bull;</span>
+                      <span>+482 / -31 lines</span>
+                    </div>
+                  </div>
 
-              <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-white flex items-center gap-1.5">
-                    <FileCode className="w-4 h-4 text-blue-400" />
-                    PR #130: PayPal Sandbox Webhook Integration
-                  </span>
-                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                    MERGED
-                  </span>
+                  <div className="p-3 rounded-xl bg-[#0C1524] border border-[#26344B] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <FileCode className="w-4 h-4 text-blue-400" />
+                        PR #130: PayPal Sandbox Webhook Integration (DEMO)
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                        MERGED
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Implements webhook event verification, invoice settlement listener, and HMAC signature validations.
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                      <span>SHA: 8c1d302</span>
+                      <span>&bull;</span>
+                      <span>8 files changed</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 rounded-xl bg-[#0C1524] border border-[#26344B] text-xs text-slate-400">
+                  Open the <span className="text-blue-400 font-semibold">Full Evidence Workspace</span> to inspect live commits, pull requests, and deliverable mappings for this project.
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Implements webhook event verification, invoice settlement listener, and HMAC signature validations.
-                </p>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-                  <span>SHA: 8c1d302</span>
-                  <span>&bull;</span>
-                  <span>8 files changed</span>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="pt-2 flex justify-between items-center border-t border-[#26344B]">
@@ -1251,7 +1368,11 @@ export const VerificationPage: React.FC = () => {
                 <span className="font-bold text-white block">Key Security Safeguards:</span>
                 <ul className="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
                   <li>AI recommendations are advisory and require client sign-off.</li>
-                  <li>Invoices are simulated in PayPal Sandbox mode for hackathon demonstration.</li>
+                  <li>
+                    {isGuest
+                      ? 'Invoices are simulated in PayPal Sandbox mode for guest preview.'
+                      : 'Invoices and settlements use your configured PayPal integration only after explicit client approval.'}
+                  </li>
                   <li>All AST verification executions are immutable and logged.</li>
                 </ul>
               </div>

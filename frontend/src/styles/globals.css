@@ -343,6 +343,25 @@ html.dark .bg-\[\#0F172A\]:not(button):not(a):not([class*="text-"]):not(.hero-ba
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.06) !important;
 }
 
+/* 5b. Floating Popovers & Dropdown Menus (Solid High-Contrast Surfaces) */
+html.dark [role="menu"],
+html.dark [data-popover="true"] {
+  background-color: #111c30 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: #26344b !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+html.light [role="menu"],
+html.light [data-popover="true"] {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
+}
+
 /* 6. Subtle Surfaces, Pill Tags, Table Headers, Inset Boxes & Progress Tracks */
 html.light .bg-\[\#132038\],
 html.light .bg-\[\#132644\],

@@ -55,6 +55,31 @@ const breadcrumbMap: Record<string, { title: string; subtitle: string; section: 
     subtitle: 'Generate sandbox invoices and verify cryptographically signed webhook receipts',
     section: 'Financials',
   },
+  '/career-profile': {
+    title: 'Career Profile & Resume Studio',
+    subtitle: 'Manage encrypted resumes, AI skill extraction, GitHub signals, and ATS templates',
+    section: 'Career & Talent',
+  },
+  '/find-developers': {
+    title: 'Find Developers',
+    subtitle: 'Search opted-in engineering talent and run explainable AI matching',
+    section: 'Talent Marketplace',
+  },
+  '/talent-pipeline': {
+    title: 'Applications & Talent Pipeline',
+    subtitle: 'Create and publish opportunities, review applicants, and compare candidates',
+    section: 'Talent Marketplace',
+  },
+  '/opportunities': {
+    title: 'Find Opportunities',
+    subtitle: 'Discover published client engagements and submit tailored proposals',
+    section: 'Marketplace',
+  },
+  '/my-applications': {
+    title: 'My Applications',
+    subtitle: 'Track submitted proposals, consent settings, and client hiring updates',
+    section: 'Marketplace',
+  },
   '/settings': {
     title: 'Platform Settings',
     subtitle: 'Configure GitHub webhooks, PayPal sandbox credentials, and team roles',
@@ -117,48 +142,52 @@ export const Header: React.FC<HeaderProps> = ({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | 'milestones' | 'ai' | 'payments'>('all');
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: '1',
-      category: 'payments',
-      title: 'Milestone 2 Verified & Paid',
-      desc: 'PayPal webhook verified PAYMENT.INVOICING.INVOICE.PAID ($4,500.00)',
-      time: '12m ago',
-      type: 'success',
-      read: false,
-      actionUrl: '/payments',
-    },
-    {
-      id: '2',
-      category: 'ai',
-      title: 'AI Analysis Completed',
-      desc: 'Milestone 3 scored 94.2% confidence across 5 commit hashes',
-      time: '1h ago',
-      type: 'ai',
-      read: false,
-      actionUrl: '/verification',
-    },
-    {
-      id: '3',
-      category: 'milestones',
-      title: 'Client Review Pending',
-      desc: 'Marcus Vance opened Milestone 3 evidence submission for review',
-      time: '2h ago',
-      type: 'warning',
-      read: false,
-      actionUrl: '/milestones',
-    },
-    {
-      id: '4',
-      category: 'payments',
-      title: 'Sandbox Invoice Draft Ready',
-      desc: 'Invoice #INV-2026-0843 created for Payment Gateway Integration',
-      time: '5h ago',
-      type: 'info',
-      read: true,
-      actionUrl: '/payments',
-    },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    isGuest
+      ? [
+          {
+            id: '1',
+            category: 'payments',
+            title: 'Milestone 2 Verified & Paid (DEMO)',
+            desc: 'PayPal sandbox sample PAYMENT.INVOICING.INVOICE.PAID ($4,500.00)',
+            time: '12m ago',
+            type: 'success',
+            read: false,
+            actionUrl: '/payments',
+          },
+          {
+            id: '2',
+            category: 'ai',
+            title: 'AI Analysis Completed (DEMO)',
+            desc: 'Sample milestone scored 94.2% confidence across 5 commits',
+            time: '1h ago',
+            type: 'ai',
+            read: false,
+            actionUrl: '/verification',
+          },
+          {
+            id: '3',
+            category: 'milestones',
+            title: 'Client Review Pending (DEMO)',
+            desc: 'Marcus Vance opened Milestone 3 evidence submission for review',
+            time: '2h ago',
+            type: 'warning',
+            read: false,
+            actionUrl: '/milestones',
+          },
+          {
+            id: '4',
+            category: 'payments',
+            title: 'Sandbox Invoice Draft Ready (DEMO)',
+            desc: 'Invoice #INV-2026-0843 created for Payment Gateway Integration',
+            time: '5h ago',
+            type: 'info',
+            read: true,
+            actionUrl: '/payments',
+          },
+        ]
+      : []
+  );
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -355,10 +384,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Help Button */}
           <button
-            onClick={() => window.open('https://github.com/northstar-studio/payment-gateway#readme', '_blank')}
+            onClick={() => navigate('/integrations')}
             className="p-2 rounded-xl text-[#777B91] hover:text-[#25263A] hover:bg-[#F1F3FA] transition-colors"
-            title="DevFlow Architecture Docs"
-            aria-label="DevFlow Docs"
+            title="Integrations & Docs"
+            aria-label="Integrations and Documentation"
           >
             <HelpCircle className="w-4 h-4" />
           </button>

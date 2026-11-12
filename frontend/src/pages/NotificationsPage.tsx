@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { devFlowApi } from '@/services/api';
+import { NotificationItem as ApiNotificationItem } from '@/types';
 import { GuestGuardModal } from '@/components/common';
 import {
               Bell,
@@ -156,8 +158,8 @@ export const NotificationsPage: React.FC = () => {
     });
   };
 
-  // Seed Notifications Matching Reference Screenshot Exactly
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
+  // Sample Demo Seed Notifications (Used strictly in Guest Demo Mode)
+  const buildDemoNotifications = (): NotificationItem[] => [
     {
       id: 'notif-1',
       type: 'ai',
@@ -200,7 +202,7 @@ export const NotificationsPage: React.FC = () => {
       projectBadgeColor: 'amber',
       timestamp: '1 hour ago',
       read: true,
-      linkText: 'Included text link to PR repository(Project:ApolloMobile)',
+      linkText: 'View Commit & PR Evidence (Apollo Mobile)',
       linkRoute: '/evidence',
     },
     {
@@ -248,7 +250,67 @@ export const NotificationsPage: React.FC = () => {
         primaryAction: () => navigate('/integrations'),
       },
     },
-  ]);
+  ];
+
+  const mapApiNotification = (item: ApiNotificationItem): NotificationItem => {
+    const t = String(item.type || '').toUpperCase();
+    const uiType: NotificationItem['type'] =
+      t.includes('PAYMENT') || t.includes('INVOICE') || t.includes('PAYOUT')
+        ? 'paypal'
+        : t.includes('AI') || t.includes('VERIFICATION')
+          ? 'ai'
+          : t.includes('GITHUB')
+            ? 'github'
+            : 'milestone';
+    const category: NotificationItem['category'] =
+      uiType === 'paypal' ? 'Payments' : uiType === 'ai' ? 'AI Activity' : 'Projects';
+    const badgeColor: NotificationItem['projectBadgeColor'] =
+      uiType === 'paypal' ? 'blue' : uiType === 'ai' ? 'amber' : 'slate';
+
+    return {
+      id: item.id,
+      type: uiType,
+      category,
+      title: item.title,
+      description: item.message,
+      project: item.linkUrl?.includes('/projects') ? 'Workspace Project' : 'DevFlow Workspace',
+      projectBadgeColor: badgeColor,
+      timestamp: new Date(item.createdAt).toLocaleString(),
+      read: Boolean(item.isRead),
+      actions: item.linkUrl
+        ? {
+            primaryText: 'Open',
+            primaryAction: () => navigate(item.linkUrl!.startsWith('/') ? item.linkUrl! : '/dashboard'),
+          }
+        : undefined,
+    };
+  };
+
+  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const loadNotifications = async () => {
+      setLoading(true);
+      if (isGuest) {
+        if (active) {
+          setNotifications(buildDemoNotifications());
+          setLoading(false);
+        }
+        return;
+      }
+      const res = await devFlowApi.getNotifications();
+      if (active) {
+        setNotifications((res.data || []).map(mapApiNotification));
+        setLoading(false);
+      }
+    };
+    loadNotifications();
+    return () => {
+      active = false;
+    };
+  }, [isGuest]);
 
   // Derived filtered notifications
   const filteredNotifications = useMemo(() => {
@@ -268,27 +330,39 @@ export const NotificationsPage: React.FC = () => {
   }, [notifications]);
 
   // Dismiss notification
-  const handleDismiss = (id: string) => {
+  const handleDismiss = async (id: string) => {
     const target = notifications.find((n) => n.id === id);
+    if (!isGuest && target && !target.read) {
+      await devFlowApi.markNotificationRead(id);
+    }
     setNotifications((prev) => prev.filter((item) => item.id !== id));
     showToast('Notification Dismissed', target?.title || 'Notification removed from your feed.', 'info');
   };
 
   // Mark single as read/unread toggle
-  const handleToggleRead = (id: string) => {
+  const handleToggleRead = async (id: string) => {
+    const target = notifications.find((n) => n.id === id);
+    const nextRead = !(target?.read);
     setNotifications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, read: !item.read } : item))
+      prev.map((item) => (item.id === id ? { ...item, read: nextRead } : item))
     );
+    if (!isGuest && nextRead) {
+      await devFlowApi.markNotificationRead(id);
+    }
   };
 
   // Mark all as read
-  const handleMarkAllAsRead = () => {
+  const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) {
       showToast('All Caught Up', 'You have no unread notifications.', 'info');
       return;
     }
+    const prevUnread = unreadCount;
     setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
-    showToast('All Notifications Marked Read', `${unreadCount} notification(s) marked as read.`, 'success');
+    if (!isGuest) {
+      await devFlowApi.markAllNotificationsRead();
+    }
+    showToast('All Notifications Marked Read', `${prevUnread} notification(s) marked as read.`, 'success');
   };
 
   return (
@@ -315,7 +389,7 @@ export const NotificationsPage: React.FC = () => {
               </div>
 
               {/* Right Side Header Controls */}
-              <div className="flex items-center gap-3 self-end sm:self-auto relative">
+              <div className="flex items-center gap-3 self-end sm:self-auto relative z-30">
                 {/* User Avatar */}
                 <div className="relative">
                   <button
@@ -335,7 +409,11 @@ export const NotificationsPage: React.FC = () => {
 
                   {/* User Profile Popover */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs sm:text-sm animate-in fade-in duration-150">
+                    <div
+                      role="menu"
+                      data-popover="true"
+                      className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#172235] border border-[#293B55] shadow-2xl p-3 z-50 text-xs sm:text-sm animate-in fade-in duration-150"
+                    >
                       <div className="px-3.5 py-2.5 border-b border-[#293B55]/70 mb-1.5">
                         <div className="font-semibold text-white">{actorDisplayName}</div>
                         {actorEmail && <div className="text-xs text-[#AAB6C8] truncate">{actorEmail}</div>}
@@ -460,22 +538,36 @@ export const NotificationsPage: React.FC = () => {
 
                 {/* NOTIFICATION CARDS LIST */}
                 <div className="space-y-4">
-                  {filteredNotifications.length === 0 ? (
+                  {loading ? (
+                    <div className="p-10 text-center rounded-2xl bg-[#172235] border border-[#293B55] text-xs sm:text-sm text-[#AAB6C8]">
+                      Loading workspace notifications...
+                    </div>
+                  ) : filteredNotifications.length === 0 ? (
                     <div className="p-12 text-center rounded-2xl bg-[#172235] border border-[#293B55] space-y-3.5">
                       <div className="w-14 h-14 rounded-full bg-[#101A2D] text-[#AAB6C8] mx-auto flex items-center justify-center">
                         <CheckCheck className="w-7 h-7 text-[#35C987]" />
                       </div>
-                      <div className="text-lg font-bold text-white">No notifications in this filter</div>
+                      <div className="text-lg font-bold text-white">
+                        {notifications.length === 0 ? 'No notifications yet' : 'No notifications in this filter'}
+                      </div>
                       <p className="text-xs sm:text-sm text-[#AAB6C8] max-w-sm mx-auto">
-                        You have addressed all alerts under <span className="text-[#2879E8] font-medium">"{activeTab}"</span>.
-                        Switch to "All" to review recent activity.
+                        {notifications.length === 0 ? (
+                          'You are all caught up. Real project, GitHub sync, verification, and payment events will appear here.'
+                        ) : (
+                          <>
+                            You have addressed all alerts under <span className="text-[#2879E8] font-medium">"{activeTab}"</span>.
+                            Switch to "All" to review recent activity.
+                          </>
+                        )}
                       </p>
-                      <button
-                        onClick={() => setActiveTab('All')}
-                        className="px-5 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
-                      >
-                        View All Activity
-                      </button>
+                      {activeTab !== 'All' && (
+                        <button
+                          onClick={() => setActiveTab('All')}
+                          className="px-5 py-2.5 rounded-xl bg-[#2879E8] hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
+                        >
+                          View All Activity
+                        </button>
+                      )}
                     </div>
                   ) : (
                     filteredNotifications.map((item) => {

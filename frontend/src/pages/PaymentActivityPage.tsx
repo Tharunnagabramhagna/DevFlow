@@ -88,7 +88,25 @@ export const PaymentActivityPage: React.FC = () => {
 
   // Data Loading & API Sync
   const [, setMilestones] = useState<Milestone[]>([]);
-  const [, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [financials, setFinancials] = useState<{
+    receivedPaymentAmount: number;
+    pendingPaymentAmount: number;
+    completedPayoutAmount: number;
+    pendingPayoutAmount: number;
+    paypalConfigured: boolean;
+    paypalMode: string;
+    timeSeries: { label: string; paid: number; approved: number }[];
+  }>({
+    receivedPaymentAmount: 0,
+    pendingPaymentAmount: 0,
+    completedPayoutAmount: 0,
+    pendingPayoutAmount: 0,
+    paypalConfigured: false,
+    paypalMode: 'sandbox',
+    timeSeries: [],
+  });
   const [loading, setLoading] = useState(true);
 
   // Search, Filtering & Pagination
@@ -96,41 +114,21 @@ export const PaymentActivityPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'All' | 'Success' | 'Pending' | 'Failed'>('All');
   const [projectFilter, setProjectFilter] = useState<string>('All');
 
-  // Selected Transaction ID (defaulting to INV-2026-0842)
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string>('INV-2026-0842');
+  // Selected Transaction ID
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string>(isGuest ? 'INV-2026-0842' : '');
 
   // Chart Tooltip Hover State
   const [hoveredMonth, setHoveredMonth] = useState<MonthlyDataPoint | null>(null);
 
   // Toast Notification
-  const [, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   const showToast = (title: string, desc: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ title, desc, type });
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [mRes, pRes] = await Promise.all([
-        devFlowApi.getMilestones(),
-        devFlowApi.getProjects(),
-      ]);
-      setMilestones(mRes.data);
-      setProjects(pRes.data);
-    } catch (err) {
-      console.error('Failed to load telemetry:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Transaction Registry matching standard demo data
+  // Transaction Registry (Strictly used ONLY in Guest Demo Mode)
   const initialTransactions: PaymentTransaction[] = useMemo(() => [
     {
       id: 'tx-1',
@@ -140,7 +138,7 @@ export const PaymentActivityPage: React.FC = () => {
       client: 'Meridian Labs',
       amount: 5000.0,
       paymentDate: 'Nov 03, 2026',
-      paymentMethod: 'PayPal Sandbox',
+      paymentMethod: 'PayPal Demo',
       status: 'Success',
       paypalReference: 'PP-DEMO-98471203',
       webhookTimestamp: 'Nov 03, 2026 17:42:10 UTC',
@@ -156,7 +154,7 @@ export const PaymentActivityPage: React.FC = () => {
       client: 'Meridian Labs',
       amount: 4500.0,
       paymentDate: 'Nov 05, 2026',
-      paymentMethod: 'PayPal Sandbox',
+      paymentMethod: 'PayPal Demo',
       status: 'Success',
       paypalReference: 'PP-DEMO-12345678',
       webhookTimestamp: 'Nov 05, 2026 18:15:00 UTC',
@@ -172,7 +170,7 @@ export const PaymentActivityPage: React.FC = () => {
       client: 'Meridian Labs',
       amount: 5000.0,
       paymentDate: 'Nov 07, 2026',
-      paymentMethod: 'PayPal Sandbox',
+      paymentMethod: 'PayPal Demo',
       status: 'Pending',
       paypalReference: 'PP-DEMO-44910283',
       webhookTimestamp: 'Awaiting client approval & webhook capture',
@@ -230,9 +228,97 @@ export const PaymentActivityPage: React.FC = () => {
     },
   ], []);
 
+  const loadData = async () => {
+    setLoading(true);
+    if (isGuest) {
+      setTransactions(initialTransactions);
+      setFinancials({
+        receivedPaymentAmount: initialTransactions.filter((t) => t.status === 'Success').reduce((s, t) => s + t.amount, 0),
+        pendingPaymentAmount: initialTransactions.filter((t) => t.status === 'Pending').reduce((s, t) => s + t.amount, 0),
+        completedPayoutAmount: 0,
+        pendingPayoutAmount: 0,
+        paypalConfigured: false,
+        paypalMode: 'sandbox',
+        timeSeries: MONTHLY_TREND.map((m) => ({ label: m.month, paid: m.amount, approved: m.amount })),
+      });
+      setSelectedTransactionId('INV-2026-0842');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [invRes, finRes, mRes, pRes] = await Promise.all([
+        devFlowApi.getInvoices(),
+        devFlowApi.getFinancialSummary('all'),
+        devFlowApi.getMilestones(),
+        devFlowApi.getProjects(),
+      ]);
+      setMilestones(mRes.data);
+      setProjects(pRes.data);
+      setFinancials({
+        receivedPaymentAmount: Number(finRes.data?.receivedPaymentAmount || 0),
+        pendingPaymentAmount: Number(finRes.data?.pendingPaymentAmount || 0),
+        completedPayoutAmount: Number(finRes.data?.completedPayoutAmount || 0),
+        pendingPayoutAmount: Number(finRes.data?.pendingPayoutAmount || 0),
+        paypalConfigured: Boolean(finRes.paypalConfigured),
+        paypalMode: finRes.paypalMode || 'sandbox',
+        timeSeries: (finRes.data?.timeSeries || []).map((pt) => ({
+          label: pt.label,
+          paid: Number(pt.received || 0),
+          approved: Number(pt.pending || 0) + Number(pt.received || 0),
+        })),
+      });
+
+      const mappedTx: PaymentTransaction[] = (invRes.data || []).map(({ milestone, invoice }) => {
+        const parentProj = pRes.data.find((p) => p.id === milestone.projectId);
+        const st = String(invoice.status || '').toUpperCase();
+        const mappedStatus: PaymentTransaction['status'] =
+          st === 'PAID' ? 'Success' : st === 'CANCELLED' ? 'Failed' : 'Pending';
+        const refDate = invoice.paidAt || invoice.createdAt || milestone.dueDate;
+        return {
+          id: invoice.id,
+          transactionId: invoice.invoiceNumber || invoice.id,
+          invoiceNumber: invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8)}`,
+          project: parentProj?.name || 'Workspace Project',
+          client: parentProj?.clientName || 'Client',
+          amount: Number(invoice.amount || milestone.amount || 0),
+          paymentDate: refDate ? new Date(refDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—',
+          paymentMethod: finRes.paypalConfigured ? `PayPal (${finRes.paypalMode})` : 'PayPal (Not Configured)',
+          status: mappedStatus,
+          paypalReference: invoice.paypalInvoiceId || invoice.id,
+          webhookTimestamp: invoice.paidAt ? new Date(invoice.paidAt).toUTCString() : 'Awaiting Settlement',
+          relatedMilestone: milestone.title,
+          milestoneRoute: '/milestones',
+          payerEmail: invoice.recipientEmail || parentProj?.clientEmail || '—',
+        };
+      });
+
+      setTransactions(mappedTx);
+      if (mappedTx.length > 0 && !mappedTx.some((t) => t.transactionId === selectedTransactionId)) {
+        setSelectedTransactionId(mappedTx[0].transactionId);
+      } else if (mappedTx.length === 0) {
+        setSelectedTransactionId('');
+      }
+    } catch (err) {
+      console.error('Failed to load telemetry:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [isGuest]);
+
+  const projectOptions = useMemo(() => {
+    const names = new Set<string>(transactions.map((t) => t.project).filter(Boolean));
+    projects.forEach((p) => names.add(p.name));
+    return Array.from(names);
+  }, [transactions, projects]);
+
   // Filtered & Searched Transactions
   const filteredTransactions = useMemo(() => {
-    return initialTransactions.filter((tx) => {
+    return transactions.filter((tx) => {
       const matchSearch =
         tx.transactionId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tx.project.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -244,34 +330,47 @@ export const PaymentActivityPage: React.FC = () => {
 
       return matchSearch && matchStatus && matchProject;
     });
-  }, [initialTransactions, searchQuery, statusFilter, projectFilter]);
+  }, [transactions, searchQuery, statusFilter, projectFilter]);
 
   // Selected Transaction Object
   const currentTransaction = useMemo(() => {
     return (
-      initialTransactions.find((tx) => tx.transactionId === selectedTransactionId) ||
-      initialTransactions[1] ||
-      initialTransactions[0]
+      transactions.find((tx) => tx.transactionId === selectedTransactionId) ||
+      transactions[0] ||
+      null
     );
-  }, [initialTransactions, selectedTransactionId]);
+  }, [transactions, selectedTransactionId]);
 
-  // Financial Summary KPI Aggregates
+  // Financial Summary KPI Aggregates consistent with financialSummary service
   const summaryMetrics = useMemo(() => {
-    const totalReceived = initialTransactions
-      .filter((t) => t.status === 'Success')
-      .reduce((acc, curr) => acc + curr.amount, 0);
+    if (isGuest) {
+      const totalReceived = transactions.filter((t) => t.status === 'Success').reduce((acc, curr) => acc + curr.amount, 0);
+      const pending = transactions.filter((t) => t.status === 'Pending').reduce((acc, curr) => acc + curr.amount, 0);
+      const totalCount = transactions.length;
+      const verifiedRate = totalCount > 0 ? Math.round((transactions.filter((t) => t.status === 'Success').length / totalCount) * 100) : 0;
+      return {
+        totalReceived,
+        pending,
+        totalCount,
+        settledCount: transactions.filter((t) => t.status === 'Success').length,
+        pendingCount: transactions.filter((t) => t.status === 'Pending').length,
+        verifiedRate,
+      };
+    }
 
-    const pending = initialTransactions
-      .filter((t) => t.status === 'Pending')
-      .reduce((acc, curr) => acc + curr.amount, 0);
+    const settledCount = transactions.filter((t) => t.status === 'Success').length;
+    const pendingCount = transactions.filter((t) => t.status === 'Pending').length;
+    const verifiedRate = transactions.length > 0 ? Math.round((settledCount / transactions.length) * 100) : 0;
 
-    const totalCount = initialTransactions.length;
-    const verifiedRate = Math.round(
-      (initialTransactions.filter((t) => t.status === 'Success').length / totalCount) * 100
-    );
-
-    return { totalReceived, pending, totalCount, verifiedRate };
-  }, [initialTransactions]);
+    return {
+      totalReceived: financials.completedPayoutAmount > 0 ? financials.completedPayoutAmount : financials.receivedPaymentAmount,
+      pending: financials.pendingPayoutAmount > 0 ? financials.pendingPayoutAmount : financials.pendingPaymentAmount,
+      totalCount: transactions.length,
+      settledCount,
+      pendingCount,
+      verifiedRate,
+    };
+  }, [transactions, financials, isGuest]);
 
   if (loading) {
     return (
@@ -285,6 +384,10 @@ export const PaymentActivityPage: React.FC = () => {
   }
 
   // Monthly Chart SVG geometry calculations
+  const chartSeries: MonthlyDataPoint[] = isGuest
+    ? MONTHLY_TREND
+    : (financials.timeSeries || []).map((pt) => ({ label: pt.label, month: pt.label, amount: Number(pt.paid || 0) }));
+
   const chartHeight = 140;
   const chartWidth = 520;
   const paddingLeft = 35;
@@ -292,12 +395,12 @@ export const PaymentActivityPage: React.FC = () => {
   const paddingTop = 20;
   const paddingBottom = 25;
 
-  const maxAmount = Math.max(...MONTHLY_TREND.map((d) => d.amount));
+  const maxAmount = Math.max(100, ...chartSeries.map((d) => d.amount));
   const innerWidth = chartWidth - paddingLeft - paddingRight;
   const innerHeight = chartHeight - paddingTop - paddingBottom;
 
-  const points = MONTHLY_TREND.map((d, index) => {
-    const x = paddingLeft + (index / (MONTHLY_TREND.length - 1)) * innerWidth;
+  const points = chartSeries.map((d, index) => {
+    const x = chartSeries.length === 1 ? paddingLeft + innerWidth / 2 : paddingLeft + (index / (chartSeries.length - 1)) * innerWidth;
     const y = paddingTop + innerHeight - (d.amount / maxAmount) * innerHeight;
     return { x, y, ...d };
   });
@@ -309,12 +412,15 @@ export const PaymentActivityPage: React.FC = () => {
     return `${acc} C ${cpX} ${prev.y}, ${cpX} ${point.y}, ${point.x} ${point.y}`;
   }, '');
 
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${chartHeight - paddingBottom} L ${points[0].x} ${chartHeight - paddingBottom} Z`;
+  const areaD =
+    points.length > 1
+      ? `${pathD} L ${points[points.length - 1].x} ${chartHeight - paddingBottom} L ${points[0].x} ${chartHeight - paddingBottom} Z`
+      : '';
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#080D18]">
         {/* PAGE HEADER */}
-        <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
+        <header className="relative z-30 h-16 px-4 sm:px-6 lg:px-8 border-b border-[#26344B] bg-[#080D18]/90 backdrop-blur-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={openMobileSidebar}
@@ -328,7 +434,11 @@ export const PaymentActivityPage: React.FC = () => {
                   {isClient ? 'Payment Activity & Settlements' : 'Payments & Payouts'}
                 </h1>
                 <span className="text-[10px] font-sans font-bold bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full whitespace-nowrap">
-                  {isGuest ? 'DEMO MODE' : 'SANDBOX TELEMETRY'}
+                  {isGuest
+                    ? 'DEMO MODE'
+                    : financials.paypalConfigured
+                      ? `PAYPAL ${financials.paypalMode.toUpperCase()}`
+                      : 'LIVE LEDGER'}
                 </span>
               </div>
             </div>
@@ -338,9 +448,10 @@ export const PaymentActivityPage: React.FC = () => {
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <button
               onClick={() => {
-                showToast('Synchronized', 'Payment ledger synchronized with PayPal sandbox webhooks.', 'info');
+                loadData();
+                showToast('Refreshed', 'Payment ledger refreshed from backend database.', 'info');
               }}
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D] transition-colors"
+              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-[#101A2D] transition-colors cursor-pointer"
               title="Refresh ledger"
             >
               <RotateCw className="w-4 h-4" />
@@ -354,7 +465,9 @@ export const PaymentActivityPage: React.FC = () => {
                 title="Notifications"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#080D18]" />
+                {transactions.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-[#080D18]" />
+                )}
               </button>
 
               {notificationsOpen && (
@@ -366,14 +479,18 @@ export const PaymentActivityPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="space-y-2">
-                    <div className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B]">
-                      <div className="font-semibold text-white">Invoice #INV-2026-0842 Settled</div>
-                      <div className="text-xs text-slate-400">$4,500.00 confirmed via PayPal Webhook</div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B]">
-                      <div className="font-semibold text-white">Invoice #INV-2026-0843 Drafted</div>
-                      <div className="text-xs text-slate-400">$5,000.00 awaiting human sign-off</div>
-                    </div>
+                    {transactions.length > 0 ? (
+                      transactions.slice(0, 2).map((tx) => (
+                        <div key={tx.id} className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B]">
+                          <div className="font-semibold text-white">{tx.invoiceNumber} &bull; {tx.status === 'Success' ? 'Settled' : tx.status}</div>
+                          <div className="text-xs text-slate-400">${tx.amount.toLocaleString()} &bull; {tx.project}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-[#080D18] border border-[#26344B] text-xs text-slate-400">
+                        No payment alerts recorded yet.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -404,38 +521,53 @@ export const PaymentActivityPage: React.FC = () => {
 
         {/* Scrollable Dashboard Workspace */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-7 py-5 space-y-6 max-w-[1600px] w-full mx-auto">
+          {toastMessage && (
+            <div className="rounded-xl px-4 py-3 border border-blue-700/50 bg-blue-950/60 text-xs text-blue-200 flex items-center justify-between">
+              <span><strong className="mr-1.5">{toastMessage.title}:</strong>{toastMessage.desc}</span>
+              <button onClick={() => setToastMessage(null)}><X className="w-4 h-4" /></button>
+            </div>
+          )}
+
           {/* FINANCIAL SUMMARY CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs text-slate-400 block font-medium">Total Settled (Demo)</span>
+              <span className="font-sans text-xs text-slate-400 block font-medium">
+                {isGuest ? 'Total Settled (Demo)' : isClient ? 'Total Settled Payments' : 'Received Payouts'}
+              </span>
               <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 font-sans tabular-nums tracking-tight mt-1">
                 ${summaryMetrics.totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-[11px] text-slate-500 font-sans tabular-nums mt-0.5 block">4 settled milestone invoices</span>
+              <span className="text-[11px] text-slate-500 font-sans tabular-nums mt-0.5 block">
+                {summaryMetrics.settledCount} settled invoice(s)
+              </span>
             </div>
 
             <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs text-slate-400 block font-medium">Pending Client Sign-off</span>
+              <span className="font-sans text-xs text-slate-400 block font-medium">Pending Settlement</span>
               <div className="text-xl sm:text-2xl font-extrabold text-amber-400 font-sans tabular-nums tracking-tight mt-1">
                 ${summaryMetrics.pending.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-[11px] text-slate-500 font-sans tabular-nums mt-0.5 block">2 deliverables under review</span>
+              <span className="text-[11px] text-slate-500 font-sans tabular-nums mt-0.5 block">
+                {summaryMetrics.pendingCount} pending invoice(s)
+              </span>
             </div>
 
             <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs text-slate-400 block font-medium">Verification Pass Rate</span>
+              <span className="font-sans text-xs text-slate-400 block font-medium">Settlement Rate</span>
               <div className="text-xl sm:text-2xl font-extrabold text-blue-400 font-sans tabular-nums tracking-tight mt-1">
                 {summaryMetrics.verifiedRate}%
               </div>
-              <span className="text-[11px] text-slate-500 font-sans mt-0.5 block">AST requirement matching</span>
+              <span className="text-[11px] text-slate-500 font-sans mt-0.5 block">Settled vs issued invoices</span>
             </div>
 
             <div className="rounded-xl bg-[#111C30] border border-[#26344B] p-4 shadow-sm hover:border-slate-600 transition-colors">
-              <span className="font-sans text-xs text-slate-400 block font-medium">PayPal Webhooks Active</span>
+              <span className="font-sans text-xs text-slate-400 block font-medium">PayPal Webhook Listener</span>
               <div className="text-xl sm:text-2xl font-extrabold text-white font-sans tabular-nums tracking-tight mt-1">
-                100%
+                {isGuest ? 'Demo Preview' : financials.paypalConfigured ? 'Configured' : 'Not Configured'}
               </div>
-              <span className="text-[11px] text-emerald-400 font-sans mt-0.5 block">CRC32 / HMAC verified</span>
+              <span className={`text-[11px] font-sans mt-0.5 block ${financials.paypalConfigured || isGuest ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {isGuest ? 'Sample webhook events' : financials.paypalConfigured ? `${financials.paypalMode.toUpperCase()} mode active` : 'Set PAYPAL_CLIENT_ID in .env'}
+              </span>
             </div>
           </div>
 
@@ -443,53 +575,66 @@ export const PaymentActivityPage: React.FC = () => {
           <div className="rounded-2xl bg-[#111C30] border border-[#26344B] p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#26344B] pb-3.5">
               <div>
-                <h3 className="font-heading text-base sm:text-lg font-bold text-white">Monthly Settlement Volume</h3>
-                <p className="font-sans text-xs sm:text-sm text-slate-400">Milestone payout history reconciled via PayPal Sandbox</p>
+                <h3 className="font-heading text-base sm:text-lg font-bold text-white">Settlement Volume Trend</h3>
+                <p className="font-sans text-xs sm:text-sm text-slate-400">
+                  {isGuest ? 'Demo settlement trend preview' : 'Recorded milestone payment and payout history'}
+                </p>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm font-mono">
                 <span className="flex items-center gap-2 text-slate-300">
                   <span className="w-3 h-3 rounded-full bg-[#2563EB]" />
-                  <span>Settled Payouts</span>
+                  <span>Settled Amounts</span>
                 </span>
-                <span className="text-slate-500">&bull; 2026 Sandbox Timeline</span>
+                <span className="text-slate-500">&bull; {isGuest ? 'Demo Timeline' : 'Live Ledger'}</span>
               </div>
             </div>
 
             <div className="relative pt-2">
-              <svg className="w-full h-40" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="payChartGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563EB" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d={areaD} fill="url(#payChartGrad)" />
-                <path d={pathD} fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" />
-                {points.map((pt) => (
-                  <circle
-                    key={pt.month}
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={hoveredMonth?.month === pt.month ? 6 : 3.5}
-                    className="fill-[#2563EB] stroke-[#080D18] stroke-2 cursor-pointer transition-all"
-                    onMouseEnter={() => setHoveredMonth(pt)}
-                    onMouseLeave={() => setHoveredMonth(null)}
-                  />
-                ))}
-              </svg>
+              {points.length === 0 ? (
+                <div className="h-40 flex flex-col items-center justify-center text-center border border-dashed border-[#26344B] rounded-xl px-4">
+                  <p className="text-sm font-semibold text-white">No payment or payout settlements recorded yet</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Settled PayPal invoices and developer payouts will chart here automatically.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <svg className="w-full h-40" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="payChartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2563EB" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    {areaD && <path d={areaD} fill="url(#payChartGrad)" />}
+                    {pathD && <path d={pathD} fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" />}
+                    {points.map((pt) => (
+                      <circle
+                        key={pt.month}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={hoveredMonth?.month === pt.month ? 6 : 3.5}
+                        className="fill-[#2563EB] stroke-[#080D18] stroke-2 cursor-pointer transition-all"
+                        onMouseEnter={() => setHoveredMonth(pt)}
+                        onMouseLeave={() => setHoveredMonth(null)}
+                      />
+                    ))}
+                  </svg>
 
-              <div className="flex justify-between text-xs text-slate-400 font-mono pt-3 px-6">
-                {MONTHLY_TREND.map((d) => (
-                  <span key={d.month}>{d.month}</span>
-                ))}
-              </div>
+                  <div className="flex justify-between text-xs text-slate-400 font-mono pt-3 px-6">
+                    {chartSeries.map((d) => (
+                      <span key={d.month}>{d.month}</span>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
           {/* TRANSACTIONS SECTION & SLIDE-OVER DETAIL */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Transactions Table (Left lg:col-span-8 or lg:col-span-7) */}
-            <div className={`${isDetailPanelOpen ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4 transition-all duration-200`}>
+            <div className={`${isDetailPanelOpen && currentTransaction ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4 transition-all duration-200`}>
               {/* Filter Toolbar */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 p-4 rounded-2xl bg-[#111C30] border border-[#26344B]">
                 <div className="relative flex-1">
@@ -521,10 +666,11 @@ export const PaymentActivityPage: React.FC = () => {
                     className="bg-[#080D18] border border-[#26344B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-300 focus:outline-none focus:border-[#2563EB] cursor-pointer"
                   >
                     <option value="All">All Projects</option>
-                    <option value="Payment Gateway Integration">Payment Gateway</option>
-                    <option value="Analytics Dashboard">Analytics Dashboard</option>
-                    <option value="API Modernization">API Modernization</option>
-                    <option value="Customer Portal">Customer Portal</option>
+                    {projectOptions.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -543,7 +689,16 @@ export const PaymentActivityPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#26344B]/40">
-                      {filteredTransactions.map((tx) => {
+                      {filteredTransactions.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-12 px-4 text-center text-xs sm:text-sm text-slate-400">
+                            {transactions.length === 0
+                              ? 'No payment transactions or payouts recorded yet.'
+                              : 'No transactions match your current filter.'}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredTransactions.map((tx) => {
                         const isSelected = tx.transactionId === selectedTransactionId;
                         const statusBadge =
                           tx.status === 'Success'
@@ -583,7 +738,7 @@ export const PaymentActivityPage: React.FC = () => {
                             </td>
                           </tr>
                         );
-                      })}
+                      }))}
                     </tbody>
                   </table>
                 </div>
@@ -644,14 +799,25 @@ export const PaymentActivityPage: React.FC = () => {
                   <div className="p-4 rounded-xl bg-[#080D18] border border-[#26344B] space-y-2">
                     <div className="text-slate-200 font-semibold">{currentTransaction.relatedMilestone}</div>
                     <div className="text-xs text-slate-400 font-mono">Project: {currentTransaction.project}</div>
-                    <div className="flex items-center gap-2 pt-1 text-xs">
-                      <span className="text-emerald-400 flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" />
-                        AST Passed (94.2%)
-                      </span>
-                      <span className="text-slate-500">&bull;</span>
-                      <span className="text-blue-400">Human Sign-off Confirmed</span>
-                    </div>
+                    {isGuest ? (
+                      <div className="flex items-center gap-2 pt-1 text-xs">
+                        <span className="text-emerald-400 flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" />
+                          AST Passed (94.2%)
+                        </span>
+                        <span className="text-slate-500">&bull;</span>
+                        <span className="text-blue-400">Human Sign-off Confirmed</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 pt-1 text-xs">
+                        <span className={currentTransaction.status === 'Success' ? 'text-emerald-400 flex items-center gap-1' : 'text-amber-400 flex items-center gap-1'}>
+                          <Check className="w-3.5 h-3.5" />
+                          {currentTransaction.status === 'Success' ? 'Settlement Recorded' : 'Pending Settlement'}
+                        </span>
+                        <span className="text-slate-500">&bull;</span>
+                        <span className="text-slate-400">{currentTransaction.webhookTimestamp}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import { app } from './app';
 import { env } from './config/env';
-import { disconnectDatabase } from './config/database';
+import { checkDatabaseHealth, disconnectDatabase } from './config/database';
 import logger from './utils/logger';
 
 const server = app.listen(env.PORT, () => {
@@ -8,6 +8,16 @@ const server = app.listen(env.PORT, () => {
     port: env.PORT,
     environment: env.NODE_ENV,
     clientUrl: env.CLIENT_URL,
+  });
+
+  void checkDatabaseHealth().then((healthy) => {
+    if (healthy) {
+      logger.info('PostgreSQL database connection verified');
+    } else {
+      logger.warn(
+        'PostgreSQL database is unreachable at startup; auth and data endpoints will return 503 until the database is running.'
+      );
+    }
   });
 });
 

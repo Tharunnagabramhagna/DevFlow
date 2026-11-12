@@ -6,6 +6,7 @@ import { env } from './config/env';
 import { prisma } from './config/database';
 import { generalRateLimiter, authRateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
+import { isTrustedClientOrigin } from './middleware/csrf';
 import { authRouter } from './modules/auth/auth.routes';
 import { projectsRouter } from './modules/projects/projects.routes';
 import { milestonesRouter, projectMilestonesRouter } from './modules/milestones/milestones.routes';
@@ -17,6 +18,8 @@ import { paymentsRouter, projectPaymentsRouter } from './modules/payments/paymen
 import { webhooksRouter } from './modules/webhooks/webhooks.routes';
 import { telemetryRouter } from './modules/telemetry/telemetry.routes';
 import { githubRouter } from './modules/github/github.routes';
+import { resumeRouter } from './modules/resume/resume.routes';
+import { marketplaceRouter } from './modules/marketplace/marketplace.routes';
 import logger from './utils/logger';
 
 export const createApp = (): Express => {
@@ -26,14 +29,23 @@ export const createApp = (): Express => {
   app.use(helmet());
   app.use(
     cors({
-      origin: env.CLIENT_URL,
+      origin: (origin, callback) => {
+        callback(null, !origin || isTrustedClientOrigin(origin));
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Idempotency-Key'],
     })
   );
   app.use(cookieParser());
-  app.use(express.json({ limit: '10mb' }));
+  app.use(
+    express.json({
+      limit: '10mb',
+      verify: (req, _res, buf) => {
+        (req as Request & { rawBody?: Buffer }).rawBody = buf;
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // Global Rate Limiting
@@ -109,6 +121,10 @@ export const createApp = (): Express => {
   app.use('/api/telemetry', telemetryRouter);
   app.use('/api/github', githubRouter);
   app.use('/api/ai', aiCompatibilityRouter);
+
+  // Mount Resume Studio & Talent Marketplace Routes
+  app.use('/api/resumes', resumeRouter);
+  app.use('/api/marketplace', marketplaceRouter);
 
   // Global Centralized Error Handler
   app.use(errorHandler);

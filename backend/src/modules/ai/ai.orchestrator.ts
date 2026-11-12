@@ -11,6 +11,16 @@ import { MilestoneVerificationAgent } from './agents/milestoneVerification.agent
 import { RiskDetectionAgent } from './agents/riskDetection.agent';
 import { ProjectMonitoringAgent } from './agents/projectMonitoring.agent';
 import { PaymentCoordinationAgent } from './agents/paymentCoordination.agent';
+import { ResumeParsingAgent, ResumeParsingInput } from './agents/resumeParsing.agent';
+import {
+  TalentQueryAnalyzerAgent,
+  TalentCandidateEvaluationAgent,
+  TalentRerankCandidateSummary,
+} from './agents/talentMatching.agent';
+import {
+  OpportunityRefinementAgent,
+  OpportunityRefinementInput,
+} from './agents/opportunityRefinement.agent';
 import { activityService } from '../../services/activity.service';
 import { notificationService } from '../../services/notification.service';
 import { NotFoundError, BadRequestError } from '../../utils/errors';
@@ -42,7 +52,15 @@ export class AIOrchestrationService {
     this.registerAgent(new RiskDetectionAgent());
     this.registerAgent(new ProjectMonitoringAgent());
     this.registerAgent(new PaymentCoordinationAgent());
+    this.registerAgent(new ResumeParsingAgent());
+    this.registerAgent(new TalentQueryAnalyzerAgent());
+    this.registerAgent(new OpportunityRefinementAgent());
   }
+
+  private resumeParsingAgent = new ResumeParsingAgent();
+  private talentQueryAnalyzer = new TalentQueryAnalyzerAgent();
+  private talentCandidateEvaluator = new TalentCandidateEvaluationAgent();
+  private opportunityRefinementAgent = new OpportunityRefinementAgent();
 
   registerAgent(agent: BaseAIAgent<any, any>): void {
     this.agents.set(agent.agentType, agent);
@@ -451,6 +469,28 @@ export class AIOrchestrationService {
       monitoring: JSON.parse(analysis.rawResponse),
       analyzedAt: analysis.createdAt,
     };
+  }
+
+  async parseResumeDocument(input: ResumeParsingInput) {
+    return this.executeWithRetry(this.resumeParsingAgent, input);
+  }
+
+  async analyzeTalentSearchQuery(naturalLanguageQuery: string) {
+    return this.executeWithRetry(this.talentQueryAnalyzer, { naturalLanguageQuery });
+  }
+
+  async evaluateTalentCandidates(input: {
+    queryText: string;
+    mandatorySkills: string[];
+    preferredSkills: string[];
+    minYearsExperience: number | null;
+    candidates: TalentRerankCandidateSummary[];
+  }) {
+    return this.executeWithRetry(this.talentCandidateEvaluator, input);
+  }
+
+  async refineOpportunityScope(input: OpportunityRefinementInput) {
+    return this.executeWithRetry(this.opportunityRefinementAgent, input);
   }
 }
 
